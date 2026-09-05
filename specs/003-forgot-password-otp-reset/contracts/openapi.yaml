@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Forgot Password Flow (OTP-Based Reset) API
+  version: "1.0.0"
+  description: >
+    Contract for feature 003-forgot-password-otp-reset. Both endpoints are
+    unauthenticated (a user who forgot their password, by definition, cannot
+    present a valid access token). Builds on
+    specs/002-registration-login-jwt-auth/contracts/openapi.yaml's Session
+    schema — a successful verify does not itself log the user in; per this
+    feature's spec, the user proceeds to /auth/login afterward with their new
+    password (no session is issued directly by /auth/forgot-password/verify).
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+tags:
+  - name: ForgotPassword
+
+paths:
+  /auth/forgot-password/request:
+    post:
+      tags: [ForgotPassword]
+      summary: >
+        Request a password-reset code (FR-001..FR-006). Always returns 202
+        with an identical body, whether or not the username exists
+        (FR-004/research.md §5) — never 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username: { type: string, description: "Mobile number" }
+      responses:
+        "202":
+          description: >
+            A code has been generated and dispatched if an account exists for
+            this username. Identical response regardless of actual existence.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequestAck" }
+
+  /auth/forgot-password/verify:
+    post:
+      tags: [ForgotPassword]
+      summary: Submit the code and a new password (FR-007..FR-013)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VerifyRequest" }
+      responses:
+        "200":
+          description: Password successfully reset (FR-009..FR-011)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VerifyAck" }
+        "400":
+          description: New Password and Retype Password did not match (FR-008) — rejected before any code check
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "422":
+          description: >
+            Code is invalid, expired, already used, or the incorrect-attempt
+            limit has been reached for it (FR-012, FR-015) — a single generic
+            reason, not distinguished further to the client
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  schemas:
+    RequestAck:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "If an account exists for this username, a code has been sent."
+
+    VerifyRequest:
+      type: object
+      required: [username, code, new_password, retype_password]
+      properties:
+        username: { type: string, description: "Mobile number — identifies which account's outstanding code to check" }
+        code: { type: string, description: "6-character alphanumeric code" }
+        new_password: { type: string, format: password }
+        retype_password: { type: string, format: password }
+
+    VerifyAck:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Your password has been reset. Please log in with your new password."
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }

@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Company Admin Product Management API
+  version: "1.0.0"
+  description: >
+    Contract for feature 004-company-admin-product-crud. All endpoints
+    require Authorization: Bearer <access_token> (see
+    specs/002-registration-login-jwt-auth). company_id is always taken from
+    the verified JWT claim, never from the request body or path. Full CRUD
+    is Company-Admin-only; PATCH .../soldout is additionally available to
+    Staff (FR-012). No endpoint here is reachable by System Admin — this
+    feature grants no cross-tenant Product access (FR-003).
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Products
+
+paths:
+  /tenant/products:
+    get:
+      tags: [Products]
+      summary: List the caller's own company's active products (Company Admin or Staff)
+      responses:
+        "200":
+          description: The caller's company products, sold-out items clearly flagged
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Product" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Products]
+      summary: Create a new product scoped to the caller's own company (Company Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductCreateRequest" }
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tenant/products/{productId}:
+    patch:
+      tags: [Products]
+      summary: Update a product's Name, Description, Image, Price, and/or Veg/Non-Veg indicator (Company Admin only)
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductUpdateRequest" }
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Products]
+      summary: Soft-delete a product (Company Admin only) — removed from active list, existing references remain valid
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      responses:
+        "204": { description: Product soft-deleted }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/products/{productId}/soldout:
+    patch:
+      tags: [Products]
+      summary: Toggle sold-out status only, independent of every other field (Company Admin or Staff — FR-012)
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [is_soldout]
+              properties:
+                is_soldout: { type: boolean }
+      responses:
+        "200":
+          description: Sold-out status updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/products/{productId}/image:
+    post:
+      tags: [Products]
+      summary: Upload or replace a product's photo (Company Admin only) — stored in object storage, response carries only the resulting URL
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image: { type: string, format: binary }
+      responses:
+        "200":
+          description: Image stored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Forbidden:
+      description: Caller's role/company scope does not permit this action
+    NotFound:
+      description: Product does not exist, belongs to a different company, or has been removed
+    ValidationError:
+      description: Request failed field-level validation (e.g., missing Name, Price <= 0)
+
+  schemas:
+    Product:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        image_url: { type: string, format: uri, nullable: true }
+        price: { type: integer, description: "Whole-number amount in the smallest currency unit", example: 4000 }
+        is_veg: { type: boolean }
+        is_soldout: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ProductCreateRequest:
+      type: object
+      required: [name, description, price, is_veg]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        price: { type: integer, minimum: 1 }
+        is_veg: { type: boolean }
+        is_soldout: { type: boolean, description: "Optional; defaults to false per FR-005" }
+
+    ProductUpdateRequest:
+      type: object
+      description: Any subset of these fields; omitted fields are left unchanged (FR-007)
+      properties:
+        name: { type: string }
+        description: { type: string }
+        price: { type: integer, minimum: 1 }
+        is_veg: { type: boolean }

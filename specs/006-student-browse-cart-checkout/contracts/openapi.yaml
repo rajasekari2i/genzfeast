@@ -1,0 +1,256 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Browse, Cart & Checkout with Payment API
+  version: "1.0.0"
+  description: >
+    Contract for feature 006-student-browse-cart-checkout. Student-facing
+    endpoints require Authorization: Bearer <access_token> with the
+    `student` role (see specs/002-registration-login-jwt-auth). The cart
+    itself has no API surface (research.md §1) — it is purely client-side
+    until POST /student/orders. The webhook endpoint is called by the
+    payment gateway, not the mobile client, and is authenticated by
+    signature verification rather than a bearer token.
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+tags:
+  - name: Browsing
+  - name: Orders
+  - name: PaymentWebhook
+
+paths:
+  /student/products:
+    get:
+      tags: [Browsing]
+      summary: List the student's own company's non-removed products (sold-out items included, clearly flagged)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProductForBrowsing" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /student/orders:
+    get:
+      tags: [Orders]
+      summary: List the caller's own orders
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The student's own orders only
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Order" }
+    post:
+      tags: [Orders]
+      summary: >
+        Place an order from the given cart items. Re-validates availability
+        and re-derives price/name server-side (FR-008, research.md §2) —
+        never trusts client-supplied price. If the caller already has a
+        payment_pending or payment_failed order, returns that existing order
+        instead of creating a new one (FR-016).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PlaceOrderRequest" }
+      responses:
+        "201":
+          description: New order created, payment_pending
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithPaymentSession" }
+        "200":
+          description: An existing unresolved order was returned instead of creating a new one (FR-016)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithPaymentSession" }
+        "409":
+          description: One or more cart items are no longer available (FR-008) — no order created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnavailableItemsError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /student/orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: >
+        View a specific order's detail, including its pickup code while
+        order_placed (never shown once delivered — FR-013)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderDetail" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /student/orders/{orderId}/retry-payment:
+    post:
+      tags: [Orders]
+      summary: Retry payment on a payment_failed order (FR-014/FR-015) — reuses the same order, never creates a new one
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: A fresh payment session opened on the same order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderWithPaymentSession" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Order is not in a payment_failed state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /payments/webhook:
+    post:
+      tags: [PaymentWebhook]
+      summary: >
+        Razorpay server-to-server payment confirmation (research.md §4/§5).
+        Not called by the mobile client. Authenticated via webhook signature
+        header, not a bearer token. Idempotent: a redelivered event for an
+        order no longer in payment_pending is acknowledged with no further
+        state change.
+      security: []
+      parameters:
+        - name: X-Razorpay-Signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PaymentWebhookPayload" }
+      responses:
+        "200": { description: Acknowledged (whether or not it caused a state change) }
+        "400": { description: Signature verification failed }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Forbidden:
+      description: Caller's role/company scope does not permit this action
+    NotFound:
+      description: Order does not exist or does not belong to the caller
+    ValidationError:
+      description: Request failed field-level validation (e.g., empty item list)
+
+  schemas:
+    ProductForBrowsing:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        image_url: { type: string, format: uri, nullable: true }
+        price: { type: integer }
+        is_veg: { type: boolean }
+        is_soldout: { type: boolean }
+
+    PlaceOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id: { type: string, format: uuid }
+              quantity: { type: integer, minimum: 1 }
+        payment_method:
+          type: string
+          description: "V1 has exactly one available value; included for forward compatibility (FR-007)"
+
+    UnavailableItemsError:
+      type: object
+      properties:
+        message: { type: string }
+        unavailable_product_ids:
+          type: array
+          items: { type: string, format: uuid }
+
+    Order:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [payment_pending, order_placed, payment_failed, delivered] }
+        total_amount: { type: integer }
+        placed_at: { type: string, format: date-time }
+
+    OrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  price: { type: integer }
+                  quantity: { type: integer }
+                  line_total: { type: integer }
+            fulfilment_type: { type: string, enum: [pickup] }
+            otp:
+              type: string
+              nullable: true
+              description: "Present only while status = order_placed (FR-013); absent/null otherwise"
+
+    OrderWithPaymentSession:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          properties:
+            payment_session:
+              type: object
+              description: Gateway-specific data the client uses to launch the UPI checkout/payment intent
+              properties:
+                gateway_ref: { type: string }
+
+    PaymentWebhookPayload:
+      type: object
+      properties:
+        gateway_ref: { type: string }
+        event: { type: string, enum: [payment.success, payment.failed] }
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }

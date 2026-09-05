@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Registration & Login with JWT Authentication API
+  version: "1.0.0"
+  description: >
+    Contract for feature 002-registration-login-jwt-auth. Extends the
+    /auth/register endpoint already defined in
+    specs/001-company-role-user-setup/contracts/openapi.yaml (its response
+    now also includes a Session) and adds /auth/login, /auth/refresh,
+    /auth/logout. Every authenticated route elsewhere in the platform expects
+    Authorization: Bearer <access_token> issued by this contract.
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+tags:
+  - name: Auth
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: >
+        Student self-registration (fields/behavior owned by
+        001-company-role-user-setup). This contract only adds: on success,
+        the response also carries a Session so the client is signed in
+        immediately (FR-001) — see the extended response schema below.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../../001-company-role-user-setup/contracts/openapi.yaml#/components/schemas/StudentRegisterRequest"
+      responses:
+        "201":
+          description: Student account created and signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthenticatedUserResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409": { $ref: "#/components/responses/DuplicateUsername" }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with username and password (any role)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthenticatedUserResponse" }
+        "401":
+          description: Invalid username or password (FR-005) — generic, does not reveal which
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Account is locked or inactive (FR-014) — distinct from 401
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccountBlockedErrorResponse" }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange a valid refresh token for a new access token (and a rotated refresh token)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200":
+          description: New session issued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+        "401":
+          description: Refresh token is invalid, expired, or revoked (FR-010) — re-login required
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke the current session's refresh token (FR-011)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string, description: "The session's own refresh token, to identify which session to revoke" }
+      responses:
+        "204": { description: Session's refresh token revoked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid, or expired access token
+    ValidationError:
+      description: Request failed field-level validation
+    DuplicateUsername:
+      description: Username already exists within the target company
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, description: "Mobile number" }
+        password: { type: string, format: password }
+
+    Session:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: >
+            Short-lived JWT (~30 min). Claims: sub (user id), role, company_id
+            (nullable for system_admin), iat, exp, jti.
+        refresh_token:
+          type: string
+          description: Opaque, high-entropy string (~14 day lifetime). Store securely (Keychain/Keystore) — never in plain AsyncStorage.
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds
+
+    AuthenticatedUserResponse:
+      allOf:
+        - type: object
+          properties:
+            user:
+              type: object
+              description: The authenticated user's own profile summary
+              properties:
+                id: { type: string, format: uuid }
+                company_id: { type: string, format: uuid, nullable: true }
+                role: { type: string, enum: [system_admin, company_admin, staff, student] }
+                name: { type: string }
+                username: { type: string }
+        - $ref: "#/components/schemas/Session"
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string, example: "Invalid username or password" }
+
+    AccountBlockedErrorResponse:
+      type: object
+      properties:
+        message: { type: string, example: "Your account is locked. Reset your password to regain access." }
+        reason: { type: string, enum: [locked, inactive] }

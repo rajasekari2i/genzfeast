@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Resume Payment on a Pending Order API (amendment)
+  version: "1.0.0"
+  description: >
+    Amendment to specs/006-student-browse-cart-checkout/contracts/openapi.yaml.
+    No new endpoints are introduced — this document specifies the CHANGED
+    behavior of 006's existing POST /student/orders/{orderId}/retry-payment
+    (now also accepting payment_pending, not only payment_failed) and its
+    payment webhook's reconciliation logic (research.md §1-§2). Read
+    alongside 006's original contract, which this supersedes only for the
+    two paths shown below.
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Orders (amended)
+
+paths:
+  /student/orders/{orderId}/retry-payment:
+    post:
+      tags: [Orders (amended)]
+      summary: >
+        AMENDED from 006: now accepts an order in EITHER payment_pending or
+        payment_failed (previously payment_failed only). Creates a new
+        payment_attempts row (marking any prior attempt non-current) and
+        opens a fresh payment session on the same order (FR-001-FR-003).
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: A fresh payment session opened on the same order
+          content:
+            application/json:
+              schema:
+                $ref: "../../006-student-browse-cart-checkout/contracts/openapi.yaml#/components/schemas/OrderWithPaymentSession"
+        "404":
+          description: Order does not exist or does not belong to the caller
+        "409":
+          description: >
+            AMENDED: now only returned when the order is order_placed or
+            delivered — no longer returned for payment_pending (FR-004
+            still applies to those two statuses)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /payments/webhook:
+    post:
+      tags: [Orders (amended)]
+      summary: >
+        AMENDED from 006: reconciliation logic now looks up the specific
+        payment_attempts row by gateway_ref (not orders.payment_gateway_ref)
+        and applies the asymmetric success/failure rule in research.md §2 —
+        see data-model.md's Reconciliation Logic Summary table. Signature
+        verification and the "acknowledge but no-op if already resolved"
+        idempotency behavior from 006 are otherwise unchanged.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../../006-student-browse-cart-checkout/contracts/openapi.yaml#/components/schemas/PaymentWebhookPayload"
+      responses:
+        "200": { description: Acknowledged (whether or not it caused a state change) }
+        "400": { description: Signature verification failed }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }

@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — My Orders (History & Upcoming) API
+  version: "1.0.0"
+  description: >
+    Contract for feature 008-my-orders-history-upcoming. Extends
+    specs/006-student-browse-cart-checkout/contracts/openapi.yaml's
+    GET /student/orders with a `view` filter and its OrderDetail schema with
+    `delivered_at` — no new endpoints or tables beyond that extension.
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: MyOrders
+
+paths:
+  /student/orders:
+    get:
+      tags: [MyOrders]
+      summary: >
+        List the caller's own orders, optionally filtered into the Upcoming
+        or History view (research.md §1). Omitting `view` preserves 006's
+        original unfiltered behavior.
+      parameters:
+        - name: view
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [upcoming, history]
+          description: >
+            upcoming = payment_pending/order_placed only;
+            history = delivered/payment_failed/cancelled only.
+            Both sorted most-recently-placed-first (research.md §2).
+      responses:
+        "200":
+          description: The student's own orders, filtered and sorted per `view`
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../../006-student-browse-cart-checkout/contracts/openapi.yaml#/components/schemas/Order"
+
+  /student/orders/{orderId}:
+    get:
+      tags: [MyOrders]
+      summary: >
+        View a specific order's detail, now including delivered_at
+        (research.md §3). Pickup code (otp) and delivered_at are mutually
+        exclusive in practice, governed entirely by `status`.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Order detail, extended with delivered_at
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderDetailWithDeliveredAt" }
+        "404":
+          description: Order does not exist or does not belong to the caller
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    OrderDetailWithDeliveredAt:
+      allOf:
+        - $ref: "../../006-student-browse-cart-checkout/contracts/openapi.yaml#/components/schemas/OrderDetail"
+        - type: object
+          properties:
+            delivered_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: "Present only once status = delivered (FR-008); null otherwise"

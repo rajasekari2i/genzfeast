@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — User Profile API
+  version: "1.0.0"
+  description: >
+    Contract for feature 007-user-profile-management. Every endpoint acts
+    only on the caller's own account (identity from the verified JWT, per
+    specs/002-registration-login-jwt-auth) — none takes a user id parameter,
+    since no cross-user access exists in this feature (FR-014).
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Profile
+
+paths:
+  /me/profile:
+    get:
+      tags: [Profile]
+      summary: View the caller's own profile
+      responses:
+        "200":
+          description: Profile, shaped by the caller's role
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+    patch:
+      tags: [Profile]
+      summary: >
+        Update the caller's own Email (all roles) and Department (Student
+        only). All-or-nothing (FR-007) — Name, Username, Category are never
+        accepted here regardless of role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileUpdateRequest" }
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /me/change-password:
+    post:
+      tags: [Profile]
+      summary: Change the caller's own password (distinct from the OTP-based forgot-password flow)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordRequest" }
+      responses:
+        "200":
+          description: Password changed; other sessions revoked (FR-012)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangePasswordAck" }
+        "400":
+          description: New password and confirmation did not match (FR-010) — rejected before checking current password
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Current password did not match (FR-011) — nothing changed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    ValidationError:
+      description: Request failed field-level validation (e.g., invalid email format, department not in caller's own company)
+
+  schemas:
+    Profile:
+      type: object
+      description: Fields present depend on role — category/department only for a student, company only for company_admin/staff
+      properties:
+        name: { type: string, description: "Read-only (FR-008)" }
+        username: { type: string, description: "Read-only (FR-003)" }
+        email: { type: string, format: email }
+        role: { type: string, enum: [system_admin, company_admin, staff, student] }
+        category:
+          type: string
+          nullable: true
+          description: "Student only, read-only (FR-005)"
+        department:
+          type: string
+          nullable: true
+          description: "Student only, editable (FR-005)"
+        company:
+          type: string
+          nullable: true
+          description: "company_admin/staff only, read-only (FR-002); absent for system_admin"
+
+    ProfileUpdateRequest:
+      type: object
+      description: Any subset of these fields; department is rejected for non-Student roles
+      properties:
+        email: { type: string, format: email }
+        department_id:
+          type: string
+          format: uuid
+          description: "Student only — must belong to the caller's own company (research.md §3)"
+
+    ChangePasswordRequest:
+      type: object
+      required: [current_password, new_password, retype_password]
+      properties:
+        current_password: { type: string, format: password }
+        new_password: { type: string, format: password }
+        retype_password: { type: string, format: password }
+        refresh_token:
+          type: string
+          description: >
+            Optional — the caller's own current-session refresh token, to
+            preserve that one session from revocation (research.md §2).
+            If omitted, every session (including the current one) is
+            revoked, matching 003's password-reset behavior.
+
+    ChangePasswordAck:
+      type: object
+      properties:
+        message: { type: string, example: "Password updated. You've been logged out of other devices." }
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }

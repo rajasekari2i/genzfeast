@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Order Push Notifications API
+  version: "1.0.0"
+  description: >
+    Contract for feature 009-order-fcm-push-notifications. The only
+    client-facing endpoint is device registration; the order-confirmation
+    notification itself is sent server-to-server (Firebase Cloud Messaging)
+    as a side effect of specs/006-student-browse-cart-checkout's existing
+    payment webhook — there is no endpoint the client calls to "send" it.
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: DeviceRegistration
+
+paths:
+  /me/devices:
+    post:
+      tags: [DeviceRegistration]
+      summary: >
+        Register (or update) this device's push-notification token for the
+        caller's account. Requires the caller's own current refresh_token to
+        link this registration to a specific session (research.md §1), so it
+        can be precisely removed on that session's logout (FR-008).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeviceRegistrationRequest" }
+      responses:
+        "200":
+          description: Registration created or updated (upsert — FR-003)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeviceRegistrationAck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    ValidationError:
+      description: Missing fcm_token or refresh_token
+    Unauthorized:
+      description: refresh_token does not belong to the caller or is not currently valid
+
+  schemas:
+    DeviceRegistrationRequest:
+      type: object
+      required: [fcm_token, refresh_token]
+      properties:
+        fcm_token:
+          type: string
+          description: The device's current Firebase Cloud Messaging registration token
+        refresh_token:
+          type: string
+          description: >
+            The caller's own current-session refresh token (from
+            002-registration-login-jwt-auth), used only to link this
+            registration to that session — never returned or exposed
+            elsewhere.
+
+    DeviceRegistrationAck:
+      type: object
+      properties:
+        registered: { type: boolean }
+
+# --- Reference only: not new endpoints introduced by this feature ---
+# The order-confirmation notification is a side effect inside
+# specs/006-student-browse-cart-checkout's POST /payments/webhook handler,
+# at the moment it sets order.status = 'order_placed' (research.md §4).
+# Its payload (illustrative, not a schema this feature exposes via HTTP):
+#   notification: { title, body }
+#   data: { order_id: "<uuid>" }

@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Staff Order Fulfilment API
+  version: "1.0.0"
+  description: >
+    Contract for feature 005-staff-order-fulfilment-otp. All endpoints
+    require Authorization: Bearer <access_token> and are restricted to the
+    `staff` role for the caller's own company_id (see
+    specs/002-registration-login-jwt-auth). The `orders` resource itself is
+    owned by a future Checkout & Payment feature — this contract only
+    exposes the read/verify operations this feature is responsible for; full
+    order creation/payment endpoints are intentionally absent here.
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: StaffOrders
+
+paths:
+  /tenant/staff/orders:
+    get:
+      tags: [StaffOrders]
+      summary: List the caller's own company's incoming orders (status = order_placed)
+      responses:
+        "200":
+          description: Incoming orders for the caller's company, oldest or most-relevant first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OrderSummary" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tenant/staff/orders/{orderId}:
+    get:
+      tags: [StaffOrders]
+      summary: View a specific incoming order's full detail (never includes the pickup code)
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderDetail" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/staff/orders/{orderId}/verify:
+    post:
+      tags: [StaffOrders]
+      summary: Submit the pickup code presented by the student to complete delivery
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, description: "6-digit numeric pickup code, as stated by the student" }
+      responses:
+        "200":
+          description: Code matched — order marked delivered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VerifySuccess" }
+        "422":
+          description: Code did not match — no status change, retry allowed (FR-007)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "409":
+          description: Order has already been delivered — code can no longer be submitted (FR-008)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Forbidden:
+      description: Caller is not Staff for this order's company
+    NotFound:
+      description: Order does not exist, belongs to a different company, or is not currently in the order_placed state
+
+  schemas:
+    OrderSummary:
+      type: object
+      description: Never includes the pickup code (FR-009)
+      properties:
+        id: { type: string, format: uuid }
+        reference: { type: string, description: "Short, human-readable order reference" }
+        item_count: { type: integer }
+        total_amount: { type: integer, description: "Whole-number amount in the smallest currency unit" }
+        placed_at: { type: string, format: date-time }
+
+    OrderDetail:
+      type: object
+      description: Never includes the pickup code (FR-009)
+      properties:
+        id: { type: string, format: uuid }
+        reference: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              quantity: { type: integer }
+              price: { type: integer }
+        total_amount: { type: integer }
+        placed_at: { type: string, format: date-time }
+
+    VerifySuccess:
+      type: object
+      properties:
+        order_id: { type: string, format: uuid }
+        status: { type: string, enum: [delivered] }
+        delivered_at: { type: string, format: date-time }
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }

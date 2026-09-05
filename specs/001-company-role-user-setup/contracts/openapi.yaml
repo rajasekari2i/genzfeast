@@ -1,0 +1,579 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Company, Role, Category, Department & User Creation API
+  version: "1.0.0"
+  description: >
+    Contract for feature 001-company-role-user-setup. All endpoints require
+    Authorization: Bearer <JWT> (Architecture §4). company_id/role are always
+    taken from the verified JWT claims, never from the request body or path.
+    Every write additionally lands in audit_logs automatically via DB trigger
+    (out of band for this contract).
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Companies
+  - name: Roles
+  - name: Categories
+  - name: Departments
+  - name: Users
+
+paths:
+  /admin/companies:
+    get:
+      tags: [Companies]
+      summary: List all companies (System Admin only)
+      responses:
+        "200":
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Company" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Companies]
+      summary: Create a company (System Admin only). Seeds company_admin/staff/student roles.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompanyCreateRequest" }
+      responses:
+        "201":
+          description: Company created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Company" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/companies/{companyId}:
+    patch:
+      tags: [Companies]
+      summary: Update company details or toggle open/closed status (System Admin only)
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompanyUpdateRequest" }
+      responses:
+        "200":
+          description: Company updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Company" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /admin/companies/{companyId}/admins:
+    post:
+      tags: [Users]
+      summary: Create the first (or an additional) Company Admin for a company (System Admin only)
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminUserCreateRequest" }
+      responses:
+        "201":
+          description: Company Admin created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/DuplicateUsername" }
+
+  /admin/roles:
+    get:
+      tags: [Roles]
+      summary: List roles across every company (System Admin only)
+      responses:
+        "200":
+          description: All roles, platform-wide
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Role" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/categories:
+    get:
+      tags: [Categories]
+      summary: List categories across every company (System Admin only)
+      responses:
+        "200":
+          description: All categories, platform-wide
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Category" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Categories]
+      summary: Create a category for any company (System Admin only, full cross-tenant CRUD)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminCategoryCreateRequest" }
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/categories/{categoryId}:
+    patch:
+      tags: [Categories]
+      summary: Update a category belonging to any company (System Admin only)
+      parameters:
+        - $ref: "#/components/parameters/CategoryId"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MasterDataUpdateRequest" }
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Categories]
+      summary: Soft-delete a category belonging to any company (System Admin only)
+      parameters:
+        - $ref: "#/components/parameters/CategoryId"
+      responses:
+        "204": { description: Category soft-deleted }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /admin/departments:
+    get:
+      tags: [Departments]
+      summary: List departments across every company (System Admin only)
+      responses:
+        "200":
+          description: All departments, platform-wide
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Department" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Departments]
+      summary: Create a department for any company (System Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminDepartmentCreateRequest" }
+      responses:
+        "201":
+          description: Department created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Department" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/departments/{departmentId}:
+    patch:
+      tags: [Departments]
+      summary: Update a department belonging to any company (System Admin only)
+      parameters:
+        - $ref: "#/components/parameters/DepartmentId"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MasterDataUpdateRequest" }
+      responses:
+        "200":
+          description: Department updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Department" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Departments]
+      summary: Soft-delete a department belonging to any company (System Admin only)
+      parameters:
+        - $ref: "#/components/parameters/DepartmentId"
+      responses:
+        "204": { description: Department soft-deleted }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/categories:
+    get:
+      tags: [Categories]
+      summary: List categories for the caller's own company (Company Admin, Staff, Student)
+      responses:
+        "200":
+          description: The caller's company categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Category" }
+    post:
+      tags: [Categories]
+      summary: Create a category scoped to the caller's own company (Company Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MasterDataCreateRequest" }
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tenant/categories/{categoryId}:
+    patch:
+      tags: [Categories]
+      summary: Update a category scoped to the caller's own company (Company Admin only)
+      parameters:
+        - $ref: "#/components/parameters/CategoryId"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MasterDataUpdateRequest" }
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Categories]
+      summary: Soft-delete a category scoped to the caller's own company (Company Admin only)
+      parameters:
+        - $ref: "#/components/parameters/CategoryId"
+      responses:
+        "204": { description: Category soft-deleted }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/departments:
+    get:
+      tags: [Departments]
+      summary: List departments for the caller's own company (Company Admin, Staff, Student)
+      responses:
+        "200":
+          description: The caller's company departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Department" }
+    post:
+      tags: [Departments]
+      summary: Create a department scoped to the caller's own company (Company Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MasterDataCreateRequest" }
+      responses:
+        "201":
+          description: Department created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Department" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tenant/departments/{departmentId}:
+    patch:
+      tags: [Departments]
+      summary: Update a department scoped to the caller's own company (Company Admin only)
+      parameters:
+        - $ref: "#/components/parameters/DepartmentId"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MasterDataUpdateRequest" }
+      responses:
+        "200":
+          description: Department updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Department" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Departments]
+      summary: Soft-delete a department scoped to the caller's own company (Company Admin only)
+      parameters:
+        - $ref: "#/components/parameters/DepartmentId"
+      responses:
+        "204": { description: Department soft-deleted }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/users:
+    get:
+      tags: [Users]
+      summary: List Staff and Company Admin users for the caller's own company (Company Admin only)
+      responses:
+        "200":
+          description: The caller's company users (Staff/Company Admin)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Users]
+      summary: Create a Staff or Company Admin user in the caller's own company (Company Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantUserCreateRequest" }
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/DuplicateUsername" }
+
+  /tenant/users/{userId}/status:
+    patch:
+      tags: [Users]
+      summary: Activate or deactivate a Staff/Student user in the caller's own company (Company Admin only)
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [active, inactive] }
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /auth/register:
+    post:
+      tags: [Users]
+      summary: Student self-registration on a specific company's app
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentRegisterRequest" }
+      responses:
+        "201":
+          description: Student account created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409": { $ref: "#/components/responses/DuplicateUsername" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CompanyId:
+      name: companyId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DepartmentId:
+      name: departmentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Forbidden:
+      description: Caller's role/company scope does not permit this action
+    NotFound:
+      description: Resource does not exist or is not visible to the caller's scope
+    ValidationError:
+      description: Request failed field-level validation
+    DuplicateUsername:
+      description: Username already exists within the target company
+
+  schemas:
+    Company:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        contact_person: { type: string }
+        mobile: { type: string }
+        email: { type: string, format: email }
+        address: { type: string }
+        is_open: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CompanyCreateRequest:
+      type: object
+      required: [name, contact_person, mobile, email, address]
+      properties:
+        name: { type: string }
+        contact_person: { type: string }
+        mobile: { type: string }
+        email: { type: string, format: email }
+        address: { type: string }
+
+    CompanyUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        contact_person: { type: string }
+        mobile: { type: string }
+        email: { type: string, format: email }
+        address: { type: string }
+        is_open: { type: boolean }
+
+    Role:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, enum: [system_admin, company_admin, staff, student] }
+        company_id: { type: string, format: uuid, nullable: true }
+
+    Category:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid }
+        name: { type: string, example: "Student" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Department:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid }
+        name: { type: string, example: "Computer Science" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    MasterDataCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+
+    AdminCategoryCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/MasterDataCreateRequest"
+        - type: object
+          required: [company_id]
+          properties:
+            company_id: { type: string, format: uuid }
+
+    AdminDepartmentCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/MasterDataCreateRequest"
+        - type: object
+          required: [company_id]
+          properties:
+            company_id: { type: string, format: uuid }
+
+    MasterDataUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid, nullable: true }
+        role: { type: string, enum: [system_admin, company_admin, staff, student] }
+        name: { type: string }
+        username: { type: string }
+        email: { type: string, format: email }
+        category_id: { type: string, format: uuid, nullable: true }
+        department_id: { type: string, format: uuid, nullable: true }
+        status: { type: string, enum: [active, inactive, locked] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AdminUserCreateRequest:
+      type: object
+      required: [name, username, password, email]
+      properties:
+        name: { type: string }
+        username: { type: string, description: "Mobile number" }
+        password: { type: string, format: password, description: "Temporary password" }
+        email: { type: string, format: email }
+
+    TenantUserCreateRequest:
+      type: object
+      required: [name, username, password, email, role]
+      properties:
+        name: { type: string }
+        username: { type: string, description: "Mobile number" }
+        password: { type: string, format: password, description: "Temporary password" }
+        email: { type: string, format: email }
+        role: { type: string, enum: [staff, company_admin] }
+
+    StudentRegisterRequest:
+      type: object
+      required: [name, username, password, email, category_id]
+      properties:
+        name: { type: string }
+        username: { type: string, description: "Mobile number" }
+        password: { type: string, format: password }
+        email: { type: string, format: email }
+        category_id: { type: string, format: uuid }
+        department_id: { type: string, format: uuid, nullable: true }
