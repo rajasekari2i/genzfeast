@@ -1,0 +1,130 @@
+// GenzFeast — Prisma schema for specs/001-company-role-user-setup
+//
+// IMPORTANT (coding_standard.md §4.2): this file is NOT the full source of
+// truth for the database. Row Level Security policies, the role-seeding
+// trigger, CHECK constraints, and partial unique indexes are hand-added to
+// the generated migration SQL — they cannot be expressed here. See
+// prisma/migrations/*/migration.sql for those.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A single college canteen operating independently on the platform (data-model.md §1).
+model Company {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  contactPerson  String   @map("contact_person")
+  mobile         String
+  email          String
+  address        String
+  isOpen         Boolean  @default(true) @map("is_open")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
+  createdBy      String?  @map("created_by") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  roles       Role[]
+  categories  Category[]
+  departments Department[]
+  users       User[]
+
+  @@map("companies")
+}
+
+/// A named permission group. Global system_admin role has companyId = NULL (data-model.md §2).
+model Role {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  companyId String?  @map("company_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // onDelete: Restrict — a company is soft-delete only in every spec (no hard
+  // delete path exists); SET NULL here could otherwise produce a row that
+  // violates roles_company_id_or_system_admin (a non-system_admin role with
+  // a NULL company_id) if a company were ever hard-deleted.
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  users   User[]
+
+  // Note: the two partial unique indexes described in data-model.md §2
+  // (UNIQUE(company_id, name) and UNIQUE(name) WHERE company_id IS NULL)
+  // are not expressible together via @@unique here and are added as raw
+  // SQL in the migration (coding_standard.md §4.2).
+  @@map("roles")
+}
+
+/// A registrant-affiliation label (e.g. Student, Teaching Staff), scoped to one Company (data-model.md §3).
+model Category {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  isDeleted Boolean  @default(false) @map("is_deleted")
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedBy String?  @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id])
+  users   User[]
+
+  @@map("categories")
+}
+
+/// A student's academic department, scoped to one Company (data-model.md §4).
+model Department {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  isDeleted Boolean  @default(false) @map("is_deleted")
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedBy String?  @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id])
+  users   User[]
+
+  @@map("departments")
+}
+
+/// A platform account: System Admin, Company Admin, Staff, or Student (data-model.md §5).
+model User {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId         String?  @map("company_id") @db.Uuid
+  roleId            String   @map("role_id") @db.Uuid
+  categoryId        String?  @map("category_id") @db.Uuid
+  departmentId      String?  @map("department_id") @db.Uuid
+  name              String
+  username          String
+  passwordHash      String   @map("password_hash")
+  email             String
+  status            String   @default("active")
+  noOfLoginAttempt  Int      @default(0) @map("no_of_login_attempt")
+  isDeleted         Boolean  @default(false) @map("is_deleted")
+  createdBy         String?  @map("created_by") @db.Uuid
+  updatedBy         String?  @map("updated_by") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // onDelete: Restrict — same reasoning as Role.company below: companies are
+  // soft-delete only, this is a defense-in-depth safety net, not a path the
+  // application exercises.
+  company    Company?    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  role       Role        @relation(fields: [roleId], references: [id])
+  // onDelete: Restrict — research.md §4 explicitly rejects SET NULL here
+  // ("would silently corrupt a Student's historical Department/Category");
+  // Categories/Departments are only ever soft-deleted in practice (is_deleted),
+  // so this FK behavior is a defense-in-depth safety net against an accidental
+  // hard delete, not a path the application ever exercises directly.
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  @@map("users")
+}
