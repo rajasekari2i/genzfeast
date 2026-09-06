@@ -20,6 +20,8 @@ export interface ColorTokens {
   background: string;
   textPrimary: string;
   textSecondary: string;
+  /** Subtle card/chip/divider borders, and disabled-control fills — the one neutral gray in the palette (added during WU2, contracts/design-tokens.md). */
+  border: string;
 }
 
 export const colors: ColorTokens = {
@@ -30,6 +32,7 @@ export const colors: ColorTokens = {
   background: '#F5F8FC',
   textPrimary: '#12202E',
   textSecondary: '#5B6B7A',
+  border: '#E2E8F0',
 };
 
 export interface TypographyStyle {

@@ -18,6 +18,7 @@ module.exports = {
         background: '#F5F8FC',
         'text-primary': '#12202E',
         'text-secondary': '#5B6B7A',
+        border: '#E2E8F0',
       },
       fontSize: {
         h1: ['24px', { lineHeight: '32px', fontWeight: '700' }],

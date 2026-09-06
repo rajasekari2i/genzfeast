@@ -13,6 +13,7 @@ This is the contract every screen and shared component in `mobile/` must consume
 | `colors.background` | `#F5F8FC` | Screen background |
 | `colors.textPrimary` | `#12202E` | Headings, body text, prices |
 | `colors.textSecondary` | `#5B6B7A` | Captions, secondary labels, placeholder text |
+| `colors.border` | `#E2E8F0` | Card/chip/skeleton borders and dividers; also the disabled-control fill (`PrimaryButton`'s disabled state) — the palette's one neutral gray, added during WU2 implementation once component work revealed the original 7-color table had no border/neutral token |
 
 `colors.primary` is the **only** color token overridable per tenant (see `tenant-brand-config.schema.json`); every other color token is fixed platform-wide.
 

@@ -15,6 +15,7 @@ The platform-wide, fixed set of values every screen/component consumes. Defined 
 | `colors.background` | hex string | Screen background (default `#F5F8FC`) |
 | `colors.textPrimary` | hex string | Heading/body text color (default `#12202E`) |
 | `colors.textSecondary` | hex string | Caption/secondary text color (default `#5B6B7A`) |
+| `colors.border` | hex string | Card/chip/skeleton border and disabled-control fill color (default `#E2E8F0`) |
 | `statusColors` | map of order status → `{ color: hex string, label: string }` | One entry per `payment_pending` \| `order_placed` \| `payment_failed` \| `delivered` (spec FR-002/FR-003) |
 | `typography` | named scale (`h1`, `h2`, `body`, `bodyBold`, `price`, `caption`, `button`) → `{ fontSize: number, fontWeight: string, lineHeight: number }` | One fixed scale used everywhere (FR-004) |
 | `spacing` | named scale (`xs`, `sm`, `md`, `lg`, `xl`) → number (dp) | Consistent gutters/padding across all three surfaces |
