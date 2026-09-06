@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://genzfeast.internal/schemas/tenant-brand-config.schema.json",
+  "title": "Tenant Brand Config",
+  "description": "Build-time input consumed by mobile/src/theme/brand/resolveBrandTheme.ts to produce one tenant's branded Student App build (spec 013, FR-011/FR-012). Supplied once per CI build, per docs/architecture/04-Architecture.md's existing per-tenant-flavor pipeline. Never stored in the companies table (see research.md #3).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["companyId", "accentColor", "appDisplayName"],
+  "properties": {
+    "companyId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The Company (specs/001-company-role-user-setup) this brand belongs to. Traceability only — not a foreign key, since this file is not a database row."
+    },
+    "accentColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$",
+      "description": "Overrides colors.primary for this build only. Must pass a WCAG 2.1 AA (4.5:1) contrast check against colors.background, colors.surface, and colors.textPrimary before it is applied; on failure the build falls back to the Design Token Set's default colors.primary (FR-012)."
+    },
+    "logoAssetPath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Build-relative path to this tenant's app icon/splash logo asset. Optional — if omitted, the platform default logo is used."
+    },
+    "appDisplayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30,
+      "description": "Overrides the app's display name (app store name / home-screen label) for this tenant's build."
+    }
+  }
+}
