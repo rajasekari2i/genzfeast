@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "GenzFeast API",
+    "description": "specs/001-company-role-user-setup — System Admin Company endpoints (Work Unit 2). See postman/README.md for how to get an access token before login (specs/002) exists.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "companyId", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "List Companies",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/companies", "host": ["{{baseUrl}}"], "path": ["admin", "companies"] }
+          }
+        },
+        {
+          "name": "Create Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('companyId', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/companies", "host": ["{{baseUrl}}"], "path": ["admin", "companies"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo Canteen\",\n  \"contact_person\": \"Jane Doe\",\n  \"mobile\": \"9000000000\",\n  \"email\": \"jane@example.com\",\n  \"address\": \"123 Campus Road\"\n}"
+            },
+            "description": "201 response's `id` is automatically saved into the {{companyId}} collection variable (see the Tests tab) for the two requests below."
+          }
+        },
+        {
+          "name": "Update Company (toggle open/closed)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/companies/{{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "companies", "{{companyId}}"]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"is_open\": false\n}" }
+          }
+        },
+        {
+          "name": "Create Company Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/companies/{{companyId}}/admins",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "companies", "{{companyId}}", "admins"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Admin\",\n  \"username\": \"9111111111\",\n  \"password\": \"temporary123\",\n  \"email\": \"alice@example.com\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

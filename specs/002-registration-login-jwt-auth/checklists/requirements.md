@@ -33,3 +33,4 @@
 
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`.
 - The one open question (PRD §5, Open Question #2 — failed-login lockout threshold and unlock mechanism) has been answered by the user and resolved into FR-012: 5 consecutive failed attempts locks the account; unlock only via the forgot-password reset flow, no auto-unlock and no admin-reactivation path in V1.
+- A second ambiguity found during task planning (2026-09-06) — `/auth/login` had no way to disambiguate a `username` that independently exists at two different Companies — was resolved via `/speckit-clarify` into FR-002/FR-005 and `contracts/openapi.yaml`: the login request now carries an optional `company_id`, supplied implicitly by each Company's branded app build.

@@ -1,4 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { APP_PRISMA_CLIENT } from './prisma-client.token';
 
 /**
  * The session context an RLS policy is predicated on (coding_standard.md §4.3).
@@ -26,8 +28,9 @@ export interface TenantContext {
  *
  * No service may inject PrismaClient directly.
  */
+@Injectable()
 export class TenantPrismaService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(@Inject(APP_PRISMA_CLIENT) private readonly prisma: PrismaClient) {}
 
   async runInTenantContext<T>(
     ctx: TenantContext,

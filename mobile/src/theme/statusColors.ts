@@ -27,10 +27,11 @@ export interface StatusColorEntry {
 }
 
 export const statusColors: Record<OrderStatus, StatusColorEntry> = {
-  payment_pending: { color: '#F9A825', label: 'Payment Pending' },
+  // Warning/Error/Success from the GenzFeast brand color system.
+  payment_pending: { color: '#F59E0B', label: 'Payment Pending' },
   order_placed: { color: colors.primary, label: 'Order Placed' },
-  payment_failed: { color: '#D32F2F', label: 'Payment Failed' },
-  delivered: { color: '#2E7D32', label: 'Delivered' },
+  payment_failed: { color: '#DC2626', label: 'Payment Failed' },
+  delivered: { color: '#16A34A', label: 'Delivered' },
 };
 
 export default statusColors;

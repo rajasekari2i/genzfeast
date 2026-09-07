@@ -1,0 +1,35 @@
+{
+  "metaswarm_version": "1.0.0",
+  "distribution": "plugin",
+  "installed_at": "2026-09-06T12:28:35Z",
+  "updated_at": "2026-09-06T12:28:35Z",
+  "detection": {
+    "language": "TypeScript",
+    "framework": "NestJS (api/), Expo/React Native (mobile/)",
+    "test_runner": "Jest",
+    "linter": null,
+    "formatter": null,
+    "package_manager": "npm",
+    "type_checker": "tsc",
+    "ci": null,
+    "git_hooks": null
+  },
+  "choices": {
+    "coverage_threshold": 80,
+    "external_tools": false,
+    "visual_review": false,
+    "ci_pipeline": false,
+    "git_hooks": false
+  },
+  "commands": {
+    "test": "npm --prefix api run test",
+    "coverage": "npm --prefix api run test -- --coverage",
+    "lint": null,
+    "typecheck": "npx --prefix api tsc -p tsconfig.json --noEmit",
+    "format_check": null
+  },
+  "notes": {
+    "monorepo": "No root package.json — api/ (NestJS) and mobile/ (Expo/React Native) are independent sub-projects, each with their own Jest + tsconfig. Coverage enforcement is scoped to api/ only.",
+    "testing_policy": "Per explicit user direction: implement functionality first, write/run unit tests only afterward as a separate step. Tests must mock the DB/Prisma layer — never connect to the real Supabase/Postgres instance (a prior RLS test run mutated live data)."
+  }
+}

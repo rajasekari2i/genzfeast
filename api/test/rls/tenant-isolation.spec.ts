@@ -24,7 +24,9 @@ async function resetDatabase() {
   // Superuser cleanup only — app_user is never granted DELETE (soft-delete
   // convention, coding_standard.md §4.4); this is test-infra teardown, not
   // something the application itself is allowed to do.
-  await superPrisma.$executeRawUnsafe('TRUNCATE TABLE users, categories, departments, roles, companies CASCADE');
+  await superPrisma.$executeRawUnsafe(
+    'TRUNCATE TABLE refresh_tokens, auth_audit_logs, users, categories, departments, roles, companies CASCADE',
+  );
 }
 
 beforeEach(async () => {
@@ -46,16 +48,15 @@ describe('Company RLS — system_admin only (data-model.md, companies_system_adm
     expect(company.id).toBeDefined();
   });
 
-  it('auto-seeds company_admin/staff/student roles on company creation (trigger)', async () => {
-    const company = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+  it('does not seed any new role rows on company creation (roles are global, migration 20260907170000)', async () => {
+    const before = await tenantDb.runInTenantContext(systemAdminCtx, (tx) => tx.role.count());
+    await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
       tx.company.create({
         data: { name: 'Trigger Canteen', contactPerson: 'Bob', mobile: '9000000002', email: 'b@test.com', address: 'Campus' },
       }),
     );
-    const seededRoles = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-      tx.role.findMany({ where: { companyId: company.id }, orderBy: { name: 'asc' } }),
-    );
-    expect(seededRoles.map((r) => r.name)).toEqual(['company_admin', 'staff', 'student']);
+    const after = await tenantDb.runInTenantContext(systemAdminCtx, (tx) => tx.role.count());
+    expect(after).toBe(before);
   });
 
   it('denies a non-system_admin role from seeing any company row', async () => {
@@ -225,7 +226,7 @@ describe('User RLS — tenant isolation, per-company username uniqueness, roles 
       tx.company.create({ data: { name: 'Co', contactPerson: 'P', mobile: '9333333333', email: 'p@x.com', address: 'X' } }),
     );
     const companyAdminRole = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-      tx.role.findFirstOrThrow({ where: { companyId: company.id, name: 'company_admin' } }),
+      tx.role.findFirstOrThrow({ where: { name: 'company_admin' } }),
     );
     return { company, companyAdminRole };
   }
@@ -276,7 +277,7 @@ describe('User RLS — tenant isolation, per-company username uniqueness, roles 
       tx.company.create({ data: { name: 'B', contactPerson: 'B', mobile: '9555555555', email: 'bb@x.com', address: 'X' } }),
     );
     const roleB = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-      tx.role.findFirstOrThrow({ where: { companyId: companyB.id, name: 'company_admin' } }),
+      tx.role.findFirstOrThrow({ where: { name: 'company_admin' } }),
     );
     const sharedUsername = '9600158225';
     await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
@@ -309,69 +310,29 @@ describe('User RLS — tenant isolation, per-company username uniqueness, roles 
     ).rejects.toThrow();
   });
 
-  it('lets a company_admin read their own company\'s role list (to assign roles) but never write to it', async () => {
+  it('lets a company_admin read the global role list (to assign roles) but never write to it', async () => {
     const { company } = await seedCompanyWithAdminRole();
     const roles = await tenantDb.runInTenantContext(ctxFor(company.id, 'company_admin'), (tx) => tx.role.findMany());
-    expect(roles.map((r) => r.name).sort()).toEqual(['company_admin', 'staff', 'student']);
-
-    await expect(
-      tenantDb.runInTenantContext(ctxFor(company.id, 'company_admin'), (tx) =>
-        tx.role.create({ data: { name: 'rogue_role', companyId: company.id } }),
-      ),
-    ).rejects.toThrow(); // app_user has no INSERT grant on roles at all — only the SECURITY DEFINER trigger writes to it
-  });
-});
-
-describe('Global system_admin role uniqueness (roles_global_system_admin_unique)', () => {
-  it('CHECK constraint rejects a company-less role that is not system_admin', async () => {
-    await expect(
-      superPrisma.role.create({ data: { name: 'orphan_role', companyId: null } }),
-    ).rejects.toThrow();
-  });
-
-  it('unique index rejects a SECOND global system_admin role (distinct from the CHECK constraint)', async () => {
-    // Unique indexes are enforced regardless of role (superuser or not) — only
-    // RLS is bypassed by a superuser, not table constraints/indexes. app_user
-    // has no INSERT grant on `roles` at all (only the SECURITY DEFINER
-    // trigger writes to it), so this must go through superPrisma directly.
-    await superPrisma.role.create({ data: { name: 'system_admin', companyId: null } });
-    await expect(
-      superPrisma.role.create({ data: { name: 'system_admin', companyId: null } }),
-    ).rejects.toThrow();
-  });
-});
-
-describe('Per-company role-name uniqueness (roles_company_name_unique)', () => {
-  it('rejects a second role with the same name in the same company (the trigger already seeded company_admin/staff/student)', async () => {
-    const company = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-      tx.company.create({ data: { name: 'Role Uniqueness Co', contactPerson: 'R', mobile: '9888888881', email: 'r@x.com', address: 'X' } }),
-    );
-    // The trigger already seeded a 'staff' role for this company; inserting
-    // a second one with the same name must violate roles_company_name_unique.
-    await expect(
-      superPrisma.role.create({ data: { name: 'staff', companyId: company.id } }),
-    ).rejects.toThrow();
-  });
-
-  it('allows the SAME role name at two different companies (per-company, not global)', async () => {
-    const [companyA, companyB] = await Promise.all([
-      tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-        tx.company.create({ data: { name: 'Role Co A', contactPerson: 'A', mobile: '9888888882', email: 'ra@x.com', address: 'X' } }),
-      ),
-      tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-        tx.company.create({ data: { name: 'Role Co B', contactPerson: 'B', mobile: '9888888883', email: 'rb@x.com', address: 'X' } }),
-      ),
+    // Global, not per-company (migration 20260907170000) — every role in
+    // the platform-wide catalog, not just this company's own set.
+    expect(roles.map((r) => r.name).sort()).toEqual([
+      'company_admin',
+      'company_staff',
+      'non_teaching',
+      'student',
+      'system_admin',
+      'teaching',
     ]);
-    // Both companies already have their own 'staff' role seeded by the
-    // trigger with no conflict — proving the constraint is per-company.
-    const staffA = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-      tx.role.findFirstOrThrow({ where: { companyId: companyA.id, name: 'staff' } }),
-    );
-    const staffB = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-      tx.role.findFirstOrThrow({ where: { companyId: companyB.id, name: 'staff' } }),
-    );
-    expect(staffA.name).toBe(staffB.name);
-    expect(staffA.id).not.toBe(staffB.id);
+
+    await expect(
+      tenantDb.runInTenantContext(ctxFor(company.id, 'company_admin'), (tx) => tx.role.create({ data: { name: 'rogue_role' } })),
+    ).rejects.toThrow(); // app_user has no INSERT grant on roles at all — only a superuser-owned writer may write to it
+  });
+});
+
+describe('Global role-name uniqueness (roles_name_unique)', () => {
+  it('rejects a second role with the same name (the migration already seeded the full role catalog)', async () => {
+    await expect(superPrisma.role.create({ data: { name: 'company_staff' } })).rejects.toThrow();
   });
 });
 
@@ -381,7 +342,7 @@ describe('Case-insensitive per-company username uniqueness (users_company_userna
       tx.company.create({ data: { name: 'Username Case Co', contactPerson: 'U', mobile: '9999999991', email: 'u@x.com', address: 'X' } }),
     );
     const role = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
-      tx.role.findFirstOrThrow({ where: { companyId: company.id, name: 'company_admin' } }),
+      tx.role.findFirstOrThrow({ where: { name: 'company_admin' } }),
     );
     await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
       tx.user.create({
@@ -395,5 +356,132 @@ describe('Case-insensitive per-company username uniqueness (users_company_userna
         }),
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe('refresh_tokens RLS (specs/002 data-model.md, tasks.md T024)', () => {
+  async function seedUserWithToken() {
+    const company = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.company.create({ data: { name: 'Token Co', contactPerson: 'P', mobile: '9700000001', email: 'p@x.com', address: 'X' } }),
+    );
+    const role = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.role.findFirstOrThrow({ where: { name: 'student' } }),
+    );
+    const user = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.user.create({
+        data: { companyId: company.id, roleId: role.id, name: 'S', username: '9700000099', passwordHash: 'x', email: 's@x.com' },
+      }),
+    );
+    const token = await tenantDb.runInTenantContext({ userId: user.id, role: 'student', companyId: company.id }, (tx) =>
+      tx.refreshToken.create({
+        data: { userId: user.id, tokenHash: 'hash-a', expiresAt: new Date(Date.now() + 86400000) },
+      }),
+    );
+    return { company, user, token };
+  }
+
+  it("a user can see their own refresh token but not another user's", async () => {
+    const { company, user, token } = await seedUserWithToken();
+    const otherRole = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.role.findFirstOrThrow({ where: { name: 'student' } }),
+    );
+    const otherUser = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.user.create({
+        data: { companyId: company.id, roleId: otherRole.id, name: 'O', username: '9700000098', passwordHash: 'x', email: 'o@x.com' },
+      }),
+    );
+
+    const ownVisible = await tenantDb.runInTenantContext({ userId: user.id, role: 'student', companyId: company.id }, (tx) =>
+      tx.refreshToken.findMany(),
+    );
+    expect(ownVisible.map((t) => t.id)).toEqual([token.id]);
+
+    const otherVisible = await tenantDb.runInTenantContext({ userId: otherUser.id, role: 'student', companyId: company.id }, (tx) =>
+      tx.refreshToken.findMany(),
+    );
+    expect(otherVisible).toHaveLength(0);
+  });
+
+  it('system_admin sees every refresh token (platform-wide bypass)', async () => {
+    await seedUserWithToken();
+    const all = await tenantDb.runInTenantContext(systemAdminCtx, (tx) => tx.refreshToken.findMany());
+    expect(all.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('the pre-authentication auth_service system-actor context can look up a token by hash with no user_id set', async () => {
+    const { token } = await seedUserWithToken();
+    const found = await tenantDb.runInTenantContext({ role: 'system_actor', systemActor: 'auth_service' }, (tx) =>
+      tx.refreshToken.findUnique({ where: { tokenHash: 'hash-a' } }),
+    );
+    expect(found?.id).toBe(token.id);
+  });
+
+  it('a user cannot revoke (UPDATE) another user\'s refresh token', async () => {
+    const { company, token } = await seedUserWithToken();
+    const otherRole = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.role.findFirstOrThrow({ where: { name: 'student' } }),
+    );
+    const otherUser = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.user.create({
+        data: { companyId: company.id, roleId: otherRole.id, name: 'O2', username: '9700000097', passwordHash: 'x', email: 'o2@x.com' },
+      }),
+    );
+    const updated = await tenantDb.runInTenantContext({ userId: otherUser.id, role: 'student', companyId: company.id }, (tx) =>
+      tx.refreshToken.updateMany({ where: { id: token.id }, data: { revokedAt: new Date() } }),
+    );
+    expect(updated.count).toBe(0); // RLS silently filters the row out of the UPDATE's own WHERE, not an error
+  });
+});
+
+describe('auth_audit_logs RLS (specs/002 data-model.md, tasks.md T024)', () => {
+  async function seedCompanyWithAuditLog() {
+    const company = await tenantDb.runInTenantContext(systemAdminCtx, (tx) =>
+      tx.company.create({ data: { name: 'Audit Co', contactPerson: 'P', mobile: '9800000001', email: 'p@x.com', address: 'X' } }),
+    );
+    await tenantDb.runInTenantContext({ role: 'system_actor', systemActor: 'auth_service' }, (tx) =>
+      tx.authAuditLog.create({ data: { companyId: company.id, eventType: 'login_success' } }),
+    );
+    return company;
+  }
+
+  it('only the auth_service system-actor identity can INSERT into auth_audit_logs', async () => {
+    const company = await seedCompanyWithAuditLog();
+    await expect(
+      tenantDb.runInTenantContext({ role: 'company_admin', companyId: company.id }, (tx) =>
+        tx.authAuditLog.create({ data: { companyId: company.id, eventType: 'login_success' } }),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("a company_admin can read their own company's audit log rows but not another company's", async () => {
+    const companyA = await seedCompanyWithAuditLog();
+    const companyB = await seedCompanyWithAuditLog();
+
+    const asA = await tenantDb.runInTenantContext({ role: 'company_admin', companyId: companyA.id }, (tx) =>
+      tx.authAuditLog.findMany(),
+    );
+    expect(asA).toHaveLength(1);
+    expect(asA[0].companyId).toBe(companyA.id);
+
+    const asB = await tenantDb.runInTenantContext({ role: 'company_admin', companyId: companyB.id }, (tx) =>
+      tx.authAuditLog.findMany(),
+    );
+    expect(asB).toHaveLength(1);
+    expect(asB[0].companyId).toBe(companyB.id);
+  });
+
+  it('system_admin can read every company\'s audit log rows (platform-wide bypass)', async () => {
+    await seedCompanyWithAuditLog();
+    await seedCompanyWithAuditLog();
+    const all = await tenantDb.runInTenantContext(systemAdminCtx, (tx) => tx.authAuditLog.findMany());
+    expect(all.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('a student cannot read any auth_audit_logs row at all (no predicate grants that role SELECT)', async () => {
+    const company = await seedCompanyWithAuditLog();
+    const asStudent = await tenantDb.runInTenantContext({ role: 'student', companyId: company.id }, (tx) =>
+      tx.authAuditLog.findMany(),
+    );
+    expect(asStudent).toHaveLength(0);
   });
 });

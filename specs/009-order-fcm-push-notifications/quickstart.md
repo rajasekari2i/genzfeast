@@ -46,6 +46,17 @@ Manual/scriptable validation guide against `contracts/openapi.yaml` and `data-mo
 2. Log in fresh (after a `003` password reset unlocks the account) on two devices again, then use `007`'s `POST /me/change-password` identifying device A as "current" (via its `refresh_token`).
    - **Expect**: device B's registration is removed; device A's remains.
 
+## Scenario 6 — Unauthenticated registration reaches a locked account (FR-011, spec.md Clarifications 2026-09-06)
+
+1. Drive a Student account to `locked` via 5 failed logins (per `002`), confirming (as in Scenario 5) every `device_registrations` row for that account is now gone.
+2. `POST /auth/forgot-password/request` (from `003`) with that account's `(company_id, username)` and `fcm_token: "token-recovery"` — no `Authorization` header, since this endpoint is unauthenticated by design.
+   - **Expect**: `202` (per `003`'s own contract, unaffected by whether `fcm_token` was included); a `device_registrations` row now exists for `token-recovery` with `refresh_token_id: NULL`.
+3. Simulate the account's forgot-password OTP being sent (per `003`'s own flow) — confirm the send targets `token-recovery` (the only registration this account currently has).
+4. Log in successfully on that same device (after completing the reset) and re-register `token-recovery` through the normal authenticated `POST /me/devices` path.
+   - **Expect**: the same row is upserted (FR-003) — `refresh_token_id` is now populated with the new session's id, folding it back under normal cascade rules going forward.
+5. Repeat step 2's request, but for a username that does not resolve to any account.
+   - **Expect**: `202`, byte-identical to step 2's response; confirm via a direct query that no `device_registrations` row was created — FR-004's anti-enumeration guarantee is unaffected by whether `fcm_token` was submitted.
+
 ## Pass/Fail
 
-Any deviation — especially a notification failure ever affecting in-app pickup-code availability (Scenario 3), a logged-out device continuing to receive notifications (Scenario 4), or a locked/password-changed account's other-device registrations surviving (Scenario 5) — is a blocking failure per SC-002/SC-004 and must not ship.
+Any deviation — especially a notification failure ever affecting in-app pickup-code availability (Scenario 3), a logged-out device continuing to receive notifications (Scenario 4), a locked/password-changed account's other-device registrations surviving (Scenario 5), or a locked account's forgot-password request ever having no way to reach a device (Scenario 6) — is a blocking failure per SC-002/SC-004 and must not ship.

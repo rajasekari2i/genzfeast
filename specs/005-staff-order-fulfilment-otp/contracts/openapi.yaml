@@ -5,7 +5,7 @@ info:
   description: >
     Contract for feature 005-staff-order-fulfilment-otp. All endpoints
     require Authorization: Bearer <access_token> and are restricted to the
-    `staff` role for the caller's own company_id (see
+    `company_staff` role for the caller's own company_id (see
     specs/002-registration-login-jwt-auth). The `orders` resource itself is
     owned by a future Checkout & Payment feature — this contract only
     exposes the read/verify operations this feature is responsible for; full

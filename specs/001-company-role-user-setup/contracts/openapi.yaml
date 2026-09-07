@@ -38,7 +38,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [Companies]
-      summary: Create a company (System Admin only). Seeds company_admin/staff/student roles.
+      summary: Create a company (System Admin only). Roles are global and seeded once platform-wide, not per-company.
       requestBody:
         required: true
         content:
@@ -71,6 +71,19 @@ paths:
               schema: { $ref: "#/components/schemas/Company" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Companies]
+      summary: >
+        Soft-delete a company (System Admin only). Blocks every one of that
+        company's users, in every role, from logging in ("blocked contact
+        admin") and immediately revokes their active sessions — never a hard
+        delete.
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "204": { description: Company soft-deleted; its users' sessions revoked }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /admin/companies/{companyId}/admins:
     post:
@@ -93,13 +106,88 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/DuplicateUsername" }
 
+  /admin/users:
+    get:
+      tags: [Users]
+      summary: List every user across every company (System Admin only)
+      responses:
+        "200":
+          description: All users, platform-wide
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Users]
+      summary: >
+        Create a Company Admin or Staff user for any company (System Admin
+        only). Creating a Student isn't supported here — that stays
+        self-registration only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminTenantUserCreateRequest" }
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/DuplicateUsername" }
+
+  /admin/users/{userId}:
+    patch:
+      tags: [Users]
+      summary: >
+        Edit a Company Admin or Staff user, any company (System Admin only).
+        PATCH semantics — only submitted fields change; omitting `password`
+        keeps the existing one. Same role restriction as creation: the
+        existing account, and any submitted new role, must be
+        company_staff/company_admin.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminTenantUserUpdateRequest" }
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/DuplicateUsername" }
+    delete:
+      tags: [Users]
+      summary: >
+        Soft-delete a user, any role, any company (System Admin only). Blocks
+        that user from logging in ("blocked contact admin") and immediately
+        revokes their active sessions — never a hard delete. A System Admin
+        cannot delete their own account this way.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "204": { description: User soft-deleted; their sessions revoked }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /admin/roles:
     get:
       tags: [Roles]
-      summary: List roles across every company (System Admin only)
+      summary: List the global role catalog (System Admin only)
       responses:
         "200":
-          description: All roles, platform-wide
+          description: All roles (global, not per-company)
           content:
             application/json:
               schema:
@@ -224,15 +312,22 @@ paths:
   /tenant/categories:
     get:
       tags: [Categories]
-      summary: List categories for the caller's own company (Company Admin, Staff, Student)
+      summary: >
+        List categories for the caller's own company (Company Admin, Staff,
+        Student). Server-side paginated (revised — this task's own explicit
+        ask); `page`/`limit` both default when omitted, so an existing caller
+        needing the full list (e.g. a dropdown) can still pass a high
+        `limit` rather than paging through results.
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SearchParam"
       responses:
         "200":
-          description: The caller's company categories
+          description: A page of the caller's company categories
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/Category" }
+              schema: { $ref: "#/components/schemas/PaginatedCategoriesResponse" }
     post:
       tags: [Categories]
       summary: Create a category scoped to the caller's own company (Company Admin only)
@@ -251,6 +346,23 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /tenant/categories/{categoryId}:
+    get:
+      tags: [Categories]
+      summary: >
+        Not in this feature's original scope — added once `list` became
+        paginated, so the edit screen can look up one category directly
+        rather than fetch-the-full-list-and-find-by-id (Company Admin,
+        Staff, Student).
+      parameters:
+        - $ref: "#/components/parameters/CategoryId"
+      responses:
+        "200":
+          description: The category
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
     patch:
       tags: [Categories]
       summary: Update a category scoped to the caller's own company (Company Admin only)
@@ -281,15 +393,22 @@ paths:
   /tenant/departments:
     get:
       tags: [Departments]
-      summary: List departments for the caller's own company (Company Admin, Staff, Student)
+      summary: >
+        List departments for the caller's own company (Company Admin, Staff,
+        Student). Server-side paginated (revised — this task's own explicit
+        ask); `page`/`limit` both default when omitted, so an existing caller
+        needing the full list (e.g. a Student's profile dropdown) can still
+        pass a high `limit` rather than paging through results.
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SearchParam"
       responses:
         "200":
-          description: The caller's company departments
+          description: A page of the caller's company departments
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/Department" }
+              schema: { $ref: "#/components/schemas/PaginatedDepartmentsResponse" }
     post:
       tags: [Departments]
       summary: Create a department scoped to the caller's own company (Company Admin only)
@@ -308,6 +427,23 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /tenant/departments/{departmentId}:
+    get:
+      tags: [Departments]
+      summary: >
+        Not in this feature's original scope — added once `list` became
+        paginated, so the edit screen can look up one department directly
+        rather than fetch-the-full-list-and-find-by-id (Company Admin,
+        Staff, Student).
+      parameters:
+        - $ref: "#/components/parameters/DepartmentId"
+      responses:
+        "200":
+          description: The department
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Department" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
     patch:
       tags: [Departments]
       summary: Update a department scoped to the caller's own company (Company Admin only)
@@ -338,10 +474,13 @@ paths:
   /tenant/users:
     get:
       tags: [Users]
-      summary: List Staff and Company Admin users for the caller's own company (Company Admin only)
+      summary: >
+        List company_staff/student/teaching/non_teaching users for the
+        caller's own company (Company Admin only). Revised — company_admin
+        dropped from this screen's manageable-role set on explicit request.
       responses:
         "200":
-          description: The caller's company users (Staff/Company Admin)
+          description: The caller's company users (manageable roles only)
           content:
             application/json:
               schema:
@@ -350,7 +489,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [Users]
-      summary: Create a Staff or Company Admin user in the caller's own company (Company Admin only)
+      summary: Create a company_staff/student/teaching/non_teaching user in the caller's own company (Company Admin only)
       requestBody:
         required: true
         content:
@@ -365,6 +504,45 @@ paths:
         "400": { $ref: "#/components/responses/ValidationError" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/DuplicateUsername" }
+
+  /tenant/users/{userId}:
+    patch:
+      tags: [Users]
+      summary: >
+        Not in this feature's original scope — this task's own general edit,
+        mirroring System Admin's /admin/users/{userId} PATCH but scoped to
+        the caller's own company and TENANT_MANAGEABLE_ROLES.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantUserUpdateRequest" }
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/DuplicateUsername" }
+    delete:
+      tags: [Users]
+      summary: >
+        Not in this feature's original scope — this task's own soft delete,
+        mirroring System Admin's /admin/users/{userId} DELETE but scoped to
+        the caller's own company. Blocks the user from logging in ("blocked
+        contact admin") and immediately revokes their active sessions. A
+        Company Admin cannot delete their own account this way.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "204": { description: User soft-deleted; their sessions revoked }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /tenant/users/{userId}/status:
     patch:
@@ -389,6 +567,56 @@ paths:
               schema: { $ref: "#/components/schemas/User" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/users/{userId}/role:
+    patch:
+      tags: [Users]
+      summary: >
+        Not in this feature's original scope — added alongside the Company
+        Admin management screens for an explicit "change user role"
+        capability. Reassigns among TENANT_MANAGEABLE_ROLES only (same
+        restriction as creation); never touches a Company Admin or System
+        Admin account (Company Admin only).
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [company_staff, student, teaching, non_teaching] }
+      responses:
+        "200":
+          description: Role updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /auth/register/options:
+    get:
+      tags: [Users]
+      summary: >
+        Unauthenticated Category/Department lookup for the Registration
+        screen's dropdowns (FR-012) — added alongside the mobile Login/
+        Register wiring, since no other listing endpoint can be called
+        before an account exists. Scoped by company_id the same way
+        /auth/register itself is; id+name only, no other fields.
+      parameters:
+        - name: company_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The target company's active categories and departments
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RegistrationOptions" }
 
   /auth/register:
     post:
@@ -436,6 +664,22 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive name substring filter
+      schema: { type: string }
 
   responses:
     Forbidden:
@@ -481,12 +725,13 @@ components:
         address: { type: string }
         is_open: { type: boolean }
 
+    # Global, platform-wide catalog — not per-Company (revised; see
+    # migration 20260907170000_global_roles and 20260907180000).
     Role:
       type: object
       properties:
         id: { type: string, format: uuid }
-        name: { type: string, enum: [system_admin, company_admin, staff, student] }
-        company_id: { type: string, format: uuid, nullable: true }
+        name: { type: string, enum: [system_admin, company_admin, company_staff, student, teaching, non_teaching] }
 
     Category:
       type: object
@@ -497,6 +742,17 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
+    PaginatedCategoriesResponse:
+      type: object
+      description: Server-side pagination (10 per page) — the mobile list screen fetches the next page on scroll.
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Category" }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
     Department:
       type: object
       properties:
@@ -505,6 +761,17 @@ components:
         name: { type: string, example: "Computer Science" }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    PaginatedDepartmentsResponse:
+      type: object
+      description: Server-side pagination (10 per page) — the mobile list screen fetches the next page on scroll.
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Department" }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
 
     MasterDataCreateRequest:
       type: object
@@ -538,10 +805,11 @@ components:
       properties:
         id: { type: string, format: uuid }
         company_id: { type: string, format: uuid, nullable: true }
-        role: { type: string, enum: [system_admin, company_admin, staff, student] }
+        role: { type: string, enum: [system_admin, company_admin, company_staff, student, teaching, non_teaching] }
         name: { type: string }
         username: { type: string }
         email: { type: string, format: email }
+        gender: { type: string, enum: [male, female, transgender], nullable: true }
         category_id: { type: string, format: uuid, nullable: true }
         department_id: { type: string, format: uuid, nullable: true }
         status: { type: string, enum: [active, inactive, locked] }
@@ -559,21 +827,95 @@ components:
 
     TenantUserCreateRequest:
       type: object
-      required: [name, username, password, email, role]
+      required: [name, username, password, email, gender, role]
+      description: >
+        `role` revised (company_admin dropped from this screen on explicit
+        request; student/teaching/non_teaching added). `category_id` is
+        required exactly when role is 'student' (mirrors
+        StudentRegisterRequest's own requirement); `department_id` stays
+        optional and is ignored for every other role.
       properties:
         name: { type: string }
         username: { type: string, description: "Mobile number" }
         password: { type: string, format: password, description: "Temporary password" }
         email: { type: string, format: email }
-        role: { type: string, enum: [staff, company_admin] }
+        gender: { type: string, enum: [male, female, transgender] }
+        role: { type: string, enum: [company_staff, student, teaching, non_teaching] }
+        category_id: { type: string, format: uuid, description: "Required when role is 'student'" }
+        department_id: { type: string, format: uuid }
 
-    StudentRegisterRequest:
+    TenantUserUpdateRequest:
       type: object
-      required: [name, username, password, email, category_id]
+      description: PATCH semantics — every field optional, only submitted fields change. Omitting `password` keeps the existing one.
       properties:
         name: { type: string }
         username: { type: string, description: "Mobile number" }
         password: { type: string, format: password }
         email: { type: string, format: email }
+        gender: { type: string, enum: [male, female, transgender] }
+        role: { type: string, enum: [company_staff, student, teaching, non_teaching] }
+        category_id: { type: string, format: uuid }
+        department_id: { type: string, format: uuid }
+
+    # System Admin's cross-tenant equivalent of TenantUserCreateRequest —
+    # same shape plus an explicit company_id, since the caller isn't scoped
+    # to one Company. Same role restriction (no Student here).
+    AdminTenantUserCreateRequest:
+      type: object
+      required: [name, username, password, email, gender, role, company_id]
+      properties:
+        name: { type: string }
+        username: { type: string, description: "Mobile number" }
+        password: { type: string, format: password, description: "Temporary password" }
+        email: { type: string, format: email }
+        gender: { type: string, enum: [male, female, transgender] }
+        role: { type: string, enum: [company_staff, company_admin] }
+        company_id: { type: string, format: uuid }
+
+    AdminTenantUserUpdateRequest:
+      type: object
+      description: PATCH semantics — every field optional, only submitted fields change.
+      properties:
+        name: { type: string }
+        username: { type: string, description: "Mobile number" }
+        password: { type: string, format: password, description: "Omit to keep the existing password" }
+        email: { type: string, format: email }
+        gender: { type: string, enum: [male, female, transgender] }
+        role: { type: string, enum: [company_staff, company_admin] }
+        company_id: { type: string, format: uuid }
+
+    StudentRegisterRequest:
+      type: object
+      required: [name, username, password, email, gender, category_id, company_id]
+      properties:
+        name: { type: string }
+        username: { type: string, description: "Mobile number" }
+        password: { type: string, format: password }
+        email: { type: string, format: email }
+        gender: { type: string, enum: [male, female, transgender] }
         category_id: { type: string, format: uuid }
         department_id: { type: string, format: uuid, nullable: true }
+        company_id:
+          type: string
+          format: uuid
+          description: >
+            Not in this endpoint's original schema — added for consistency
+            with the identical company_id-per-branded-build convention
+            002/003 established for every other unauthenticated /auth/*
+            endpoint.
+
+    RegistrationOption:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+
+    RegistrationOptions:
+      type: object
+      properties:
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/RegistrationOption" }
+        departments:
+          type: array
+          items: { $ref: "#/components/schemas/RegistrationOption" }

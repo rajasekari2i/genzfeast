@@ -46,8 +46,11 @@ Splash
                      └──────────► also reachable via My Orders → Order Detail
 Register ──► (auto-login) ──► Home
 ```
+there is no specifc application for student/Tenant Admin & Staff/System Admin Based on the user role we need to show the extra menus. 
 
 ## 4. Screen Specs — Student App
+
+In login page we should have Registration button, reoget passwrod button. Once login successful we need redirect to the home page that should show list of product. profile, cart, order. show come as a side menu. 
 
 ### 4.1 Registration
 | Field | Type | Validation |

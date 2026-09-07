@@ -8,6 +8,12 @@
 
 **Input**: User description: "GenzFeast is a multi-tenant (multi-company) mobile food ordering platform that connects college canteens (\"companies\"/tenants) with students on their campus. Each canteen operates as an independent tenant with its own staff, products, and orders, while a central System Admin governs onboarding and platform-wide oversight. Analyse the BRD, PRD, Architecture, and UI Design docs and spec the registration & login JWT authentication."
 
+## Clarifications
+
+### Session 2026-09-06
+
+- Q: `username` (mobile number) is unique per Company only — the same mobile number can hold independent accounts at two different Companies (see `001-company-role-user-setup`). `/auth/login` as originally contracted takes only `username` + `password`, with no way to pick which Company's account to authenticate against. How should login resolve this? → A: Add `company_id` to the login request. Each per-tenant branded mobile build sends its own `company_id` alongside `username`/`password`; `system_admin` login omits it (that role's `company_id` is always `NULL`).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Student Registration Starts an Authenticated Session (Priority: P1)
@@ -104,10 +110,10 @@ A signed-in user deliberately ends their current session from the device they're
 ### Functional Requirements
 
 - **FR-001**: Upon successful completion of Student self-registration, the System MUST automatically issue the new account an authenticated session (an access credential and a renewal credential) without requiring a separate, manual login step.
-- **FR-002**: System MUST allow any existing user — System Admin, Company Admin, Staff, or Student — to log in by submitting their Username and Password.
+- **FR-002**: System MUST allow any existing user — System Admin, Company Admin, Staff, or Student — to log in by submitting their Username and Password. For a Company-scoped role (Company Admin, Staff, Student), the login request MUST also include the Company the account belongs to (supplied implicitly by that Company's branded app build), since Username is unique only within a Company and the same Username may independently exist at more than one Company; System Admin login omits it, since that role has no Company.
 - **FR-003**: System MUST verify a submitted password against the securely hashed stored credential and MUST NOT store or compare passwords in plain text.
 - **FR-004**: On successful login, System MUST issue a new access credential and a new renewal credential for that session.
-- **FR-005**: System MUST reject a login attempt with a single generic "invalid username or password" outcome whenever the username does not exist or the password does not match, without revealing which of the two was the cause.
+- **FR-005**: System MUST reject a login attempt with a single generic "invalid username or password" outcome whenever no account matches the submitted (Company, Username) pair or the password does not match, without revealing which of these was the cause — including the case where Username matches an account at a *different* Company than the one submitted, which MUST be indistinguishable from Username not existing at all.
 - **FR-006**: The access credential MUST be short-lived and MUST carry the authenticated user's identity, role, and Company scope, so that every subsequent request can be authorized without needing to re-derive that scope from anything the client supplies.
 - **FR-007**: System MUST derive a request's role and Company scope only from the verified access credential — never from a request body, query parameter, or path segment supplied by the client.
 - **FR-008**: The renewal credential MUST be longer-lived than the access credential and MUST be tracked by the system so any individual renewal credential can be revoked on its own, independent of others belonging to the same account.
@@ -126,7 +132,7 @@ A signed-in user deliberately ends their current session from the device they're
 
 ### Key Entities
 
-- **User Credential**: The username/password pair an existing user authenticates with. The password is never stored or compared in readable form — only a securely hashed form is retained.
+- **User Credential**: The (Company, Username, Password) tuple an existing Company-scoped user authenticates with — Company is omitted only for System Admin, whose accounts are not tied to any Company. The password is never stored or compared in readable form — only a securely hashed form is retained.
 - **Access Credential (Access Token)**: A short-lived, self-contained proof of an authenticated session that carries the user's identity, role, and Company scope, used to authorize every request until it naturally expires.
 - **Renewal Credential (Refresh Token)**: A longer-lived credential tied to one specific session/device, tracked so it can be individually revoked, used solely to obtain a new Access Credential without re-entering a password.
 - **Login Attempt Counter**: A per-account count of consecutive failed login attempts, reset to zero on any successful login, that drives the account-lockout protection.

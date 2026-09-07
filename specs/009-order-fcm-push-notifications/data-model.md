@@ -19,13 +19,13 @@ orders         (1) ──< order_audit_logs (many, reused from 005; two new even
 | `id` | `uuid` | PK, default `gen_random_uuid()` |
 | `user_id` | `uuid` | not null, references `users(id)` |
 | `fcm_token` | `text` | not null, **unique** — a token can only ever belong to one user at a time (research.md §2) |
-| `refresh_token_id` | `uuid` | not null, references `refresh_tokens(id)` — the session that registered this device (research.md §1); used to cascade-delete on that session's logout/revocation |
+| `refresh_token_id` | `uuid` | **nullable**, references `refresh_tokens(id)` — the session that registered this device (research.md §1); used to cascade-delete on that session's logout/revocation. `NULL` for a registration made through the unauthenticated path (research.md §7, FR-011) — such a row has no session to cascade from and survives every session-based delete until superseded by its own token's later, authenticated registration |
 | `created_at`, `updated_at` | `timestamptz` | not null, default `now()` |
 
 **Constraints**:
-- `UNIQUE (fcm_token)` — registering an existing token upserts (`user_id`, `refresh_token_id`, `updated_at` overwritten) rather than creating a second row (FR-003, research.md §2).
+- `UNIQUE (fcm_token)` — registering an existing token upserts (`user_id`, `refresh_token_id`, `updated_at` overwritten) rather than creating a second row (FR-003, research.md §2). This is also the mechanism by which a `NULL`-`refresh_token_id` row gets "upgraded": the same token registering again later while authenticated overwrites `refresh_token_id` with a real session id, folding it back under normal cascade rules.
 
-**Row Level Security**: scoped by `user_id = current_setting('app.current_user_id', true)::uuid` — a user can only register/see/remove their own device registrations. No `system_admin` bypass (consistent with `004`/`005`/`006`'s precedent of not adding cross-tenant/cross-user access unless a spec explicitly authorizes it — nothing here does).
+**Row Level Security**: scoped by `user_id = current_setting('app.current_user_id', true)::uuid` — a user can only register/see/remove their own device registrations. No `system_admin` bypass (consistent with `004`/`005`/`006`'s precedent of not adding cross-tenant/cross-user access unless a spec explicitly authorizes it — nothing here does). The unauthenticated registration path (research.md §7) has no `app.current_user_id` to scope against at all — that write runs under a trusted service-role/system-actor context (the same pattern `006`'s payment webhook already uses for its own no-session write path), not as a client-facing bypass of this policy.
 
 ## Reused, extended: `order_audit_logs` (from `005`) — new `event_type` values
 
@@ -58,6 +58,7 @@ No changes to `order_audit_logs`'s existing columns.
 | Registration removed when its session ends | FR-008 (research.md §3) |
 | A token is associated with at most one account at a time | FR-009 (`UNIQUE(fcm_token)` + upsert) |
 | Every send attempt's outcome is logged | FR-010 |
+| `003`'s unauthenticated forgot-password request may also register a device | FR-011 (research.md §7) |
 
 ## State Transitions
 

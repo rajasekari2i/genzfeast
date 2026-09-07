@@ -8,6 +8,14 @@
 
 **Input**: User description: "GenzFeast is a multi-tenant (multi-company) mobile food ordering platform that connects college canteens (\"companies\"/tenants) with students on their campus. Each canteen operates as an independent tenant with its own staff, products, and orders, while a central System Admin governs onboarding and platform-wide oversight. Analyse the BRD, PRD, Architecture, and UI Design docs and spec the Forgot Password flow."
 
+## Clarifications
+
+### Session 2026-09-06
+
+- Q: `username` (mobile number) is unique per Company only, not globally — `002-registration-login-jwt-auth` resolved the identical ambiguity for `/auth/login` by adding `company_id` to that request. Does the same apply here, since both endpoints in this feature also key solely on `username`? → A: Yes — for consistency with `002`'s already-shipped resolution. `/auth/forgot-password/request` and `/auth/forgot-password/verify` both gain an optional `company_id` (required in practice for every role except `system_admin`), supplied the same way `002` supplies it: implicitly, by each Company's branded app build. Anti-enumeration (FR-004) is unaffected — the response stays identical regardless of whether the `(company_id, username)` pair resolves to an account.
+- Q: FR-003 requires the code to be shown in-app as a fallback, and SC-006 requires this to work even when "a push notification [is never] delivered" — but the Assumptions also say the code must never be exposed via any API response. Since a REST response is the only channel available besides the push itself, how can the app show the code without an API exposing it, in the case where delivery genuinely fails end-to-end? → A: The code travels only inside the FCM push's *data payload*, which the app's background message handler can read and render on the Verify screen even when the OS suppresses the visible notification banner — this is what "fallback" and "no notification delivered" mean here (a suppressed/never-tapped banner, not a total FCM infrastructure failure). The code is still never returned by any REST response, preserving the sensitive-data Assumption exactly as written; a true end-to-end FCM delivery failure (not just a suppressed banner) is out of scope — the user requests a new code once connectivity/FCM registration is restored, the same way any other undelivered push would be retried.
+- Q: `009-order-fcm-push-notifications` (which owns device-token registration as shared infrastructure) cascades: the moment an account becomes `locked`, every one of its registered devices is deleted — the same event that sends a user to this feature's Forgot Password screen in the first place. Without a live device registration, the FCM-data-payload delivery this feature already committed to (above) has no device to reach. How does a locked account's request still get a working push channel? → A: `009` exposes an unauthenticated device-registration path this feature's request endpoint calls: `POST /auth/forgot-password/request` gains an optional `fcm_token` field alongside `username`/`company_id`; when present, the account it resolves to (the same lookup already performed for FR-001/FR-004 — this never runs for a username that doesn't resolve, so it adds no new enumeration surface) has that token registered for it immediately, with no session required. This is `009`'s FR-011, not a new mechanism invented here — see that spec's Clarifications and research.md §7.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Request a Password Reset OTP (Priority: P1)
@@ -55,7 +63,7 @@ A user whose device doesn't show the push notification — because notifications
 
 **Acceptance Scenarios**:
 
-1. **Given** a user has just requested a code and no push notification is ever delivered to their device, **When** they view the Verify screen, **Then** the code needed to complete the reset is available to them directly in the app, not solely through the notification.
+1. **Given** a user has just requested a code and the OS suppresses or the user never sees the visible notification banner, **When** they view the Verify screen, **Then** the code needed to complete the reset is available to them directly in the app — read by the app from the push's data payload in the background, not from the user having tapped a notification (spec.md Clarifications 2026-09-06). A true end-to-end FCM delivery failure (the data payload itself never reaching the device) is out of scope; the user requests a new code once connectivity/registration is restored.
 
 ---
 
@@ -87,10 +95,10 @@ Old codes stop working — whether because time has passed or because they were 
 
 ### Functional Requirements
 
-- **FR-001**: System MUST allow any user — System Admin, Company Admin, Staff, or Student — who cannot remember their password to initiate a password-reset request by submitting their Username.
+- **FR-001**: System MUST allow any user — System Admin, Company Admin, Staff, or Student — who cannot remember their password to initiate a password-reset request by submitting their Username (and, for a Company-scoped role, the Company the account belongs to — supplied implicitly by that Company's branded app build, per `002-registration-login-jwt-auth`'s identical resolution for login; System Admin omits it, since that role has no Company).
 - **FR-002**: Upon a password-reset request, System MUST generate a 6-character alphanumeric one-time code tied to that account and set an expiry time on it.
-- **FR-003**: System MUST deliver the generated code to the user via push notification, and MUST also display that code directly on the Verify screen within the app as a fallback, so a missed or delayed notification never blocks the user from completing the reset (User Story 3).
-- **FR-004**: System MUST respond identically to a password-reset request regardless of whether the submitted Username corresponds to an existing account, so a requester cannot determine account existence from the response.
+- **FR-003**: System MUST deliver the generated code to the user via a push notification whose *data payload* carries the code, and the app MUST display that code directly on the Verify screen from that payload as a fallback — read by the app's background message handler even when the OS suppresses the visible notification banner — so a suppressed or unseen banner never blocks the user from completing the reset (User Story 3, spec.md Clarifications 2026-09-06). The code MUST NOT be returned by any REST API response (see Assumptions "Sensitive-data handling for the code").
+- **FR-004**: System MUST respond identically to a password-reset request regardless of whether the submitted (Company, Username) pair corresponds to an existing account — including when Username matches an account at a *different* Company than the one submitted — so a requester cannot determine account existence, or which Company it belongs to, from the response.
 - **FR-005**: Each password-reset request MUST increment the same consecutive-failed-attempt counter that failed logins increment, meaning an account can become locked purely from repeated reset requests just as it can from failed logins.
 - **FR-006**: System MUST allow a password-reset request and its verification to proceed for an account regardless of whether that account's status is currently `active` or `locked` — successfully completing this flow is the account's only path back from `locked` to `active`.
 - **FR-007**: System MUST present a Verify step that collects the one-time code, a New Password, and a Retype Password together.
@@ -103,6 +111,7 @@ Old codes stop working — whether because time has passed or because they were 
 - **FR-014**: Requesting a new code MUST immediately invalidate any previous, still-outstanding code for that account, so only the most recently requested code can ever succeed.
 - **FR-015**: System MUST limit the number of incorrect code submissions allowed against a single outstanding code; once that limit is reached, that code becomes invalid regardless of whether it is later submitted correctly, and the user must request a new one.
 - **FR-016**: System MUST record every password-reset request, successful reset, and failed verification attempt in a manner that supports later security auditing, consistent with the platform's general auditability requirements.
+- **FR-017**: A password-reset request MAY optionally include the requesting device's push-notification token; when the submitted `(company_id, username)` resolves to a real account, System MUST register that token for the account (via `009-order-fcm-push-notifications`'s shared, unauthenticated device-registration path) so the account has a working channel to receive FR-003's push even if every one of its normal, session-linked device registrations was just removed by an account-lock event (spec.md Clarifications 2026-09-06). This registration MUST NOT alter the request's response in any way — FR-004's identical-response guarantee still holds regardless of whether a token was submitted or whether the account existed.
 
 ### Key Entities
 
@@ -119,7 +128,7 @@ Old codes stop working — whether because time has passed or because they were 
 - **SC-003**: 100% of accounts locked solely due to failed login or reset-request attempts can be restored to active use through this flow alone, with zero cases requiring manual/admin intervention.
 - **SC-004**: 100% of expired codes, already-used codes, and codes resubmitted after exceeding the incorrect-attempt limit are rejected on resubmission.
 - **SC-005**: 100% of sessions that were active for an account before a password reset — other than the one performing the reset — are unable to continue afterward.
-- **SC-006**: Users can complete a reset entirely without a push notification ever arriving, by using the code shown in-app.
+- **SC-006**: Users can complete a reset entirely without ever seeing or tapping a visible notification banner, by using the code the app reads from the push's data payload and shows in-app (spec.md Clarifications 2026-09-06).
 
 ## Assumptions
 
@@ -129,3 +138,4 @@ Old codes stop working — whether because time has passed or because they were 
 - **Applies uniformly across roles**: Since login itself is shared across every role, this reset flow is available the same way to System Admin, Company Admin, Staff, and Student accounts alike — there is no role-specific variation.
 - **Sensitive-data handling for the code**: The stored one-time code is treated with the same handling care as a password (never logged in plaintext, not exposed via any API beyond the Verify step's own validation); the specific storage mechanism is an implementation decision for the planning phase, not a business-facing constraint captured here.
 - **Scope boundary with account/session mechanics**: Account fields (`status`, the failed-attempt counter) are owned by `001-company-role-user-setup`; session issuance and revocation mechanics are owned by `002-registration-login-jwt-auth`. This feature specifies only the reset flow itself and the specific state changes (FR-010, FR-011) it triggers in those other features' entities.
+- **Device registration is `009`'s infrastructure, not reimplemented here**: FR-017's device-token registration on request is a thin call into `009-order-fcm-push-notifications`'s shared `device_registrations` mechanism (that spec's FR-011) — this feature does not own or duplicate that table/logic, only triggers it at one additional call site.

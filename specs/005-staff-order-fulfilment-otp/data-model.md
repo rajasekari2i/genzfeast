@@ -21,6 +21,7 @@ This feature does **not** create or migrate this table. It requires the followin
 |---|---|---|
 | `id` | `uuid` | Stable identifier for an order |
 | `company_id` | `uuid` | References `companies(id)` — this feature's RLS/query scoping depends on it |
+| `reference` *(derived, not a required stored column)* | — | The `OrderSummary`/`OrderDetail.reference` field in contracts/openapi.yaml is a short, human-readable order reference for Staff to read out loud/match against. This feature derives it from `id` (e.g., a short uppercased prefix of the UUID) at read time rather than depending on a dedicated `orders.reference` column — the owning Checkout & Payment feature is free to add a real stored reference/order-number column later without this feature needing a contract change, since it only ever *displays* whatever short form it derives from `id` today. |
 | `status` | `text` (enum) | Must include at least `order_placed` and `delivered` among its values (alongside whatever other states, e.g. `payment_pending`/`payment_failed`/`cancelled`, the owning feature defines); this feature reads rows where `status = 'order_placed'` and is the sole writer of the transition to `delivered` |
 | `items` | structured (e.g. `jsonb`) | A snapshot of ordered items (name, quantity, price) — read-only here, for display in FR-002/FR-004 |
 | `total_amount` | `integer` | Read-only here, for display in FR-002/FR-004 |

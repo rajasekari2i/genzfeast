@@ -34,4 +34,5 @@
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`.
 - Scope was narrowed before drafting: the Staff-facing sold-out toggle (also named in the original request) is already fully specified in `004-company-admin-product-crud` and is referenced, not duplicated, here.
 - The one open question (limit on incorrect pickup-code submissions per order) has been answered by the user and resolved into FR-012: no attempt limit — verification is a face-to-face, in-person counter interaction, and every attempt remains fully auditable regardless of count.
-- Ready for `/speckit-plan`.
+- A small documentation gap found during task planning (2026-09-06) — `contracts/openapi.yaml`'s `reference` field wasn't listed in `data-model.md`'s `orders` consumer-contract table — was reconciled directly in `data-model.md`: `reference` is derived from `id` by this feature, not a required stored column on the future `orders` table.
+- Ready for `/speckit-plan` (already complete — this feature already has plan.md/research.md/data-model.md/contracts/quickstart.md; only `tasks.md` was pending).

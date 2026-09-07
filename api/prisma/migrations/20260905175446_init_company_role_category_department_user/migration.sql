@@ -146,9 +146,12 @@ AS $$
 BEGIN
   INSERT INTO "roles" ("id", "name", "company_id", "created_at", "updated_at")
   VALUES
-    (gen_random_uuid(), 'company_admin', NEW."id", now(), now()),
-    (gen_random_uuid(), 'staff', NEW."id", now(), now()),
-    (gen_random_uuid(), 'student', NEW."id", now(), now());
+    (gen_random_uuid(), 'SYSTEM_ADMIN', NEW."id", now(), now()),
+    (gen_random_uuid(), 'COMPANY_ADMIN', NEW."id", now(), now()),
+    (gen_random_uuid(), 'STAFF', NEW."id", now(), now()),
+    (gen_random_uuid(), 'STUDENT', NEW."id", now(), now()),
+    (gen_random_uuid(), 'TEACHING', NEW."id", now(), now()),
+    (gen_random_uuid(), 'NON_TEACHING', NEW."id", now(), now());
   RETURN NEW;
 END;
 $$;

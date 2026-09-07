@@ -24,3 +24,17 @@ yarn-error.log*
 # Editor
 .vscode/
 !.vscode/extensions.json
+
+# Coverage
+coverage/
+*.db
+!.env.example
+
+# metaswarm / BEADS runtime
+.beads/beads.db
+.beads/daemon.lock
+.beads/daemon.pid
+.beads/daemon.log
+.beads/temp/
+.beads/context/
+.beads/plans/

@@ -34,6 +34,33 @@ paths:
               required: [username]
               properties:
                 username: { type: string, description: "Mobile number" }
+                company_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: >
+                    Required for a Company-scoped role (company_admin,
+                    company_staff, student) — supplied implicitly by that Company's
+                    branded app build, mirroring
+                    specs/002-registration-login-jwt-auth's identical
+                    LoginRequest.company_id (spec.md Clarifications
+                    2026-09-06). Omitted (or null) for system_admin. Never
+                    affects the response (FR-004) — a username that exists
+                    only at a different company_id is treated exactly like
+                    a username that does not exist at all.
+                fcm_token:
+                  type: string
+                  description: >
+                    Optional (FR-017, spec.md Clarifications 2026-09-06).
+                    When present and the (company_id, username) resolves to
+                    a real account, that account gets this token registered
+                    via specs/009-order-fcm-push-notifications's shared,
+                    unauthenticated device-registration path (that spec's
+                    FR-011) — giving a locked account (whose normal,
+                    session-linked registrations were just removed by
+                    009's own lock cascade) a channel to receive this
+                    request's FR-003 push. Never affects this endpoint's
+                    response, whether or not the account exists.
       responses:
         "202":
           description: >
@@ -86,6 +113,11 @@ components:
       required: [username, code, new_password, retype_password]
       properties:
         username: { type: string, description: "Mobile number — identifies which account's outstanding code to check" }
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Same role as LoginRequest.company_id — required for a Company-scoped role, omitted for system_admin (spec.md Clarifications 2026-09-06)."
         code: { type: string, description: "6-character alphanumeric code" }
         new_password: { type: string, format: password }
         retype_password: { type: string, format: password }

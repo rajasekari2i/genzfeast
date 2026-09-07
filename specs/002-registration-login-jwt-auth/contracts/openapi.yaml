@@ -61,7 +61,11 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
         "403":
-          description: Account is locked or inactive (FR-014) — distinct from 401
+          description: >
+            Account is locked, inactive, or blocked (FR-014) — distinct from
+            401. "blocked" covers both a soft-deleted user and a user of a
+            soft-deleted Company (specs/001's System Admin delete-from-list
+            action), in every role.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AccountBlockedErrorResponse" }
@@ -132,6 +136,20 @@ components:
       properties:
         username: { type: string, description: "Mobile number" }
         password: { type: string, format: password }
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            Required for a Company-scoped role (company_admin, company_staff,
+            student) — supplied implicitly by that Company's branded app
+            build, since username is unique only per Company and the same
+            username may exist at more than one Company (spec.md
+            Clarifications 2026-09-06). Omitted (or null) for system_admin,
+            whose accounts have no Company. A username that does not exist
+            under the given company_id (including one that exists at a
+            *different* Company) is rejected identically to FR-005's
+            generic error.
 
     Session:
       type: object
@@ -161,7 +179,7 @@ components:
               properties:
                 id: { type: string, format: uuid }
                 company_id: { type: string, format: uuid, nullable: true }
-                role: { type: string, enum: [system_admin, company_admin, staff, student] }
+                role: { type: string, enum: [system_admin, company_admin, company_staff, student, teaching, non_teaching] }
                 name: { type: string }
                 username: { type: string }
         - $ref: "#/components/schemas/Session"
@@ -175,4 +193,4 @@ components:
       type: object
       properties:
         message: { type: string, example: "Your account is locked. Reset your password to regain access." }
-        reason: { type: string, enum: [locked, inactive] }
+        reason: { type: string, enum: [locked, inactive, blocked] }

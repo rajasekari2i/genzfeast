@@ -11,14 +11,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#1565C0',
-        'primary-variant': '#0D47A1',
-        accent: '#29B6F6',
+        primary: '#FF6B35',
+        'primary-variant': '#183153',
+        accent: '#FFC857',
+        secondary: '#0E9F6E',
         surface: '#FFFFFF',
-        background: '#F5F8FC',
-        'text-primary': '#12202E',
-        'text-secondary': '#5B6B7A',
-        border: '#E2E8F0',
+        background: '#FFF7ED',
+        'text-primary': '#1F2937',
+        'text-secondary': '#6B7280',
+        border: '#E5E7EB',
       },
       fontSize: {
         h1: ['24px', { lineHeight: '32px', fontWeight: '700' }],

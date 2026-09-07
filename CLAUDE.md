@@ -40,16 +40,22 @@ A bug at either layer alone must never be sufficient to leak data across tenants
 
 ## Roles (fixed set for V1 — do not invent new roles without a spec update)
 
+**Global, not per-Company** (revised from the original per-Company design — migrations `20260907170000_global_roles`/`20260907180000`): every role is exactly one row in `roles`, shared by every tenant. `roles.name` is globally `UNIQUE`. A role like `company_staff` means the same thing at every Company; there is no per-tenant duplicate of it.
+
 | Role | Scope | Can do |
 |---|---|---|
-| `system_admin` | Platform-wide, `company_id = NULL` | Create/manage Companies; create a Company's first Company Admin; full CRUD over Roles/Categories/Departments across every tenant |
-| `company_admin` | One Company | Manage Staff + peer Company Admin accounts, Categories, Departments, Products (CRUD), toggle company open/closed |
-| `staff` | One Company | Toggle product sold-out, fulfil orders via OTP |
-| `student` | One Company | Register/login, browse, cart, checkout, pay, pick up with OTP |
+| `system_admin` | Platform-wide, users' `company_id = NULL` | Create/manage Companies; create a Company's first Company Admin; full CRUD over Categories/Departments across every tenant |
+| `company_admin` | Scoped to the calling user's own Company via their JWT | Manage Staff + peer Company Admin accounts, Categories, Departments, Products (CRUD), toggle company open/closed |
+| `company_staff` | Scoped to the calling user's own Company via their JWT | Toggle product sold-out, fulfil orders via OTP |
+| `student` | Scoped to the calling user's own Company via their JWT | Register/login, browse, cart, checkout, pay, pick up with OTP |
+| `teaching` | — | Added to the role catalog on explicit request; no `@Roles(...)` guard, endpoint, or capability references it yet — treat as reserved/undefined until a spec assigns it real permissions. |
+| `non_teaching` | — | Same as `teaching` — reserved, no wired-up capability yet. |
 
-A Company's three tenant-scoped roles (`company_admin`, `staff`, `student`) are auto-seeded when the Company is created (DB trigger, not application code — see `specs/001-company-role-user-setup/research.md` §3). A student registers into exactly one Company; the same mobile number may hold independent accounts at two different Companies since username uniqueness is per-tenant, not global.
+A user's own row still carries `company_id` (their tenant), it's just `roles` itself that's no longer tenant-scoped — a Company's staff/admin/student accounts reference the one shared `company_staff`/`company_admin`/`student` row, not a copy seeded for that Company. A student registers into exactly one Company; the same mobile number may hold independent accounts at two different Companies since username uniqueness is per-tenant, not global.
 
-**Category vs Department (easy to confuse):** `Category` is the registrant's affiliation type at registration — e.g. "Student", "Teaching Staff", "Non-Teaching Staff" — scoped per Company, required at Student registration. `Department` is the student's academic department, also per-Company, optional. Neither is a food/product classification.
+**Category vs Department vs Role (easy to confuse — three distinct things sharing similar names):** `Category` is the registrant's affiliation type at registration — e.g. "Student", "Teaching Staff", "Non-Teaching Staff" — scoped per Company, required at Student registration; it is a label on a User, not a permission grant, and it is **not** a food/product classification (BRD §Business Rules, UI-Design §5.3's own Product field list has no category at all — Products carry no category concept in V1). `Department` is the student's academic department, also per-Company, optional. `Role` (`teaching`/`non_teaching` above) is a separate, platform-wide permission grant that happens to share a name with two Category values — a user's Category and a user's Role are independent fields (`users.category_id` vs `users.role_id`); nothing currently keeps them in sync.
+
+**`/tenant/users` vs `/admin/users` manage different role sets, on purpose:** Company Admin's own `/tenant/users` (mobile: the "Users" side-menu item) creates/edits/deletes `company_staff`/`student`/`teaching`/`non_teaching` only — it deliberately cannot create or edit a fellow `company_admin` (dropped from this screen on explicit request; creating a Student here additionally requires a `category_id`, mirroring self-registration's own requirement). System Admin's cross-tenant `/admin/users` is unchanged: `company_staff`/`company_admin` only, any company. `users.service.ts` tracks this as two separate constants (`TENANT_MANAGEABLE_ROLES` vs `ADMIN_MANAGEABLE_ROLES`) — they used to be one shared list and must not be merged back into one.
 
 ## Order Lifecycle
 
@@ -82,3 +88,61 @@ payment_pending → order_placed → delivered
 - `.specify/memory/constitution.md` is an unfilled template — in its absence, `docs/architecture/04-Architecture.md` + `docs/product/01-BRD.md` are the governing constraints for any plan's Constitution Check (this is Architecture §11's own stated mapping).
 - Before assuming a technical or scope decision is "obvious," check `docs/product/02-PRD.md` §5 (Open Questions for Business Sign-off) and any feature's `spec.md` Assumptions — several plausible defaults (e.g., can a Company Admin create another Company Admin?) have already been explicitly decided per-feature and shouldn't be re-guessed differently elsewhere.
 
+
+## metaswarm
+
+This project uses [metaswarm](https://github.com/dsifry/metaswarm) for multi-agent orchestration with Claude Code. It provides 18 specialized agents, a 9-phase development workflow, and quality gates that enforce TDD, coverage thresholds, and spec-driven development.
+
+### Workflow
+
+- **Most tasks**: `/start-task` — primes context, guides scoping, picks the right level of process
+- **Complex features** (multi-file, spec-driven): Describe what you want built with a Definition of Done, then tell Claude: `Use the full metaswarm orchestration workflow.`
+
+### Available Commands
+
+| Command | Purpose |
+|---|---|
+| `/start-task` | Begin tracked work on a task |
+| `/prime` | Load relevant knowledge before starting |
+| `/review-design` | Trigger parallel design review gate (5 agents) |
+| `/pr-shepherd <pr>` | Monitor a PR through to merge |
+| `/self-reflect` | Extract learnings after a PR merge |
+| `/handoff` | Write a self-contained handoff doc so a fresh agent can resume the work |
+| `/handle-pr-comments` | Handle PR review comments |
+| `/brainstorm` | Refine an idea before implementation |
+| `/create-issue` | Create a well-structured GitHub Issue |
+
+### Quality Gates
+
+- **Design Review Gate** — Parallel 5-agent review after design is drafted (`/review-design`)
+- **Plan Review Gate** — Automatic adversarial review after any implementation plan is drafted. Spawns 3 independent reviewers (Feasibility, Completeness, Scope & Alignment) in parallel — ALL must PASS before presenting the plan. See `skills/plan-review-gate/SKILL.md`
+- **Coverage Gate** — `.coverage-thresholds.json` defines thresholds. BLOCKING gate before PR creation
+
+### Team Mode
+
+When `TeamCreate` and `SendMessage` tools are available, the orchestrator uses Team Mode for parallel agent dispatch. Otherwise it falls back to Task Mode (existing workflow, unchanged). See `guides/agent-coordination.md` for details.
+
+### Guides
+
+Development patterns and standards are documented in `guides/` — covering agent coordination, build validation, coding standards, git workflow, testing patterns, and worktree development.
+
+### Testing & Quality
+
+- **Implementation before tests, per explicit user direction** — for this project, build the functionality first; write/run the unit test suite as a separate follow-up step once the user asks for it. Do not run tests proactively mid-implementation.
+- **80% test coverage required** — Enforced via `.coverage-thresholds.json` as a blocking gate before PR creation and task completion (the threshold there is the source of truth, not the number in this bullet)
+- **Coverage source of truth** — `.coverage-thresholds.json` defines thresholds. Update it if your spec requires different values. The orchestrator reads it during validation — this is a BLOCKING gate.
+- **Tests must never hit the real Supabase/Postgres database** — unit/coverage tests use mocked Prisma/DB clients only. A prior run of `api/test/rls/tenant-isolation.spec.ts` hit the live Supabase instance and mutated real data; any RLS/tenant-isolation test must run against a mocked or ephemeral test DB, never the configured `DATABASE_URL` for the real project.
+
+### Workflow Enforcement (MANDATORY)
+
+These rules override any conflicting instructions from third-party skills:
+
+- **After brainstorming** → MUST run Design Review Gate (5 agents) before writing-plans or implementation
+- **After any plan is created** → MUST run Plan Review Gate (3 adversarial reviewers) before presenting to user
+- **Execution method choice** → ALWAYS ask the user whether to use metaswarm orchestrated execution (more thorough, uses more tokens) or superpowers execution skills (faster, lighter-weight). Never auto-select.
+- **Before finishing a branch** → MUST run `/self-reflect` and commit knowledge base updates before PR creation
+- **Complex tasks** → Use `/start-task` instead of `EnterPlanMode` for tasks touching 3+ files. EnterPlanMode bypasses all quality gates.
+- **Standalone TDD on 3+ files** → Ask user if they want adversarial review before committing
+- **Coverage** → `.coverage-thresholds.json` is the single source of truth. All skills must check it, including `verification-before-completion`.
+- **Subagents** → NEVER use `--no-verify`, ALWAYS follow TDD, NEVER self-certify, STAY within file scope
+- **Context recovery** → Approved plans and execution state persist to `.beads/`. After compaction, run `bd prime --work-type recovery` to reload.

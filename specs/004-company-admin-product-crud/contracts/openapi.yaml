@@ -24,15 +24,21 @@ paths:
   /tenant/products:
     get:
       tags: [Products]
-      summary: List the caller's own company's active products (Company Admin or Staff)
+      summary: >
+        List the caller's own company's active products (Company Admin or
+        Staff). Server-side paginated (revised — this task's own explicit
+        ask: 10 per page, fetch the next page on scroll) with an optional
+        name search filter.
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SearchParam"
       responses:
         "200":
-          description: The caller's company products, sold-out items clearly flagged
+          description: A page of the caller's company products, sold-out items clearly flagged
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/Product" }
+              schema: { $ref: "#/components/schemas/PaginatedProductsResponse" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [Products]
@@ -52,6 +58,23 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /tenant/products/{productId}:
+    get:
+      tags: [Products]
+      summary: >
+        Not in this feature's original scope — added once `list` became
+        paginated, so the edit screen can look up one product directly
+        rather than fetch-the-full-list-and-find-by-id (Company Admin or
+        Staff).
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      responses:
+        "200":
+          description: The product
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
     patch:
       tags: [Products]
       summary: Update a product's Name, Description, Image, Price, and/or Veg/Non-Veg indicator (Company Admin only)
@@ -107,7 +130,14 @@ paths:
   /tenant/products/{productId}/image:
     post:
       tags: [Products]
-      summary: Upload or replace a product's photo (Company Admin only) — stored in object storage, response carries only the resulting URL
+      summary: >
+        Upload or replace a product's photo (Company Admin only). Required
+        on every product going forward — the mobile Create/Edit form's own
+        Save flow calls this immediately after creating (or when editing,
+        alongside updating) the product. JPEG or PNG only, max 2MB. Stored
+        in a Supabase Storage bucket named by the caller's own company_id
+        (created automatically on first upload for that Company) — response
+        carries only the resulting public URL.
       parameters:
         - $ref: "#/components/parameters/ProductId"
       requestBody:
@@ -118,14 +148,18 @@ paths:
               type: object
               required: [image]
               properties:
-                image: { type: string, format: binary }
+                image: { type: string, format: binary, description: "JPEG or PNG, max 2MB" }
       responses:
         "200":
           description: Image stored
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Product" }
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: Missing file, wrong type (not JPEG/PNG), or over the 2MB limit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
@@ -142,6 +176,22 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive name substring filter
+      schema: { type: string }
 
   responses:
     Forbidden:
@@ -152,6 +202,11 @@ components:
       description: Request failed field-level validation (e.g., missing Name, Price <= 0)
 
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string, example: "Image exceeds the maximum allowed size (2MB)" }
+
     Product:
       type: object
       properties:
@@ -184,3 +239,20 @@ components:
         description: { type: string }
         price: { type: integer, minimum: 1 }
         is_veg: { type: boolean }
+        is_soldout:
+          type: boolean
+          description: >
+            Not in this endpoint's original scope — the mobile Create/Edit
+            form now shows this toggle directly, in addition to the
+            dedicated PATCH .../soldout endpoint.
+
+    PaginatedProductsResponse:
+      type: object
+      description: Server-side pagination (10 per page) — the mobile list screen fetches the next page on scroll.
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Product" }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }

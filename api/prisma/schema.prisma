@@ -17,46 +17,47 @@ datasource db {
 
 /// A single college canteen operating independently on the platform (data-model.md §1).
 model Company {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String
-  contactPerson  String   @map("contact_person")
-  mobile         String
-  email          String
-  address        String
-  isOpen         Boolean  @default(true) @map("is_open")
-  isDeleted      Boolean  @default(false) @map("is_deleted")
-  createdBy      String?  @map("created_by") @db.Uuid
-  updatedBy      String?  @map("updated_by") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  contactPerson String   @map("contact_person")
+  mobile        String
+  email         String
+  address       String
+  isOpen        Boolean  @default(true) @map("is_open")
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+  createdBy     String?  @map("created_by") @db.Uuid
+  updatedBy     String?  @map("updated_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  roles       Role[]
-  categories  Category[]
-  departments Department[]
-  users       User[]
+  categories     Category[]
+  departments    Department[]
+  users          User[]
+  authAuditLogs  AuthAuditLog[]
+  products       Product[]
+  orders         Order[]
+  deliveries     Delivery[]
+  orderAuditLogs OrderAuditLog[]
+  auditLogs      AuditLog[]
 
   @@map("companies")
 }
 
 /// A named permission group. Global system_admin role has companyId = NULL (data-model.md §2).
+/// Global, platform-wide role catalog — NOT per-company (revised; the
+/// original per-company design was found to be both unimplemented
+/// correctly in practice and unnecessary: a role like "staff" means the
+/// same thing at every company, so every company's staff share the same
+/// row rather than each company getting its own duplicate copy). Fixed set
+/// for V1 per CLAUDE.md: system_admin, company_admin, staff, student.
 model Role {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  companyId String?  @map("company_id") @db.Uuid
+  name      String   @unique
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  // onDelete: Restrict — a company is soft-delete only in every spec (no hard
-  // delete path exists); SET NULL here could otherwise produce a row that
-  // violates roles_company_id_or_system_admin (a non-system_admin role with
-  // a NULL company_id) if a company were ever hard-deleted.
-  company Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  users   User[]
+  users User[]
 
-  // Note: the two partial unique indexes described in data-model.md §2
-  // (UNIQUE(company_id, name) and UNIQUE(name) WHERE company_id IS NULL)
-  // are not expressible together via @@unique here and are added as raw
-  // SQL in the migration (coding_standard.md §4.2).
   @@map("roles")
 }
 
@@ -96,22 +97,35 @@ model Department {
 
 /// A platform account: System Admin, Company Admin, Staff, or Student (data-model.md §5).
 model User {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId         String?  @map("company_id") @db.Uuid
-  roleId            String   @map("role_id") @db.Uuid
-  categoryId        String?  @map("category_id") @db.Uuid
-  departmentId      String?  @map("department_id") @db.Uuid
-  name              String
-  username          String
-  passwordHash      String   @map("password_hash")
-  email             String
-  status            String   @default("active")
-  noOfLoginAttempt  Int      @default(0) @map("no_of_login_attempt")
-  isDeleted         Boolean  @default(false) @map("is_deleted")
-  createdBy         String?  @map("created_by") @db.Uuid
-  updatedBy         String?  @map("updated_by") @db.Uuid
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId                 String?   @map("company_id") @db.Uuid
+  roleId                    String    @map("role_id") @db.Uuid
+  categoryId                String?   @map("category_id") @db.Uuid
+  departmentId              String?   @map("department_id") @db.Uuid
+  name                      String
+  username                  String
+  passwordHash              String    @map("password_hash")
+  email                     String
+  // Nullable — existing rows predate this column. New creations (student
+  // registration, staff/company_admin creation) require it at the DTO
+  // layer; enforced at the DB layer via a CHECK constraint (hand-added
+  // migration SQL) rather than a Prisma enum, matching this schema's
+  // existing convention for enum-like string columns (e.g. `status`).
+  gender                    String?
+  status                    String    @default("active")
+  noOfLoginAttempt          Int       @default(0) @map("no_of_login_attempt")
+  // specs/003-forgot-password-otp-reset data-model.md §1 — SHA-256 hex digest
+  // of the current outstanding 6-character alphanumeric reset code; NULL
+  // when no reset is in progress. At most one outstanding code per account
+  // (a new request supersedes any prior one, FR-014).
+  resetPasswordOtp          String?   @map("reset_password_otp")
+  resetPasswordOtpExpiresAt DateTime? @map("reset_password_otp_expires_at") @db.Timestamptz(6)
+  resetPasswordOtpAttempts  Int       @default(0) @map("reset_password_otp_attempts")
+  isDeleted                 Boolean   @default(false) @map("is_deleted")
+  createdBy                 String?   @map("created_by") @db.Uuid
+  updatedBy                 String?   @map("updated_by") @db.Uuid
+  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   // onDelete: Restrict — same reasoning as Role.company below: companies are
   // soft-delete only, this is a defense-in-depth safety net, not a path the
@@ -126,5 +140,240 @@ model User {
   category   Category?   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   department Department? @relation(fields: [departmentId], references: [id], onDelete: Restrict)
 
+  refreshTokens       RefreshToken[]
+  authAuditLogs       AuthAuditLog[]
+  deviceRegistrations DeviceRegistration[]
+  orders              Order[]
+  deliveriesPerformed Delivery[]           @relation("DeliveryDeliveredBy")
+  orderAuditLogs      OrderAuditLog[]      @relation("OrderAuditLogPerformedBy")
+  auditLogsPerformed  AuditLog[]           @relation("AuditLogPerformedBy")
+
   @@map("users")
+}
+
+/// One issued session's renewal credential (specs/002-registration-login-jwt-auth data-model.md §1).
+model RefreshToken {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  issuedAt   DateTime  @default(now()) @map("issued_at") @db.Timestamptz(6)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  replacedBy String?   @map("replaced_by") @db.Uuid
+  userAgent  String?   @map("user_agent")
+  ipAddress  String?   @map("ip_address")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  // Self-reference for the rotation chain (data-model.md §1). onDelete: NoAction
+  // avoids Prisma's self-relation ambiguity error; no row in this table is ever
+  // hard-deleted, so the cascade behavior never actually triggers.
+  replacedByToken     RefreshToken?        @relation("RefreshTokenRotation", fields: [replacedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replacedTokens      RefreshToken[]       @relation("RefreshTokenRotation")
+  authAuditLogs       AuthAuditLog[]
+  deviceRegistrations DeviceRegistration[]
+
+  @@map("refresh_tokens")
+}
+
+/// An append-only login/logout/lock security event (specs/002-registration-login-jwt-auth data-model.md §2).
+model AuthAuditLog {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  companyId      String?  @map("company_id") @db.Uuid
+  eventType      String   @map("event_type")
+  refreshTokenId String?  @map("refresh_token_id") @db.Uuid
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // onDelete: Restrict — same defense-in-depth reasoning as every other FK in
+  // this schema; users/refresh_tokens/companies are never hard-deleted.
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  company      Company?      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  refreshToken RefreshToken? @relation(fields: [refreshTokenId], references: [id], onDelete: Restrict)
+
+  @@map("auth_audit_logs")
+}
+
+/// A single menu item offered by one Company (specs/004-company-admin-product-crud data-model.md §1).
+model Product {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  name        String
+  description String
+  imageUrl    String?  @map("image_url")
+  price       Int
+  isVeg       Boolean  @map("is_veg")
+  isSoldout   Boolean  @default(false) @map("is_soldout")
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  createdBy   String?  @map("created_by") @db.Uuid
+  updatedBy   String?  @map("updated_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // onDelete: Restrict — same defense-in-depth reasoning as every other FK
+  // in this schema; a Company is soft-delete only, and this feature never
+  // hard-deletes a Product either (FR-008/FR-009).
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@map("products")
+}
+
+/// One registered device's push token (specs/009-order-fcm-push-notifications data-model.md §1).
+/// Built here as the minimal slice specs/003-forgot-password-otp-reset's FR-017 needs
+/// (DevicesService.upsertUnauthenticated + FCM sending) — the authenticated
+/// POST /me/devices endpoint and the order-confirmation notification hook
+/// are the rest of 009's scope, not built yet (both depend on tables/flows
+/// that don't exist here: 006's orders, 005's order_audit_logs).
+model DeviceRegistration {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  fcmToken       String   @unique @map("fcm_token")
+  // Nullable — NULL for a registration made through 003's unauthenticated
+  // forgot-password path (research.md §7); set for the normal authenticated
+  // path (not built yet), which links a registration to the specific
+  // session it can be precisely removed on logout.
+  refreshTokenId String?  @map("refresh_token_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  refreshToken RefreshToken? @relation(fields: [refreshTokenId], references: [id], onDelete: Restrict)
+
+  @@map("device_registrations")
+}
+
+/// A student's paid, placed purchase (specs/005-staff-order-fulfilment-otp
+/// data-model.md's "Dependency" section). Built here as the minimal slice
+/// 005 needs to function — full checkout/payment (cart, Razorpay, the
+/// payment_pending/payment_failed transitions) is specs/006's job, not
+/// built yet. `otp` is deliberately plaintext, not hashed (research.md §2):
+/// the student must be able to re-view it on their own order detail screen
+/// until pickup, which a one-way hash would make impossible.
+model Order {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  // specs/006-student-browse-cart-checkout data-model.md §1 — fixed to
+  // 'pickup' in V1 (CHECK constraint, hand-added migration SQL).
+  fulfilmentType    String    @default("pickup") @map("fulfilment_type")
+  status            String    @default("payment_pending")
+  // Mirrors `status` but kept distinct — a future feature (e.g. a refund)
+  // could need a payment outcome independent of the order's own lifecycle
+  // label (data-model.md §1).
+  paymentStatus     String    @default("pending") @map("payment_status")
+  // The Razorpay order reference — set when the payment session opens,
+  // used to correlate the webhook back to this row (research.md §4).
+  paymentGatewayRef String?   @map("payment_gateway_ref")
+  items             Json
+  totalAmount       Int       @map("total_amount")
+  // Nullable — generated once, at the payment_pending -> order_placed
+  // transition (FR-012); plaintext, not hashed (research.md §2 in specs/005,
+  // reaffirmed here), since the student must be able to re-view it.
+  otp               String?
+  createdBy         String?   @map("created_by") @db.Uuid
+  updatedBy         String?   @map("updated_by") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deliveredAt       DateTime? @map("delivered_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // onDelete: Restrict — same defense-in-depth reasoning as every other FK
+  // in this schema; orders are never hard-deleted.
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  delivery        Delivery?
+  orderAuditLogs  OrderAuditLog[]
+  paymentAttempts PaymentAttempt[]
+
+  @@map("orders")
+}
+
+/// One payment attempt against an order — old and new (specs/010-resume-pending-order-payment
+/// data-model.md §1). Fixes a real bug in 006's original single-column
+/// design: every gateway_ref ever issued stays permanently discoverable by
+/// the webhook, even after being superseded by a resume, so a late-arriving
+/// confirmation for an earlier attempt is never silently dropped
+/// (research.md §1).
+model PaymentAttempt {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId    String    @map("order_id") @db.Uuid
+  gatewayRef String    @unique @map("gateway_ref")
+  // Exactly one true row per order_id at any time (partial unique index,
+  // hand-added migration SQL) — set false on every prior attempt the
+  // moment a new one is created (research.md §2).
+  isCurrent  Boolean   @default(true) @map("is_current")
+  // Nullable while awaiting the gateway's confirmation.
+  outcome    String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@map("payment_attempts")
+}
+
+/// The record created once, at successful pickup-code verification
+/// (specs/005-staff-order-fulfilment-otp data-model.md §1, fully owned by
+/// this feature).
+model Delivery {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String   @unique @map("order_id") @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  deliveredBy String   @map("delivered_by") @db.Uuid
+  deliveredAt DateTime @default(now()) @map("delivered_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  company         Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  deliveredByUser User    @relation("DeliveryDeliveredBy", fields: [deliveredBy], references: [id], onDelete: Restrict)
+
+  @@map("deliveries")
+}
+
+/// Append-only pickup-verification/delivery event trail (specs/005-staff-order-fulfilment-otp
+/// data-model.md §2, fully owned by this feature) — captures a mismatched
+/// attempt too, which never mutates the order row itself (research.md §3).
+model OrderAuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String   @map("order_id") @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  eventType   String   @map("event_type")
+  performedBy String?  @map("performed_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  company         Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  performedByUser User?   @relation("OrderAuditLogPerformedBy", fields: [performedBy], references: [id], onDelete: Restrict)
+
+  @@map("order_audit_logs")
+}
+
+/// specs/011-audit-logs-product-order-payment. Row-level change trail for
+/// `products`, `orders`, and `payment_attempts` — populated exclusively by
+/// the `fn_audit_log()` DB trigger attached to those three tables (see
+/// migration `..._audit_logs`); no application code ever writes here
+/// directly, so this model has no corresponding service write path.
+/// Immutable by design: the application's DB role (`app_user`) has
+/// UPDATE/DELETE revoked on this table at the database layer (FR-006) —
+/// only the trigger's own SECURITY DEFINER INSERT can ever add a row.
+/// Distinct from `AuthAuditLog`/`OrderAuditLog`, which capture events that
+/// are not themselves a row changing (spec Assumptions).
+model AuditLog {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tableName         String   @map("table_name")
+  recordId          String   @map("record_id") @db.Uuid
+  companyId         String?  @map("company_id") @db.Uuid
+  action            String
+  changedFields     Json?    @map("changed_fields")
+  performedByUserId String?  @map("performed_by_user_id") @db.Uuid
+  performedBySystem String?  @map("performed_by_system")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company         Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  performedByUser User?    @relation("AuditLogPerformedBy", fields: [performedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([tableName, recordId, createdAt])
+  @@map("audit_logs")
 }

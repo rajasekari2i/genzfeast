@@ -87,12 +87,12 @@ components:
   schemas:
     Profile:
       type: object
-      description: Fields present depend on role — category/department only for a student, company only for company_admin/staff
+      description: Fields present depend on role — category/department only for a student, company only for company_admin/company_staff
       properties:
         name: { type: string, description: "Read-only (FR-008)" }
         username: { type: string, description: "Read-only (FR-003)" }
         email: { type: string, format: email }
-        role: { type: string, enum: [system_admin, company_admin, staff, student] }
+        role: { type: string, enum: [system_admin, company_admin, company_staff, student, teaching, non_teaching] }
         category:
           type: string
           nullable: true
@@ -104,7 +104,7 @@ components:
         company:
           type: string
           nullable: true
-          description: "company_admin/staff only, read-only (FR-002); absent for system_admin"
+          description: "company_admin/company_staff only, read-only (FR-002); absent for system_admin"
 
     ProfileUpdateRequest:
       type: object

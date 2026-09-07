@@ -1,4 +1,6 @@
-// Design Token Set — specs/013-blue-theme-visual-design/contracts/design-tokens.md
+// Design Token Set — GenzFeast brand system (orange/campus identity,
+// supersedes specs/013-blue-theme-visual-design's original blue palette;
+// mechanism and every non-color token below is unchanged).
 //
 // The single source of truth for every color, typography, spacing, and radius
 // value used anywhere in mobile/. No screen or component may hardcode a value
@@ -14,8 +16,11 @@
 // string, not just the literal default.
 export interface ColorTokens {
   primary: string;
+  /** Navigation/header chrome — "Trust/Navigation" in the brand color system, not a shade of primary. */
   primaryVariant: string;
   accent: string;
+  /** Fresh/secondary actions and healthy-food indicators — "Secondary/Fresh" in the brand color system. Not yet consumed by any screen; available for e.g. a future "Fresh" product badge. */
+  secondary: string;
   surface: string;
   background: string;
   textPrimary: string;
@@ -25,14 +30,15 @@ export interface ColorTokens {
 }
 
 export const colors: ColorTokens = {
-  primary: '#1565C0',
-  primaryVariant: '#0D47A1',
-  accent: '#29B6F6',
+  primary: '#FF6B35',
+  primaryVariant: '#183153',
+  accent: '#FFC857',
+  secondary: '#0E9F6E',
   surface: '#FFFFFF',
-  background: '#F5F8FC',
-  textPrimary: '#12202E',
-  textSecondary: '#5B6B7A',
-  border: '#E2E8F0',
+  background: '#FFF7ED',
+  textPrimary: '#1F2937',
+  textSecondary: '#6B7280',
+  border: '#E5E7EB',
 };
 
 export interface TypographyStyle {
