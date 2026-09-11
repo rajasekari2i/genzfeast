@@ -8,7 +8,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { createTypedClient } from '../../api/client';
 import { useCart } from '../../cart/CartContext';
 import { formatRupees } from '../../theme/money';
-import { getRazorpayKeyId } from '../../config/tenant';
+import { getRazorpayConfigId, getRazorpayKeyId } from '../../config/tenant';
 import type { StudentStackParamList } from '../../navigation/StudentNavigator';
 import type { paths } from '../../api/generated/006-student-browse-cart-checkout';
 
@@ -73,6 +73,7 @@ export function CartScreen({ navigation }: Props) {
       const orderId = data.id;
       const gatewayRef = data.payment_session?.gateway_ref;
       const keyId = getRazorpayKeyId();
+      const configId = getRazorpayConfigId();
 
       if (gatewayRef && keyId) {
         try {
@@ -83,6 +84,20 @@ export function CartScreen({ navigation }: Props) {
             order_id: gatewayRef,
             name: 'GenzFeast',
             description: 'Canteen order',
+            // BRD/PRD V1 scope: UPI-only. `method` is what the React Native
+            // Standard SDK actually documents/enforces; config_id (Dashboard
+            // Payment Methods Configuration) is sent too in case a future
+            // SDK version honors it, but isn't relied on alone — a live test
+            // showed a wallet (Airtel Money) payment going through with
+            // config_id set but no `method` restriction.
+            method: {
+              upi: '1',
+              card: '0',
+              netbanking: '0',
+              wallet: '0',
+              paylater: '0',
+            },
+            ...(configId ? { config_id: configId } : {}),
           });
         } catch {
           // User cancelled or the SDK reported a failure — irrelevant to

@@ -11,6 +11,20 @@ declare module 'react-native-razorpay' {
     description?: string;
     prefill?: { email?: string; contact?: string; name?: string };
     theme?: { color?: string };
+    // BRD/PRD V1 scope: UPI-only. config_id (Dashboard's Payment Methods
+    // Configuration) is included for completeness but is NOT confirmed
+    // supported by the React Native Standard SDK this package wraps — only
+    // Checkout.js/web and Payment Links document it. `method` below is
+    // documented for this SDK and is the one actually enforcing the
+    // restriction (CartScreen.tsx).
+    config_id?: string;
+    method?: {
+      upi?: '0' | '1';
+      card?: '0' | '1';
+      netbanking?: '0' | '1';
+      wallet?: '0' | '1';
+      paylater?: '0' | '1';
+    };
   }
 
   export interface RazorpaySuccessResult {
