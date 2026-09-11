@@ -209,15 +209,28 @@ export class StudentOrdersService {
       await tx.paymentAttempt.create({
         data: { orderId: order.id, gatewayRef: gatewayOrder.gatewayRef },
       });
-      const row = await tx.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'payment_pending',
-          paymentStatus: 'pending',
-          paymentGatewayRef: gatewayOrder.gatewayRef,
-          updatedBy: ctx.userId,
-        },
-      });
+      // Re-checked atomically here (not just the read at the top of this
+      // method) — a concurrent webhook can move the order past
+      // payment_failed/payment_pending between that initial read and this
+      // update. Without this guard, Prisma finds zero matching rows and
+      // throws an unhandled P2025 instead of a proper 409.
+      let row;
+      try {
+        row = await tx.order.update({
+          where: { id: order.id, status: { in: ['payment_failed', 'payment_pending'] } },
+          data: {
+            status: 'payment_pending',
+            paymentStatus: 'pending',
+            paymentGatewayRef: gatewayOrder.gatewayRef,
+            updatedBy: ctx.userId,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+          throw new ConflictException('Order is not in a resumable payment state');
+        }
+        throw error;
+      }
       await tx.orderAuditLog.create({
         data: {
           orderId: row.id,
