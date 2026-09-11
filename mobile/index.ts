@@ -2,11 +2,16 @@
 // @react-navigation/drawer, used by the role-based side menu) requires this
 // on Android/iOS to install its native event handlers correctly.
 import 'react-native-gesture-handler';
-import { registerRootComponent } from 'expo';
+import { AppRegistry } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
 
 import App from './App';
+import { registerBackgroundResetCodeHandler } from './src/notifications/passwordResetPush';
 
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
-registerRootComponent(App);
+// Must be registered here, outside the React tree — @react-native-firebase/messaging
+// only invokes this while the app is backgrounded/killed if it's set at module
+// scope before AppRegistry.registerComponent (specs/003-forgot-password-otp-reset
+// User Story 3; the foreground case is registerForegroundResetCodeListener in App.tsx).
+messaging().setBackgroundMessageHandler(registerBackgroundResetCodeHandler);
+
+AppRegistry.registerComponent('main', () => App);

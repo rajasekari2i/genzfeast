@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Pressable, Switch, Text, TextInput, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
@@ -72,24 +72,21 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
 
   async function handlePickImage() {
     setErrorMessage(null);
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
+    // launchImageLibrary requests the platform photo-access permission
+    // itself; a denial surfaces as result.errorCode === 'permission' below.
+    const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
+    if (result.errorCode === 'permission') {
       setErrorMessage('Photo library access is required to pick a product image.');
       return;
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets?.[0]) {
+    if (result.didCancel || !result.assets?.[0]) {
       return;
     }
 
     const asset = result.assets[0];
-    const inferredMimeType = asset.uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-    const mimeType = asset.mimeType ?? inferredMimeType;
-    if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+    const inferredMimeType = (asset.uri ?? '').toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+    const mimeType = asset.type ?? inferredMimeType;
+    if (!asset.uri || !ALLOWED_MIME_TYPES.includes(mimeType)) {
       setErrorMessage('Image must be JPEG or PNG.');
       return;
     }
@@ -108,8 +105,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
   /**
    * Runs only when a new photo was picked — an unmodified existing photo
    * needs no re-upload. Uses uploadFile (raw XMLHttpRequest), not the typed
-   * openapi-fetch client — this Expo SDK's global fetch has a known bug
-   * uploading FormData on Android (see uploadFile's own docstring).
+   * openapi-fetch client — see uploadFile's own docstring for why.
    */
   async function uploadImage(targetProductId: string): Promise<void> {
     if (!pickedImage) return;

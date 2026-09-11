@@ -3,29 +3,47 @@
 # dependencies
 node_modules/
 
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
+# Metro
+.metro-health-check*
 
-# Native
-.kotlin/
-*.orig.*
+# Bundle artifact
+*.jsbundle
+
+# Firebase project config (contains this app's Firebase API keys;
+# per-developer/per-environment, never shared across forks of this repo).
+google-services.json
+GoogleService-Info.plist
+
+# Android build output/machine-local config — android/ itself is real
+# source now (bare React Native CLI, no more `expo prebuild` regenerating
+# it), but these are build artifacts, not source.
+android/build/
+android/app/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+android/*.iml
+android/*.hprof
+android/.cxx/
+android/**/.cxx/
+android/.kotlin/
+*.keystore
+!android/app/debug.keystore
 *.jks
+
+# Signing/provisioning credentials — per-developer, never shared.
 *.p8
 *.p12
 *.key
 *.mobileprovision
 
-# Firebase project config (app.json's googleServicesFile entries) — contains
-# this app's Firebase API keys; per-developer/per-environment, never shared
-# across forks of this repo.
-google-services.json
-GoogleService-Info.plist
-
-# Metro
-.metro-health-check*
+# iOS build output/machine-local config
+ios/build/
+ios/Pods/
+ios/*.xcuserstate
+ios/**/xcuserdata/
+ios/.xcode.env.local
+*.xcworkspace/xcuserdata/
 
 # debug
 npm-debug.*
@@ -42,6 +60,5 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# testing
+/coverage

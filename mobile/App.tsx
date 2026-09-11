@@ -1,6 +1,6 @@
 import './global.css';
 import React, { useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,18 +8,19 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { AuthProvider } from './src/auth/AuthContext';
 import { CartProvider } from './src/cart/CartContext';
-import {
-  registerForegroundResetCodeListener,
-  registerPasswordResetBackgroundTask,
-} from './src/notifications/passwordResetPush';
+import { registerForegroundResetCodeListener } from './src/notifications/passwordResetPush';
 import { registerOrderNotificationTapListener } from './src/notifications/orderReadyNotifications';
 
 export default function App() {
+  const colorScheme = useColorScheme();
+
   useEffect(() => {
-    // specs/003-forgot-password-otp-reset User Story 3 — see
-    // src/notifications/passwordResetPush.ts for what these do and why
-    // real-device/Firebase verification is still outstanding.
-    registerPasswordResetBackgroundTask();
+    // specs/003-forgot-password-otp-reset User Story 3 — the background
+    // handler is registered in index.ts (outside the React tree, per
+    // @react-native-firebase/messaging's requirement); see
+    // src/notifications/passwordResetPush.ts for what this foreground
+    // listener does and why real-device/Firebase verification is still
+    // outstanding.
     const unsubscribeForeground = registerForegroundResetCodeListener();
     // specs/009-order-fcm-push-notifications FR-007 — tap-to-open.
     const unsubscribeTap = registerOrderNotificationTapListener();
@@ -38,7 +39,7 @@ export default function App() {
           <CartProvider>
             <NavigationContainer ref={navigationRef}>
               <RootNavigator />
-              <StatusBar style="auto" />
+              <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
             </NavigationContainer>
           </CartProvider>
         </AuthProvider>

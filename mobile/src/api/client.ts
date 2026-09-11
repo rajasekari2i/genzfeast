@@ -1,6 +1,7 @@
 import createClient from 'openapi-fetch';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import * as Keychain from 'react-native-keychain';
+import Config from 'react-native-config';
 import { emitUnauthorized } from '../auth/authEvents';
 
 // Generated per-feature types (openapi-typescript) — see ./generated/README.md.
@@ -9,16 +10,18 @@ import { emitUnauthorized } from '../auth/authEvents';
 //   const client = createTypedClient<paths>();
 
 // Base URL: overridden per environment (dev/staging/prod, per Architecture §9)
-// via app.json's `extra.apiBaseUrl` or an EXPO_PUBLIC_ env var — never
-// hardcoded per coding_standard.md §10.
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+// via react-native-config's build-time .env — never hardcoded per
+// coding_standard.md §10.
+const API_BASE_URL = Config.API_BASE_URL ?? 'http://localhost:3000';
 
 const ACCESS_TOKEN_KEY = 'genzfeast.accessToken';
 // specs/002-registration-login-jwt-auth contracts/openapi.yaml's Session
 // schema: "Store securely (Keychain/Keystore) — never in plain AsyncStorage."
 // — the access token above is short-lived (~30 min) and stays in AsyncStorage
 // per the existing convention; only the long-lived refresh token needs
-// SecureStore.
+// Keychain. react-native-keychain stores one username/password pair per
+// `service` string, so REFRESH_TOKEN_KEY below doubles as both the storage
+// key and the Keychain `service` id.
 const REFRESH_TOKEN_KEY = 'genzfeast.refreshToken';
 // No screen anywhere in the app previously had a way to know the logged-in
 // user's role/company_id at runtime (RootNavigator's SurfacePicker is a
@@ -91,7 +94,9 @@ export async function storeSession(session: {
     await setStoredAccessToken(session.access_token);
   }
   if (session.refresh_token) {
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, session.refresh_token);
+    await Keychain.setGenericPassword(REFRESH_TOKEN_KEY, session.refresh_token, {
+      service: REFRESH_TOKEN_KEY,
+    });
   }
   if (session.user) {
     await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(session.user));
@@ -99,7 +104,8 @@ export async function storeSession(session: {
 }
 
 export async function getStoredRefreshToken(): Promise<string | null> {
-  return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  const credentials = await Keychain.getGenericPassword({ service: REFRESH_TOKEN_KEY });
+  return credentials ? credentials.password : null;
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
@@ -109,7 +115,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
 export async function clearStoredSession(): Promise<void> {
   await setStoredAccessToken(null);
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+  await Keychain.resetGenericPassword({ service: REFRESH_TOKEN_KEY });
   await AsyncStorage.removeItem(CURRENT_USER_KEY);
 }
 
@@ -121,12 +127,11 @@ export interface UploadFileResult {
 
 /**
  * Multipart file upload via raw XMLHttpRequest — deliberately NOT the typed
- * openapi-fetch client. This Expo SDK's global `fetch` (expo/fetch) has a
- * known, currently-unfixed bug uploading FormData on Android ("Unsupported
- * FormDataPart implementation" — https://github.com/expo/expo/issues/33134);
+ * openapi-fetch client. React Native's global `fetch` has historically been
+ * inconsistent uploading FormData with a `{uri, name, type}` part on Android;
  * every JSON request is unaffected and keeps using createTypedClient as
- * normal. XHR predates that fetch reimplementation and has supported this
- * exact `{uri, name, type}` FormData shape in React Native for years.
+ * normal. XHR has supported this exact FormData shape in React Native for
+ * years and is the safer default here.
  * Mirrors createTypedClient's own 401 -> sign-out behavior for consistency.
  */
 export function uploadFile(

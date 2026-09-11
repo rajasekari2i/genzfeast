@@ -1,3 +1,7 @@
-# Expo HAS CHANGED
+# Bare React Native — no Expo
 
-Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
+This app was migrated off Expo to the plain React Native CLI (see
+`android/`, `ios/`, `index.ts`). Do not reintroduce `expo` or any `expo-*`
+package — use the native/community RN equivalent instead (e.g.
+`@react-native-firebase/messaging` for push, `react-native-image-picker`,
+`react-native-keychain`, `react-native-config`).
