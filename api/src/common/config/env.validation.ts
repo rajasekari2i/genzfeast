@@ -48,6 +48,28 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  // specs/014-msg91-sms-otp-mobile-verification — MSG91 SMS, used ONLY for
+  // registration-time mobile-number verification (password-reset/
+  // order-pickup OTPs stay on FCM above). Deliberately optional, same
+  // reasoning as Firebase/Supabase/Razorpay: the app boots without these;
+  // AuthService.sendMobileVerification throws a clear error at request
+  // time instead (see msg91-sms.adapter.ts) — there's no silent-fallback
+  // adapter for this one flow (unlike the FCM-based NotificationPort),
+  // since a send failure here must be surfaced, not swallowed.
+  MSG91_AUTH_KEY: z.string().optional(),
+  MSG91_SENDER_ID: z.string().optional(),
+  MSG91_DLT_ENTITY_ID: z.string().optional(),
+  MSG91_TEMPLATE_ID_MOBILE_VERIFICATION: z.string().optional(),
+  MOBILE_VERIFICATION_OTP_TTL_MINUTES: z.coerce.number().int().positive().default(10),
+  MOBILE_VERIFICATION_OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
+  // Gates whether registerStudent actually enforces the verification-token
+  // check — default false so registration keeps working exactly as before
+  // until MSG91/DLT is live in a given environment.
+  MOBILE_VERIFICATION_REQUIRED: z.coerce.boolean().default(false),
+  // Resend-cooldown for the mobile-verification send endpoint only (real
+  // SMS spend per call) — no throttling infrastructure exists in this
+  // codebase, so this bounds spend per number without adding any.
+  MOBILE_VERIFICATION_RESEND_COOLDOWN_SECONDS: z.coerce.number().int().positive().default(60),
   PORT: z.coerce.number().int().positive().default(3000),
 });
 

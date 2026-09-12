@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NotificationPort, LoggingNotificationAdapter } from './notification.port';
 import { FcmNotificationAdapter } from './fcm-notification.adapter';
+import { Msg91SmsAdapter } from './msg91-sms.adapter';
 import { DevicesModule } from '../devices/devices.module';
 
 @Module({
@@ -9,6 +10,10 @@ import { DevicesModule } from '../devices/devices.module';
   providers: [
     LoggingNotificationAdapter,
     FcmNotificationAdapter,
+    // specs/014-msg91-sms-otp-mobile-verification — a separate, narrower
+    // SMS service used only by registration mobile-verification, not part
+    // of the FCM-based NotificationPort abstraction above.
+    Msg91SmsAdapter,
     {
       provide: NotificationPort,
       // Firebase is optional (env.validation.ts) — fall back to the logging
@@ -29,6 +34,6 @@ import { DevicesModule } from '../devices/devices.module';
       inject: [ConfigService, FcmNotificationAdapter, LoggingNotificationAdapter],
     },
   ],
-  exports: [NotificationPort],
+  exports: [NotificationPort, Msg91SmsAdapter],
 })
 export class NotificationsModule {}

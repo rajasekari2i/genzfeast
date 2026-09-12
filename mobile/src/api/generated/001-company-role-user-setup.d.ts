@@ -1238,6 +1238,8 @@ export interface components {
             email?: string;
             address?: string;
             is_open?: boolean;
+            /** @description FR-002a. When true (default), specs/014's registration mobile-verification delivers via MSG91 SMS (FCM push only as a failure-fallback); when false, FCM push is used directly and MSG91 is never attempted. */
+            is_sms?: boolean;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
@@ -1259,6 +1261,8 @@ export interface components {
             email?: string;
             address?: string;
             is_open?: boolean;
+            /** @description FR-002a. */
+            is_sms?: boolean;
         };
         Role: {
             /** Format: uuid */
@@ -1452,6 +1456,8 @@ export interface components {
              * @description Not in this endpoint's original schema — added for consistency with the identical company_id-per-branded-build convention 002/003 established for every other unauthenticated /auth/* endpoint.
              */
             company_id: string;
+            /** @description Not in this endpoint's original schema — added by 014-msg91-sms-otp-mobile-verification. Only actually required (enforced server-side) when MOBILE_VERIFICATION_REQUIRED=true; optional at the schema layer so registration keeps working while that flag is off. Obtained from POST /auth/register/verify-mobile. */
+            mobile_verification_token?: string;
         };
         RegistrationOption: {
             /** Format: uuid */

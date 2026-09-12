@@ -53,6 +53,7 @@ College canteens currently rely on manual, in-person, first-come-first-served or
 - Staff: sold-out toggle, order fulfilment via OTP, delivery.
 - Student: registration/login, browse menu, cart, **canteen pickup only** (no delivery-address flow in V1), online payment, 6-digit numeric OTP for pickup verification., profile page, my order history page. 
 - Forgot-password flow via alphanumeric OTP push notification (Firebase Cloud Messaging).
+- Registration-time mobile number verification via SMS OTP (MSG91) — a separate, narrower flow from the FCM-delivered OTPs above; gated by a rollout flag until DLT template approval completes. *(Added — see specs/014-msg91-sms-otp-mobile-verification.)*
 - Order lifecycle: `payment_pending → order_placed → delivered`, with a `payment_failed` retry path.
 
 ## 6. Out of Scope (V1)
@@ -74,7 +75,7 @@ College canteens currently rely on manual, in-person, first-come-first-served or
 3. One student account belongs to exactly one company/tenant (a student registers within a specific canteen's app).
 4. Payment is via **Razorpay, restricted to UPI-only** methods in V1.
 5. "Category" = user category (e.g., Student, Teaching, Non_Teaching); "Department" = student's academic department — both are tenant-scoped master tables.
-6. Order OTP and password-reset OTP are two distinct fields/flows, both delivered via Firebase Cloud Messaging (push), not SMS.
+6. Order OTP and password-reset OTP are two distinct fields/flows, both delivered via Firebase Cloud Messaging (push), not SMS. *(The one exception: registration-time mobile-number verification, a separate new flow, is SMS-delivered by design — see specs/014-msg91-sms-otp-mobile-verification. This assumption otherwise stands unchanged for order/password-reset OTP.)*
 7. **[Added]** Authentication uses **stateless JWT access tokens** plus **database-tracked, revocable refresh tokens** — not session cookies, not Supabase Auth, not Firebase Auth. *(Decided — see Architecture doc §4.)*
 8. **[Added]** Every mutation of a business-critical table is recorded in a Postgres `audit_logs` table via database triggers, not via Firebase or application-level logging. *(Decided — see Data Model §10.)*
 

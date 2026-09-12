@@ -196,7 +196,7 @@ These restate CLAUDE.md's own rules as enforceable coding rules, since this is t
 
 ## 10. Configuration & Secrets
 
-- All secrets (JWT signing key, Supabase service-role key, Razorpay keys, FCM credentials, `012`'s bootstrap-admin values) come from environment variables validated at boot via a typed config schema (`@nestjs/config` + `joi`/`zod`) — a missing required var fails startup immediately, never falls back to a default (per `012`'s explicit "fail loud, no silent fallback" rule).
+- All secrets (JWT signing key, Supabase service-role key, Razorpay keys, FCM credentials, MSG91 auth key (`014`, mobile-number verification only), `012`'s bootstrap-admin values) come from environment variables validated at boot via a typed config schema (`@nestjs/config` + `joi`/`zod`) — a missing required var fails startup immediately, never falls back to a default (per `012`'s explicit "fail loud, no silent fallback" rule).
 - No secret, credential, or `.env` file is ever committed. `.env.example` documents every required key with a placeholder, never a real value.
 - Environment-specific values (which Supabase project, which Firebase project, per Architecture §9) are injected at deploy time, never hardcoded per environment in source.
 

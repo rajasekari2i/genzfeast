@@ -3,7 +3,7 @@ import { IsBoolean, IsEmail, IsOptional, IsString } from 'class-validator';
 /**
  * PATCH semantics (coding_standard.md §6): every field optional, only
  * submitted fields change. Matches contracts/openapi.yaml's
- * CompanyUpdateRequest, including the is_open toggle.
+ * CompanyUpdateRequest, including the is_open and is_sms (FR-002a) toggles.
  */
 export class UpdateCompanyDto {
   @IsOptional()
@@ -29,4 +29,8 @@ export class UpdateCompanyDto {
   @IsOptional()
   @IsBoolean()
   is_open?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  is_sms?: boolean;
 }

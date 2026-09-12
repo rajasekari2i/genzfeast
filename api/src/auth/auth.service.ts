@@ -2,12 +2,16 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
+  ServiceUnavailableException,
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
+import { randomBytes, randomInt } from 'crypto';
 import { TenantContext, TenantPrismaService } from '../common/prisma/tenant-prisma.service';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
@@ -15,10 +19,23 @@ import { AuthAuditService, AuditMeta, AUTH_SERVICE_ACTOR } from './auth-audit.se
 import { OtpService } from './otp.service';
 import { NotificationPort } from '../notifications/notification.port';
 import { DevicesService } from '../devices/devices.service';
+import { Msg91SmsAdapter } from '../notifications/msg91-sms.adapter';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordRequestDto } from './dto/forgot-password-request.dto';
 import { ForgotPasswordVerifyDto } from './dto/forgot-password-verify.dto';
 import { RegisterStudentDto } from './dto/register-student.dto';
+import { SendMobileVerificationDto } from './dto/send-mobile-verification.dto';
+import { VerifyMobileDto } from './dto/verify-mobile.dto';
+
+// specs/014-msg91-sms-otp-mobile-verification — long enough to finish the
+// rest of the registration form, short enough not to become a long-lived
+// reusable bearer credential.
+const MOBILE_VERIFICATION_TOKEN_TTL_MINUTES = 20;
+
+/** Numeric-only, same shape as payments.service.ts's own generateNumericOtp — this flow's code is SMS-delivered, unlike password-reset's alphanumeric one above. */
+function generateNumericVerificationCode(): string {
+  return randomInt(0, 1_000_000).toString().padStart(6, '0');
+}
 
 export interface SessionResponse {
   access_token: string;
@@ -77,6 +94,12 @@ export class AuthService {
     private readonly otpService: OtpService,
     private readonly notificationPort: NotificationPort,
     private readonly devicesService: DevicesService,
+    // specs/014-msg91-sms-otp-mobile-verification. Deliberately NOT routed
+    // through NotificationPort (which stays FCM-only, unlike an earlier
+    // draft of this feature that put all three OTP flows behind it) — only
+    // this one new flow uses SMS, so it's injected directly rather than
+    // widening the shared FCM abstraction's contract.
+    private readonly msg91SmsAdapter: Msg91SmsAdapter,
   ) {}
 
   /**
@@ -552,6 +575,145 @@ export class AuthService {
   }
 
   /**
+   * specs/014-msg91-sms-otp-mobile-verification. Unauthenticated —
+   * no User row exists yet, so this upserts its own pre-account
+   * mobile_verifications row (company_id, mobile_number) rather than
+   * reusing users.reset_password_otp*'s columns the way 003 does. Channel
+   * is per-Company (specs/001 FR-002a, `companies.is_sms`): SMS-primary
+   * (via Msg91SmsAdapter) when true (default), with FCM push only as a
+   * failure-fallback (FR-007); FCM-primary (MSG91 never attempted) when
+   * false. Either way, password-reset/order-pickup stay on FCM
+   * (NotificationPort) unaffected by this Company setting.
+   *
+   * Resend-cooldown (FR-005): a real, billed SMS send per call when
+   * SMS-primary, so this returns a real 429 rather than silently no-opping
+   * — left as one shared limit even for `is_sms=false` companies (where no
+   * SMS is ever attempted) rather than adding a second, channel-specific
+   * rate limit.
+   */
+  async sendMobileVerification(dto: SendMobileVerificationDto): Promise<{ message: string }> {
+    const cooldownSeconds = this.configService.getOrThrow<number>('MOBILE_VERIFICATION_RESEND_COOLDOWN_SECONDS');
+    const ttlMinutes = this.configService.getOrThrow<number>('MOBILE_VERIFICATION_OTP_TTL_MINUTES');
+
+    const existing = await this.tenantPrisma.runInTenantContext(PRE_AUTH_CONTEXT, (tx) =>
+      tx.mobileVerification.findUnique({
+        where: { companyId_mobileNumber: { companyId: dto.company_id, mobileNumber: dto.mobile_number } },
+      }),
+    );
+    if (existing && Date.now() - existing.lastSentAt.getTime() < cooldownSeconds * 1000) {
+      throw new HttpException('Please wait before requesting another code', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    // Numeric-only (not OtpService.generateCode()'s alphanumeric shape,
+    // used by password-reset above for a push-notification-readable code)
+    // — matches the order-pickup OTP's own format and standard SMS/Android
+    // Autofill convention, appropriate here since this is the one flow
+    // actually delivered by SMS.
+    const code = generateNumericVerificationCode();
+    const codeHash = this.otpService.hashCode(code);
+    const now = new Date();
+    const otpExpiresAt = new Date(now.getTime() + ttlMinutes * 60_000);
+
+    await this.tenantPrisma.runInTenantContext(PRE_AUTH_CONTEXT, (tx) =>
+      tx.mobileVerification.upsert({
+        where: { companyId_mobileNumber: { companyId: dto.company_id, mobileNumber: dto.mobile_number } },
+        create: {
+          companyId: dto.company_id,
+          mobileNumber: dto.mobile_number,
+          otpHash: codeHash,
+          otpExpiresAt,
+          lastSentAt: now,
+        },
+        // A new send always supersedes any prior one, including an
+        // already-verified-but-not-yet-consumed token — same "at most one
+        // outstanding" rule 003's resetPasswordOtp already established.
+        update: { otpHash: codeHash, otpExpiresAt, otpAttempts: 0, lastSentAt: now, verifiedAt: null, verificationToken: null, tokenExpiresAt: null },
+      }),
+    );
+
+    // specs/001 FR-002a: the owning Company can disable SMS entirely (e.g.
+    // to avoid MSG91's per-send cost) — no company-existence validation is
+    // added here (this method has never had one; a bogus company_id already
+    // fails via mobile_verifications' FK to companies), so a lookup miss
+    // defensively defaults to today's SMS-primary behavior.
+    const company = await this.tenantPrisma.runInTenantContext(PRE_AUTH_CONTEXT, (tx) =>
+      tx.company.findFirst({ where: { id: dto.company_id, isDeleted: false }, select: { isSms: true } }),
+    );
+    const isSmsEnabled = company?.isSms ?? true;
+
+    if (!isSmsEnabled) {
+      // FCM is this Company's configured primary channel — MSG91 is never
+      // attempted, unlike the SMS-failure fallback below.
+      if (dto.fcm_token) {
+        const { sent } = await this.notificationPort.sendMobileVerificationPush(dto.fcm_token, code, dto.mobile_number);
+        if (sent) {
+          return { message: 'A verification code has been sent via push notification.' };
+        }
+      }
+      throw new ServiceUnavailableException('Could not send verification code, please try again');
+    }
+
+    try {
+      await this.msg91SmsAdapter.sendVerificationCode(dto.mobile_number, code);
+    } catch {
+      // FR-006/FR-007: SMS failed — fall back to a best-effort FCM push to
+      // the registering device's own token, if the client supplied one.
+      // Deliberately does NOT reuse NotificationPort's user-keyed sends
+      // (sendPasswordResetCode/sendOrderReadyNotification) — no `users`
+      // row exists yet at this point in registration.
+      if (dto.fcm_token) {
+        const { sent } = await this.notificationPort.sendMobileVerificationPush(dto.fcm_token, code, dto.mobile_number);
+        if (sent) {
+          return { message: 'Could not send SMS — your code has been delivered to this device instead.' };
+        }
+      }
+      throw new ServiceUnavailableException('Could not send verification code, please try again');
+    }
+
+    return { message: 'A verification code has been sent.' };
+  }
+
+  /** specs/014-msg91-sms-otp-mobile-verification. Same validity-rule shape as verifyPasswordReset. */
+  async verifyMobile(dto: VerifyMobileDto): Promise<{ verified: true; verification_token: string; expires_in: number }> {
+    const genericInvalidCode = () => new UnprocessableEntityException('Invalid or expired code');
+
+    const found = await this.tenantPrisma.runInTenantContext(PRE_AUTH_CONTEXT, (tx) =>
+      tx.mobileVerification.findUnique({
+        where: { companyId_mobileNumber: { companyId: dto.company_id, mobileNumber: dto.mobile_number } },
+      }),
+    );
+    if (!found) {
+      throw genericInvalidCode();
+    }
+
+    const maxAttempts = this.configService.getOrThrow<number>('MOBILE_VERIFICATION_OTP_MAX_ATTEMPTS');
+    const notExpiredAndOutstanding = found.otpExpiresAt.getTime() > Date.now() && found.otpAttempts < maxAttempts;
+    const codeMatches = notExpiredAndOutstanding && found.otpHash === this.otpService.hashCode(dto.code);
+
+    if (!codeMatches) {
+      if (notExpiredAndOutstanding) {
+        await this.tenantPrisma.runInTenantContext(PRE_AUTH_CONTEXT, (tx) =>
+          tx.mobileVerification.update({ where: { id: found.id }, data: { otpAttempts: { increment: 1 } } }),
+        );
+      }
+      throw genericInvalidCode();
+    }
+
+    const verificationToken = randomBytes(32).toString('hex');
+    const now = new Date();
+    const tokenExpiresAt = new Date(now.getTime() + MOBILE_VERIFICATION_TOKEN_TTL_MINUTES * 60_000);
+
+    await this.tenantPrisma.runInTenantContext(PRE_AUTH_CONTEXT, (tx) =>
+      tx.mobileVerification.update({
+        where: { id: found.id },
+        data: { verifiedAt: now, verificationToken, tokenExpiresAt },
+      }),
+    );
+
+    return { verified: true, verification_token: verificationToken, expires_in: MOBILE_VERIFICATION_TOKEN_TTL_MINUTES * 60 };
+  }
+
+  /**
    * (specs/001-company-role-user-setup contracts/openapi.yaml POST
    * /auth/register, FR-011..FR-015, as extended by
    * specs/002-registration-login-jwt-auth's own contract/FR-001: the
@@ -598,6 +760,37 @@ export class AuthService {
         }
       }
 
+      // specs/014-msg91-sms-otp-mobile-verification — only enforced once
+      // MOBILE_VERIFICATION_REQUIRED is flipped on (default false), so this
+      // ships and merges before MSG91/DLT template approval completes
+      // without blocking registration in the meantime. `username` doubles
+      // as the mobile number (register-student.dto.ts), same convention
+      // MobileVerification itself is keyed on.
+      if (this.configService.get<boolean>('MOBILE_VERIFICATION_REQUIRED')) {
+        const verification = await tx.mobileVerification.findFirst({
+          where: {
+            companyId: dto.company_id,
+            mobileNumber: dto.username,
+            verificationToken: dto.mobile_verification_token,
+          },
+        });
+        const tokenValid =
+          verification !== null &&
+          verification.verifiedAt !== null &&
+          verification.tokenExpiresAt !== null &&
+          verification.tokenExpiresAt.getTime() > Date.now();
+        if (!tokenValid) {
+          throw new BadRequestException('Mobile number not verified');
+        }
+        // Single-use — consumed atomically with user.create below (same
+        // transaction) so it can never be replayed across two registration
+        // attempts.
+        await tx.mobileVerification.update({
+          where: { id: verification.id },
+          data: { verificationToken: null, tokenExpiresAt: null },
+        });
+      }
+
       const passwordHash = await this.passwordService.hash(dto.password);
 
       try {
@@ -635,7 +828,11 @@ export class AuthService {
         // (users_company_username_unique) is the source of truth, avoiding a
         // separate pre-check that would race with a concurrent registration.
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictException('Username already exists within this company');
+          // Broadened wording (was "...within this company"): P2002 can now
+          // also come from the cross-partition trigger (a collision with a
+          // system_admin's username), which has no "company" in common —
+          // this message is accurate for either cause.
+          throw new ConflictException('Username already exists');
         }
         throw error;
       }

@@ -37,4 +37,16 @@ export class RegisterStudentDto {
   @IsOptional()
   @IsUUID()
   department_id?: string;
+
+  /**
+   * specs/014-msg91-sms-otp-mobile-verification. Optional at the DTO layer
+   * — only actually required/checked in AuthService.registerStudent when
+   * MOBILE_VERIFICATION_REQUIRED=true (env-gated until MSG91/DLT template
+   * approval completes), so registration keeps working exactly as before
+   * while the flag is off.
+   */
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  mobile_verification_token?: string;
 }

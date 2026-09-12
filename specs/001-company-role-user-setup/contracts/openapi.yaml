@@ -702,6 +702,13 @@ components:
         email: { type: string, format: email }
         address: { type: string }
         is_open: { type: boolean }
+        is_sms:
+          type: boolean
+          description: >
+            FR-002a. When true (default), specs/014's registration
+            mobile-verification delivers via MSG91 SMS (FCM push only as a
+            failure-fallback); when false, FCM push is used directly and
+            MSG91 is never attempted.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -724,6 +731,7 @@ components:
         email: { type: string, format: email }
         address: { type: string }
         is_open: { type: boolean }
+        is_sms: { type: boolean, description: "FR-002a." }
 
     # Global, platform-wide catalog — not per-Company (revised; see
     # migration 20260907170000_global_roles and 20260907180000).
@@ -903,6 +911,15 @@ components:
             with the identical company_id-per-branded-build convention
             002/003 established for every other unauthenticated /auth/*
             endpoint.
+        mobile_verification_token:
+          type: string
+          description: >
+            Not in this endpoint's original schema — added by
+            014-msg91-sms-otp-mobile-verification. Only actually required
+            (enforced server-side) when MOBILE_VERIFICATION_REQUIRED=true;
+            optional at the schema layer so registration keeps working
+            while that flag is off. Obtained from
+            POST /auth/register/verify-mobile.
 
     RegistrationOption:
       type: object

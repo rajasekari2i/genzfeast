@@ -24,23 +24,66 @@ model Company {
   email         String
   address       String
   isOpen        Boolean  @default(true) @map("is_open")
+  /// specs/001-company-role-user-setup FR-002a. Governs registration-time
+  /// mobile-verification's delivery channel (specs/014): true (default) =
+  /// MSG91 SMS, with FCM push only as a best-effort failure-fallback
+  /// (unchanged); false = FCM push directly, MSG91 never attempted.
+  isSms         Boolean  @default(true) @map("is_sms")
   isDeleted     Boolean  @default(false) @map("is_deleted")
   createdBy     String?  @map("created_by") @db.Uuid
   updatedBy     String?  @map("updated_by") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  categories     Category[]
-  departments    Department[]
-  users          User[]
-  authAuditLogs  AuthAuditLog[]
-  products       Product[]
-  orders         Order[]
-  deliveries     Delivery[]
-  orderAuditLogs OrderAuditLog[]
-  auditLogs      AuditLog[]
+  categories          Category[]
+  departments         Department[]
+  users               User[]
+  authAuditLogs       AuthAuditLog[]
+  products            Product[]
+  orders              Order[]
+  deliveries          Delivery[]
+  orderAuditLogs      OrderAuditLog[]
+  auditLogs           AuditLog[]
+  mobileVerifications MobileVerification[]
 
   @@map("companies")
+}
+
+/// specs/014-msg91-sms-otp-mobile-verification — registration-time
+/// mobile-number verification, pre-account (no User row exists yet, so this
+/// can't reuse users.reset_password_otp*'s columns the way 003 did).
+/// company-scoped since a mobile number can register independently under
+/// more than one Company (BRD Assumption 3 — one student account per
+/// company, not globally). One outstanding verification per (company,
+/// mobile number): a new send-verification call upserts this row rather
+/// than inserting a new one, so a new request supersedes any prior one and
+/// storage is bounded by distinct (company, mobile number) pairs ever
+/// attempted, not by attempt count.
+model MobileVerification {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  mobileNumber String    @map("mobile_number")
+  otpHash      String    @map("otp_hash")
+  otpExpiresAt DateTime  @map("otp_expires_at") @db.Timestamptz(6)
+  otpAttempts  Int       @default(0) @map("otp_attempts")
+  // Resend-cooldown gate (FR-005) — same reasoning as
+  // User.resetPasswordOtpLastSentAt: SMS is a real, billed send.
+  lastSentAt   DateTime  @map("last_sent_at") @db.Timestamptz(6)
+  verifiedAt   DateTime? @map("verified_at") @db.Timestamptz(6)
+  // Opaque, single-use, short-lived (15-30 min) bearer credential proving
+  // this (company, mobile_number) pair was verified — random bytes, not a
+  // JWT (no signing-key coupling needed for something this narrowly scoped).
+  // Consumed (nulled) atomically with user.create in registerStudent so it
+  // can never be replayed across two registration attempts.
+  verificationToken String?   @unique @map("verification_token")
+  tokenExpiresAt    DateTime? @map("token_expires_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, mobileNumber])
+  @@map("mobile_verifications")
 }
 
 /// A named permission group. Global system_admin role has companyId = NULL (data-model.md §2).
@@ -115,9 +158,12 @@ model User {
   status                    String    @default("active")
   noOfLoginAttempt          Int       @default(0) @map("no_of_login_attempt")
   // specs/003-forgot-password-otp-reset data-model.md §1 — SHA-256 hex digest
-  // of the current outstanding 6-character alphanumeric reset code; NULL
-  // when no reset is in progress. At most one outstanding code per account
-  // (a new request supersedes any prior one, FR-014).
+  // of the current outstanding 6-digit numeric reset code (still delivered
+  // via FCM push, unchanged by specs/014 — numeric-only for consistency
+  // with the order-pickup OTP's own format, not because of a delivery
+  // channel change); NULL when no reset is in progress. At most one
+  // outstanding code per account (a new request supersedes any prior one,
+  // FR-014).
   resetPasswordOtp          String?   @map("reset_password_otp")
   resetPasswordOtpExpiresAt DateTime? @map("reset_password_otp_expires_at") @db.Timestamptz(6)
   resetPasswordOtpAttempts  Int       @default(0) @map("reset_password_otp_attempts")

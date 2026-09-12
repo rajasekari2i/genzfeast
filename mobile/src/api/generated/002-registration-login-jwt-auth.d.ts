@@ -264,6 +264,8 @@ export interface components {
              * @description Not in this endpoint's original schema — added for consistency with the identical company_id-per-branded-build convention 002/003 established for every other unauthenticated /auth/* endpoint.
              */
             company_id: string;
+            /** @description Not in this endpoint's original schema — added by 014-msg91-sms-otp-mobile-verification. Only actually required (enforced server-side) when MOBILE_VERIFICATION_REQUIRED=true; optional at the schema layer so registration keeps working while that flag is off. Obtained from POST /auth/register/verify-mobile. */
+            mobile_verification_token?: string;
         };
     };
     responses: {

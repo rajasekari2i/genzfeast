@@ -52,6 +52,7 @@ export class CompaniesService {
           ...(dto.email !== undefined && { email: dto.email }),
           ...(dto.address !== undefined && { address: dto.address }),
           ...(dto.is_open !== undefined && { isOpen: dto.is_open }),
+          ...(dto.is_sms !== undefined && { isSms: dto.is_sms }),
           updatedBy: ctx.userId,
         },
       });
@@ -155,7 +156,11 @@ export class CompaniesService {
         // as the source of truth for the uniqueness rule, rather than a
         // separate pre-check that would race with a concurrent request.
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictException('Username already exists within this company');
+          // Broadened wording (was "...within this company"): P2002 can now
+          // also come from the cross-partition trigger (a collision with a
+          // system_admin's username), which has no "company" in common —
+          // this message is accurate for either cause.
+          throw new ConflictException('Username already exists');
         }
         throw error;
       }

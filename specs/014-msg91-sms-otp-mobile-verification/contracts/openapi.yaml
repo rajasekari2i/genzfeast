@@ -1,0 +1,132 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — MSG91 SMS OTP Mobile Verification API
+  version: "1.0.0"
+  description: >
+    Contract for feature 014-msg91-sms-otp-mobile-verification. Both
+    endpoints are unauthenticated — a prospective student verifying their
+    mobile number, by definition, has no account/session yet. SMS (MSG91)
+    is used ONLY for these two endpoints — 003-forgot-password-otp-reset's
+    and 009-order-fcm-push-notifications's existing OTP flows are
+    unaffected and stay on FCM push, unchanged.
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+tags:
+  - name: MobileVerification
+
+paths:
+  /auth/register/send-verification:
+    post:
+      tags: [MobileVerification]
+      summary: >
+        Send a one-time SMS code to a mobile number, to be verified before
+        registration completes (User Story 1). Always 202.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SendVerificationRequest" }
+      responses:
+        "202":
+          description: >
+            A verification code has been sent. `message` varies by delivery
+            channel (FR-008): the owning Company's SMS-primary
+            (`"A verification code has been sent."`), FCM-primary when
+            `is_sms=false` (`"A verification code has been sent via push
+            notification."`), or SMS-failure-fallback (`"Could not send SMS
+            — your code has been delivered to this device instead."`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequestAck" }
+        "429":
+          description: >
+            A code was already sent to this (company_id, mobile_number) pair
+            within the resend-cooldown window (FR-005).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "503":
+          description: >
+            MSG91 did not confirm delivery (FR-006) — unlike password-reset/
+            order-pickup, this flow has no in-app fallback, so a send
+            failure is surfaced as a real error rather than a false
+            "code sent" response.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /auth/register/verify-mobile:
+    post:
+      tags: [MobileVerification]
+      summary: Submit the code and receive a short-lived verification token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VerifyMobileRequest" }
+      responses:
+        "200":
+          description: Code verified — token may now be submitted to POST /auth/register.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VerifyMobileAck" }
+        "422":
+          description: >
+            Code is invalid, expired, already used, or the incorrect-attempt
+            limit has been reached for it — a single generic reason, not
+            distinguished further to the client (mirrors
+            003-forgot-password-otp-reset's own FR-012 precedent).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  schemas:
+    RequestAck:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "A verification code has been sent."
+
+    SendVerificationRequest:
+      type: object
+      required: [company_id, mobile_number]
+      properties:
+        company_id: { type: string, format: uuid }
+        mobile_number: { type: string, description: "10-digit mobile number" }
+        fcm_token:
+          type: string
+          description: >
+            Optional (FR-007). The registering device's own FCM token. If
+            supplied and the SMS send fails, the code is pushed directly to
+            this token as a best-effort fallback instead of a hard error.
+
+    VerifyMobileRequest:
+      type: object
+      required: [company_id, mobile_number, code]
+      properties:
+        company_id: { type: string, format: uuid }
+        mobile_number: { type: string, description: "10-digit mobile number" }
+        code: { type: string, description: "6-digit numeric code" }
+
+    VerifyMobileAck:
+      type: object
+      properties:
+        verified: { type: boolean, example: true }
+        verification_token:
+          type: string
+          description: >
+            Opaque, single-use, short-lived (~20 min) bearer credential.
+            Submit as RegisterStudentDto's mobile_verification_token
+            (001-company-role-user-setup contracts/openapi.yaml's
+            StudentRegisterRequest) to complete registration — only
+            actually enforced when MOBILE_VERIFICATION_REQUIRED=true.
+        expires_in: { type: integer, description: "Seconds until verification_token expires" }
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }

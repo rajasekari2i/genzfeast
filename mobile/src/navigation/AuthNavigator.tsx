@@ -16,6 +16,8 @@ import { primaryHeaderOptions } from '../theme/navigationHeader';
 export type AuthStackParamList = {
   Splash: undefined;
   Login: undefined;
+  // specs/014-msg91-sms-otp-mobile-verification — mobile-number verification
+  // is folded directly into RegisterScreen, no separate route/params needed.
   Register: undefined;
   ForgotPasswordRequest: undefined;
   ForgotPasswordVerify: { username: string };

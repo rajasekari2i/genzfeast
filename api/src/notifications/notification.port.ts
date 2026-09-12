@@ -22,6 +22,22 @@ export abstract class NotificationPort {
    * (FR-006).
    */
   abstract sendOrderReadyNotification(userId: string, orderId: string, otp: string): Promise<{ sent: boolean }>;
+
+  /**
+   * specs/014-msg91-sms-otp-mobile-verification FR-007 — the one exception
+   * in this codebase to every other NotificationPort call being keyed by an
+   * existing `users` row: no account exists yet at this point in
+   * registration, so this sends directly to a raw token supplied by the
+   * mobile client rather than looking anything up via DevicesService.
+   * Best-effort (never throws) — AuthService.sendMobileVerification decides
+   * what to do when this comes back `{ sent: false }`. `mobileNumber` rides
+   * along in the push payload (not used for delivery, only correlation) so
+   * the mobile client's background handler can tell which in-flight
+   * registration attempt a backgrounded/killed-app-delivered code belongs
+   * to — there is no `users`/session id to key off here, so the number is
+   * the only correlation key available.
+   */
+  abstract sendMobileVerificationPush(fcmToken: string, code: string, mobileNumber: string): Promise<{ sent: boolean }>;
 }
 
 /** Fallback used when Firebase isn't configured — see NotificationsModule. */
@@ -37,6 +53,11 @@ export class LoggingNotificationAdapter extends NotificationPort {
 
   async sendOrderReadyNotification(userId: string, orderId: string): Promise<{ sent: boolean }> {
     this.logger.log(`Order-ready push suppressed (Firebase not configured) for user ${userId}, order ${orderId}`);
+    return { sent: false };
+  }
+
+  async sendMobileVerificationPush(): Promise<{ sent: boolean }> {
+    this.logger.log('Mobile-verification push fallback suppressed (Firebase not configured)');
     return { sent: false };
   }
 }

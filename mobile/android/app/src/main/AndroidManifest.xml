@@ -8,6 +8,15 @@
     <!-- @react-native-firebase/messaging: required on Android 13+ to display
          the order-ready visible notification (specs/009-order-fcm-push-notifications). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- BatteryOptimizationModule: one-tap prompt so MIUI/OEM power management
+         doesn't silently delay FCM delivery for specs/014's mobile-verification
+         push fallback (confirmed on-device via MIUI's SmartPower throttling +
+         an FcmRetry alarm in logcat). ACCEPTED RISK: Google Play restricts this
+         permission to a narrow set of app categories (alarms, VPNs, device
+         management) that a food-ordering app does not clearly fit; using it
+         anyway risks Play Store rejection or later removal. Explicitly
+         requested and accepted by the project owner after being told this. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <queries>
         <intent>

@@ -29,6 +29,7 @@ departments (1) ──< users (many, nullable)
 | `email` | `text` | not null |
 | `address` | `text` | not null |
 | `is_open` | `boolean` | not null, default `true` — governs new order acceptance only (spec Assumptions); does not gate login/registration |
+| `is_sms` | `boolean` | not null, default `true` (FR-002a) — governs specs/014's registration mobile-verification delivery channel: `true` = MSG91 SMS (FCM push only as a failure-fallback, unchanged); `false` = FCM push directly, MSG91 never attempted |
 | `is_deleted` | `boolean` | not null, default `false` |
 | `created_by`, `updated_by` | `uuid` | references `users(id)`, nullable (the very first company has no creating user row yet — System Admin identity is carried in the JWT, not necessarily a `users` row in this schema; see Open Follow-Up below) |
 | `created_at`, `updated_at` | `timestamptz` | not null, default `now()` |

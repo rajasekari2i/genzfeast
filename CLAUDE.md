@@ -26,7 +26,8 @@ This repo also uses **spec-kit** (`.specify/`, `specs/`) for spec-driven feature
 | Database | **Supabase (managed PostgreSQL)** — relational, not Firestore |
 | File storage | Supabase Storage (product images) |
 | Auth | **Stateless JWT** access tokens (short-lived, 15–60 min) issued/verified by the Node API, + DB-tracked revocable refresh tokens. NOT Supabase Auth, NOT Firebase Auth, NOT session cookies |
-| Push notifications | **Firebase Cloud Messaging only** — no other Firebase product (no Firestore, no Firebase Auth, no Firebase Storage) |
+| Push notifications | **Firebase Cloud Messaging only** — no other Firebase product (no Firestore, no Firebase Auth, no Firebase Storage). Used for password-reset OTP and order-pickup OTP delivery |
+| SMS (mobile-number verification only) | **MSG91** — `specs/014-msg91-sms-otp-mobile-verification`. Used ONLY for the registration-time mobile-verification flow; not a replacement for FCM, which stays the delivery channel for every other OTP |
 | Payments | Razorpay, UPI-only in V1, server-verified via webhook (never trust client redirect alone) |
 | Hosting | Cloud Run or any Node-compatible container host |
 
@@ -67,6 +68,7 @@ payment_pending → order_placed → delivered
 - Order status is finalized **only** by the server-side payment webhook, never by client-side redirect alone.
 - OTP: a random 6-digit numeric OTP is generated once, at the moment payment succeeds; single-use; invalidated once `delivered`; not returned by the API once delivered.
 - Forgot-password uses a **separate** 6-character alphanumeric OTP (`reset_password_otp`), delivered via FCM push, with an in-app fallback screen (since push delivery isn't guaranteed).
+- Registration-time mobile-number verification (`mobile_verifications` table, new) is a separate, narrower flow that delivers via SMS (MSG91) instead — the only SMS-delivered OTP in this codebase. It blocks registration completion only when `MOBILE_VERIFICATION_REQUIRED=true` (default `false`, until DLT template approval completes).
 - `no_of_login_attempt` increments on failed login and on every forgot-password request; resets to 0 only after a successful password reset.
 
 ## Data Conventions

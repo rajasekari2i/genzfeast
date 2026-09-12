@@ -23,6 +23,8 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordRequestDto } from './dto/forgot-password-request.dto';
 import { ForgotPasswordVerifyDto } from './dto/forgot-password-verify.dto';
 import { RegisterStudentDto } from './dto/register-student.dto';
+import { SendMobileVerificationDto } from './dto/send-mobile-verification.dto';
+import { VerifyMobileDto } from './dto/verify-mobile.dto';
 
 function requestMeta(req: Request): AuditMeta {
   return { ipAddress: req.ip, userAgent: req.get('user-agent') };
@@ -43,6 +45,22 @@ export class AuthController {
     @Query('company_id', ParseUUIDPipe) companyId: string,
   ): Promise<RegistrationOptionsResponse> {
     return this.authService.getRegistrationOptions(companyId);
+  }
+
+  /** specs/014-msg91-sms-otp-mobile-verification User Story 1 — always 202. */
+  @Post('register/send-verification')
+  @HttpCode(HttpStatus.ACCEPTED)
+  sendMobileVerification(@Body() dto: SendMobileVerificationDto): Promise<{ message: string }> {
+    return this.authService.sendMobileVerification(dto);
+  }
+
+  /** specs/014-msg91-sms-otp-mobile-verification User Story 1 — 200/422. */
+  @Post('register/verify-mobile')
+  @HttpCode(HttpStatus.OK)
+  verifyMobile(
+    @Body() dto: VerifyMobileDto,
+  ): Promise<{ verified: true; verification_token: string; expires_in: number }> {
+    return this.authService.verifyMobile(dto);
   }
 
   /**

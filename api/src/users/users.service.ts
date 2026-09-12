@@ -118,7 +118,11 @@ export class UsersService {
       } catch (error) {
         // users_company_username_unique (FR-013/FR-014).
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictException('Username already exists within this company');
+          // Broadened wording (was "...within this company"): P2002 can now
+          // also come from the cross-partition trigger (a collision with a
+          // system_admin's username), which has no "company" in common —
+          // this message is accurate for either cause.
+          throw new ConflictException('Username already exists');
         }
         throw error;
       }
@@ -247,7 +251,11 @@ export class UsersService {
         return toUserResponse(updated, newRole.name);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictException('Username already exists within this company');
+          // Broadened wording (was "...within this company"): P2002 can now
+          // also come from the cross-partition trigger (a collision with a
+          // system_admin's username), which has no "company" in common —
+          // this message is accurate for either cause.
+          throw new ConflictException('Username already exists');
         }
         throw error;
       }
@@ -343,7 +351,11 @@ export class UsersService {
         return toUserResponse(user, role.name);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictException('Username already exists within this company');
+          // Broadened wording (was "...within this company"): P2002 can now
+          // also come from the cross-partition trigger (a collision with a
+          // system_admin's username), which has no "company" in common —
+          // this message is accurate for either cause.
+          throw new ConflictException('Username already exists');
         }
         throw error;
       }
@@ -407,7 +419,11 @@ export class UsersService {
         return toUserResponse(updated, newRole.name);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictException('Username already exists within this company');
+          // Broadened wording (was "...within this company"): P2002 can now
+          // also come from the cross-partition trigger (a collision with a
+          // system_admin's username), which has no "company" in common —
+          // this message is accurate for either cause.
+          throw new ConflictException('Username already exists');
         }
         throw error;
       }

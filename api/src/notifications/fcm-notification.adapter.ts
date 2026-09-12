@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { App, cert, getApps, initializeApp } from 'firebase-admin/app';
-import { getMessaging, MulticastMessage } from 'firebase-admin/messaging';
+import { getMessaging, Message, MulticastMessage } from 'firebase-admin/messaging';
 import { NotificationPort } from './notification.port';
 import { DevicesService } from '../devices/devices.service';
 
@@ -94,6 +94,38 @@ export class FcmNotificationAdapter extends NotificationPort {
     });
 
     return { sent: successCount > 0 };
+  }
+
+  /**
+   * specs/014-msg91-sms-otp-mobile-verification FR-007. Deliberately a
+   * single raw-token `send()`, not `sendMulticast` — this targets exactly
+   * the one device the mobile client supplied its own `fcm_token` from,
+   * never a `DevicesService` lookup (no `userId` exists yet at this point
+   * in registration). Data-only, matching sendPasswordResetCode's shape,
+   * NOT sendOrderReadyNotification's visible-notification shape: the
+   * mobile app reads the code itself via a foreground listener (while
+   * active) or a background handler (while backgrounded/killed — MIUI and
+   * similar OEM power management can throttle this app to background even
+   * moments after the student's own "send code" tap, so both paths matter
+   * in practice). `mobile_number` rides in the payload purely for
+   * client-side correlation (see NotificationPort's doc comment) — never
+   * read here.
+   */
+  async sendMobileVerificationPush(fcmToken: string, code: string, mobileNumber: string): Promise<{ sent: boolean }> {
+    const message: Message = {
+      token: fcmToken,
+      data: { type: 'mobile_verification', code, mobile_number: mobileNumber },
+      android: { priority: 'high' },
+      apns: { headers: { 'apns-priority': '10' }, payload: { aps: { contentAvailable: true } } },
+    };
+
+    try {
+      await getMessaging(this.getApp()).send(message);
+      return { sent: true };
+    } catch (error) {
+      this.logger.warn(`Mobile-verification push failed for a raw token: ${(error as Error).message}`);
+      return { sent: false };
+    }
   }
 
   private async sendMulticast(

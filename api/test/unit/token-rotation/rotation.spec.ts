@@ -118,6 +118,7 @@ function buildAuthService(usersById: Map<string, AuthUser>) {
     {} as never, // OtpService — not on the refresh/issueSession/revokeAllSessions path
     {} as never, // NotificationPort — same
     devicesService,
+    {} as never, // Msg91SmsAdapter — same
   );
 
   return { authService, tokenService, fakeTx };

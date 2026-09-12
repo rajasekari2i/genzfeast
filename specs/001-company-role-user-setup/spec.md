@@ -111,6 +111,7 @@ A System Admin views, and directly creates, edits, or removes, Roles, Categories
 
 - **FR-001**: System MUST allow a System Admin to create a Company record with name, contact person, mobile number, email, and address.
 - **FR-002**: System MUST allow a System Admin to view and list every Company on the platform, and to update a Company's details and toggle its open/closed status.
+- **FR-002a**: System MUST allow a System Admin to toggle a Company's `is_sms` setting (default `true`), governing whether `specs/014-msg91-sms-otp-mobile-verification`'s registration-time mobile-number verification delivers its code via SMS (MSG91, when `true`) or via FCM push directly (when `false`) — the same update path as FR-002, not a separate capability.
 - **FR-003**: System MUST automatically establish a default set of Company-scoped roles (Company Admin, Staff, Student) at the moment a new Company is created, so those roles are immediately available for assigning to that Company's users.
 - **FR-004**: System MUST allow a System Admin to create the first user for a newly created Company and assign that user the Company Admin role for it.
 - **FR-005**: System MUST allow a System Admin to view, create, update, and remove Roles, Categories, and Departments across every Company on the platform from a single, platform-wide capability.
