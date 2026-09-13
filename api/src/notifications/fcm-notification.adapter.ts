@@ -101,22 +101,27 @@ export class FcmNotificationAdapter extends NotificationPort {
    * single raw-token `send()`, not `sendMulticast` — this targets exactly
    * the one device the mobile client supplied its own `fcm_token` from,
    * never a `DevicesService` lookup (no `userId` exists yet at this point
-   * in registration). Data-only, matching sendPasswordResetCode's shape,
-   * NOT sendOrderReadyNotification's visible-notification shape: the
-   * mobile app reads the code itself via a foreground listener (while
-   * active) or a background handler (while backgrounded/killed — MIUI and
-   * similar OEM power management can throttle this app to background even
-   * moments after the student's own "send code" tap, so both paths matter
-   * in practice). `mobile_number` rides in the payload purely for
-   * client-side correlation (see NotificationPort's doc comment) — never
-   * read here.
+   * in registration). Unlike sendPasswordResetCode's data-only shape, this
+   * carries a visible `notification` — the student reads the code off the
+   * notification and types it in themselves, there's no auto-fill on the
+   * client side. `data.code`/`data.mobile_number` still ride along for
+   * correlation (see NotificationPort's doc comment), not for delivery.
    */
-  async sendMobileVerificationPush(fcmToken: string, code: string, mobileNumber: string): Promise<{ sent: boolean }> {
+  async sendMobileVerificationPush(
+    fcmToken: string,
+    code: string,
+    mobileNumber: string,
+    ttlMinutes: number,
+  ): Promise<{ sent: boolean }> {
     const message: Message = {
       token: fcmToken,
+      notification: {
+        title: 'GenzFeast Registration OTP',
+        body: `DO NOT SHARE: Your Registration OTP is ${code} (Valid for ${ttlMinutes} mins)`,
+      },
       data: { type: 'mobile_verification', code, mobile_number: mobileNumber },
       android: { priority: 'high' },
-      apns: { headers: { 'apns-priority': '10' }, payload: { aps: { contentAvailable: true } } },
+      apns: { headers: { 'apns-priority': '10' } },
     };
 
     try {

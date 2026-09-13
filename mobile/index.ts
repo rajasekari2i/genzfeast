@@ -7,20 +7,17 @@ import messaging from '@react-native-firebase/messaging';
 
 import App from './App';
 import { registerBackgroundResetCodeHandler } from './src/notifications/passwordResetPush';
-import { registerBackgroundMobileVerificationHandler } from './src/notifications/mobileVerificationPush';
 
 // Must be registered here, outside the React tree — @react-native-firebase/messaging
 // only invokes this while the app is backgrounded/killed if it's set at module
 // scope before AppRegistry.registerComponent (specs/003-forgot-password-otp-reset
 // User Story 3; the foreground case is registerForegroundResetCodeListener in App.tsx).
-// Firebase only allows ONE global background handler (unlike `onMessage`,
-// which supports multiple independent subscriptions), so specs/014's own
-// background handler is composed in here rather than registered separately
-// — each handler already no-ops when the message's `type` doesn't match its
-// own, so calling both unconditionally per message is safe.
+// specs/014-msg91-sms-otp-mobile-verification's push needs no handler here —
+// it carries a visible `notification`, which FCM auto-displays itself while
+// backgrounded/killed (RegisterScreen's own onMessage listener covers the
+// foreground case, since FCM doesn't auto-display for that).
 messaging().setBackgroundMessageHandler(async (message) => {
   await registerBackgroundResetCodeHandler(message);
-  await registerBackgroundMobileVerificationHandler(message);
 });
 
 AppRegistry.registerComponent('main', () => App);

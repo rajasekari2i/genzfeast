@@ -31,13 +31,23 @@ export abstract class NotificationPort {
    * mobile client rather than looking anything up via DevicesService.
    * Best-effort (never throws) — AuthService.sendMobileVerification decides
    * what to do when this comes back `{ sent: false }`. `mobileNumber` rides
-   * along in the push payload (not used for delivery, only correlation) so
-   * the mobile client's background handler can tell which in-flight
-   * registration attempt a backgrounded/killed-app-delivered code belongs
-   * to — there is no `users`/session id to key off here, so the number is
-   * the only correlation key available.
+   * along in the push payload (not used for delivery, only correlation) —
+   * kept even though the code is now shown in a visible notification body
+   * rather than auto-filled, since it's still a harmless, useful
+   * correlation key for any future tap-handling. A visible `notification`
+   * (title/body), unlike every other NotificationPort push: the student
+   * reads and types the code themselves rather than the app auto-filling
+   * it, so it must actually show up in the system tray. `ttlMinutes` is
+   * interpolated into that body text ("Valid for N mins") from the same
+   * config value the OTP itself expires by, so the message can never claim
+   * a validity window that doesn't match reality.
    */
-  abstract sendMobileVerificationPush(fcmToken: string, code: string, mobileNumber: string): Promise<{ sent: boolean }>;
+  abstract sendMobileVerificationPush(
+    fcmToken: string,
+    code: string,
+    mobileNumber: string,
+    ttlMinutes: number,
+  ): Promise<{ sent: boolean }>;
 }
 
 /** Fallback used when Firebase isn't configured — see NotificationsModule. */

@@ -645,7 +645,12 @@ export class AuthService {
       // FCM is this Company's configured primary channel — MSG91 is never
       // attempted, unlike the SMS-failure fallback below.
       if (dto.fcm_token) {
-        const { sent } = await this.notificationPort.sendMobileVerificationPush(dto.fcm_token, code, dto.mobile_number);
+        const { sent } = await this.notificationPort.sendMobileVerificationPush(
+          dto.fcm_token,
+          code,
+          dto.mobile_number,
+          ttlMinutes,
+        );
         if (sent) {
           return { message: 'A verification code has been sent via push notification.' };
         }
@@ -662,7 +667,12 @@ export class AuthService {
       // (sendPasswordResetCode/sendOrderReadyNotification) — no `users`
       // row exists yet at this point in registration.
       if (dto.fcm_token) {
-        const { sent } = await this.notificationPort.sendMobileVerificationPush(dto.fcm_token, code, dto.mobile_number);
+        const { sent } = await this.notificationPort.sendMobileVerificationPush(
+          dto.fcm_token,
+          code,
+          dto.mobile_number,
+          ttlMinutes,
+        );
         if (sent) {
           return { message: 'Could not send SMS — your code has been delivered to this device instead.' };
         }

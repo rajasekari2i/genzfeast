@@ -12,6 +12,11 @@ import { CartProvider } from './src/cart/CartContext';
 import { registerForegroundResetCodeListener } from './src/notifications/passwordResetPush';
 import { registerOrderNotificationTapListener } from './src/notifications/orderReadyNotifications';
 import { requestIgnoreBatteryOptimizations } from './src/notifications/batteryOptimization';
+import { getDevicePushToken } from './src/notifications/pushToken';
+import {
+  ensureMobileVerificationChannel,
+  registerForegroundMobileVerificationListener,
+} from './src/notifications/mobileVerificationPush';
 
 const HAS_PROMPTED_BATTERY_OPTIMIZATION_KEY = 'genzfeast.hasPromptedBatteryOptimization';
 
@@ -28,9 +33,29 @@ export default function App() {
     const unsubscribeForeground = registerForegroundResetCodeListener();
     // specs/009-order-fcm-push-notifications FR-007 — tap-to-open.
     const unsubscribeTap = registerOrderNotificationTapListener();
+    // specs/014-msg91-sms-otp-mobile-verification — registered here,
+    // unconditionally, rather than inside RegisterScreen: the server sends
+    // this push during the same HTTP call RegisterScreen awaits, so a
+    // listener only subscribed after that call resolves can race the push
+    // and miss it (see mobileVerificationPush.ts's own note).
+    ensureMobileVerificationChannel();
+    const unsubscribeMobileVerification = registerForegroundMobileVerificationListener();
+    // Ask for notification permission as early as possible — the first
+    // app launch after install — rather than waiting until the student
+    // reaches Register/ForgotPassword and taps something that needs it.
+    // This is the native OS Allow/Deny dialog (Android 13+'s
+    // POST_NOTIFICATIONS runtime permission); there's no way to grant it
+    // during installation itself, only to ask for it as soon as the app
+    // opens. If a prior install already got a hard "Deny" on this exact
+    // device, Android suppresses the dialog on every future call — no code
+    // change can force it back; only the user re-enabling it in system
+    // Settings, or a full uninstall/reinstall (which resets the OS's
+    // per-package permission state), makes this prompt reappear.
+    getDevicePushToken();
     return () => {
       unsubscribeForeground();
       unsubscribeTap();
+      unsubscribeMobileVerification();
     };
   }, []);
 

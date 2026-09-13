@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, ScrollView, Text, TextInput, View } from 'react-native';
-import messaging from '@react-native-firebase/messaging';
-import { consumePendingMobileVerificationCode } from '../../notifications/pendingMobileVerificationCode';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
@@ -9,7 +7,7 @@ import { CategoryChip } from '../../components/CategoryChip';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient, storeSession } from '../../api/client';
 import { getBuildCompanyId } from '../../config/tenant';
-import { getDevicePushToken } from '../../notifications/pushToken';
+import { areNotificationsEnabled, getDevicePushToken } from '../../notifications/pushToken';
 import { useAuth } from '../../auth/AuthContext';
 import type { paths as RegisterPaths } from '../../api/generated/002-registration-login-jwt-auth';
 import type { paths as OptionsPaths } from '../../api/generated/001-company-role-user-setup';
@@ -75,6 +73,11 @@ export function RegisterScreen() {
   const [otpBusy, setOtpBusy] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpMessage, setOtpMessage] = useState<string | null>(null);
+  // null while unchecked (avoids a flash of the warning before the first
+  // check resolves). Re-checked on every foreground resume, not just on
+  // mount, since the student may go enable it in phone Settings themselves
+  // (we never navigate there for them) and come back mid-registration.
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,6 +112,33 @@ export function RegisterScreen() {
     };
   }, []);
 
+  // specs/014-msg91-sms-otp-mobile-verification. This build's Company may
+  // rely on push as the OTP's only delivery channel (is_sms=false, not
+  // known client-side) — surfaced here rather than only after a confusing
+  // "Could not send verification code" failure, so the student can fix it
+  // before tapping Send OTP at all. Read-only (areNotificationsEnabled
+  // never prompts) — the one prompt this app shows is App.tsx's, at first
+  // launch.
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      const enabled = await areNotificationsEnabled();
+      if (!cancelled) {
+        setNotificationsEnabled(enabled);
+      }
+    }
+    check();
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        check();
+      }
+    });
+    return () => {
+      cancelled = true;
+      subscription.remove();
+    };
+  }, []);
+
   // Editing the mobile number after a send/verify invalidates whatever
   // otpStatus applied to the old number — a derived reset, not a locked
   // field, so a stale verification can never ride along with a different
@@ -124,54 +154,13 @@ export function RegisterScreen() {
     }
   }, [username, otpMobileNumber, otpStatus]);
 
-  // The FCM fallback (auth.service.ts sendMobileVerification, when
-  // is_sms=false or MSG91 fails) sends a data-only push. This listener
-  // handles the live-foreground case (app active, this screen mounted);
-  // the effect below handles the backgrounded/killed-app case (index.ts's
-  // background handler + AsyncStorage store), since OEM power management
-  // (confirmed on a MIUI device via SmartPower/FcmRetry in logcat) can
-  // throttle this app to background moments after the student's own tap,
-  // even though it's foregrounded at that exact instant. `mobile_number` is
-  // checked against `otpMobileNumber` so a late-arriving code for a number
-  // the student has since abandoned/changed never applies to whatever
-  // they're currently on.
-  useEffect(() => {
-    if (otpStatus !== 'sent') return undefined;
-    const unsubscribe = messaging().onMessage(async (message) => {
-      const payload = message.data as { type?: string; code?: string; mobile_number?: string } | undefined;
-      if (payload?.type === 'mobile_verification' && payload.mobile_number === otpMobileNumber && typeof payload.code === 'string') {
-        setCode(payload.code);
-      }
-    });
-    return unsubscribe;
-  }, [otpStatus, otpMobileNumber]);
-
-  // Backgrounded/killed-app case: consume whatever index.ts's background
-  // handler may have stored, both immediately on entering 'sent' (catches a
-  // push that arrived in the gap before this effect mounts) and whenever
-  // the app returns to 'active' (catches one that arrived while
-  // backgrounded/throttled). `consumePendingMobileVerificationCode` already
-  // checks the number itself, so a stale entry for an abandoned number is
-  // discarded rather than applied.
-  useEffect(() => {
-    if (otpStatus !== 'sent' || !otpMobileNumber) return undefined;
-    const mobileNumber = otpMobileNumber;
-
-    async function tryConsume() {
-      const pending = await consumePendingMobileVerificationCode(mobileNumber);
-      if (pending) {
-        setCode(pending);
-      }
-    }
-
-    tryConsume();
-    const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'active') {
-        tryConsume();
-      }
-    });
-    return () => subscription.remove();
-  }, [otpStatus, otpMobileNumber]);
+  // The FCM push itself (auth.service.ts sendMobileVerification, when
+  // is_sms=false or MSG91 fails) now carries a visible `notification` — the
+  // student reads the code off it and types it in below, no auto-fill.
+  // Displaying it is handled by App.tsx's always-on
+  // registerForegroundMobileVerificationListener, not here — see that
+  // file's own note on why a listener scoped to this screen's otpStatus
+  // used to race the push and miss it.
 
   async function handleSendOtp() {
     setOtpError(null);
@@ -328,6 +317,12 @@ export function RegisterScreen() {
           value={username}
           onChangeText={setUsername}
         />
+        {notificationsEnabled === false && otpStatus !== 'verified' ? (
+          <Text className="text-body text-red-600">
+            Notifications are turned off for GenzFeast. Please enable them in your phone's Settings so you can
+            receive your registration OTP.
+          </Text>
+        ) : null}
         <TextInput
           className="border border-border rounded-lg px-3 py-2 text-text-primary"
           placeholder="Password (min 8 characters)"
