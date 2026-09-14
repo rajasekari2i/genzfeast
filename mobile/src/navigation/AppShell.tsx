@@ -12,6 +12,7 @@ import { TenantAdminStaffNavigator } from './TenantAdminStaffNavigator';
 import { SystemAdminNavigator } from './SystemAdminNavigator';
 import { ProfileNavigator } from './ProfileNavigator';
 import { ContactUsNavigator } from './ContactUsNavigator';
+import { FeedbackNavigator } from './FeedbackNavigator';
 import { useAuth } from '../auth/AuthContext';
 import { colors } from '../theme/tokens';
 
@@ -51,6 +52,9 @@ function CompanyAdminDepartmentsEntry() {
 }
 function CompanyAdminUsersEntry() {
   return <TenantAdminStaffNavigator initialRouteName="UserList" />;
+}
+function CompanyAdminFeedbackEntry() {
+  return <TenantAdminStaffNavigator initialRouteName="FeedbackList" />;
 }
 function SystemAdminCompaniesEntry() {
   return <SystemAdminNavigator initialRouteName="CompanyList" />;
@@ -123,6 +127,10 @@ export function AppShell() {
           {/* "Users" replaces the old "Staff" side-menu concept — this
               task's own explicit ask. */}
           <Drawer.Screen name="Users" component={CompanyAdminUsersEntry} />
+          {/* specs/016-feedback-management User Story 2/3 — the review/
+              resolve queue is Company-Admin-only; Company Staff never gets
+              this entry point (spec Assumptions). */}
+          <Drawer.Screen name="Feedback Review" component={CompanyAdminFeedbackEntry} />
         </>
       )}
 
@@ -144,6 +152,12 @@ export function AppShell() {
           entry point 'teaching'/'non_teaching' users get, beyond Profile —
           those roles have no other wired-up capability yet (CLAUDE.md). */}
       {role && role !== 'system_admin' ? <Drawer.Screen name="Contact Us" component={ContactUsNavigator} /> : null}
+
+      {/* specs/016-feedback-management User Story 1 — every tenant role
+          EXCEPT system_admin (spec Assumptions: System Admin has no
+          feedback surface in this feature), same condition as Contact Us
+          above. */}
+      {role && role !== 'system_admin' ? <Drawer.Screen name="Feedback" component={FeedbackNavigator} /> : null}
     </Drawer.Navigator>
   );
 }
