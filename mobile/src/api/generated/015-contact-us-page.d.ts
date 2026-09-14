@@ -47,6 +47,8 @@ export interface components {
     schemas: {
         /** @description A read-only projection of the caller's own companies row (specs/001-company-role-user-setup), scoped to the caller's company_id from the verified JWT — never a path/query parameter. */
         ContactUs: {
+            /** @description companies.name */
+            company_name?: string;
             contact_person?: string;
             /** @description companies.mobile */
             phone_number?: string;
