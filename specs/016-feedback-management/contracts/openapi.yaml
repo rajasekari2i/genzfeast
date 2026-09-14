@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Feedback Management API
+  version: "1.0.0"
+  description: >
+    Contract for feature 016-feedback-management. All endpoints require
+    Authorization: Bearer <access_token> (see
+    specs/002-registration-login-jwt-auth). company_id and the submitter's
+    identity are always taken from the verified JWT claim, never from the
+    request body or path. Submitting feedback (/me/feedback) is open to any
+    authenticated tenant role. The review queue (/tenant/feedback...) is
+    Company-Admin-only — no other role, including Company Staff, may list,
+    view, or resolve feedback. No endpoint here is reachable by System
+    Admin (spec Assumptions).
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Feedback
+
+paths:
+  /me/feedback:
+    post:
+      tags: [Feedback]
+      summary: >
+        Submit feedback about the caller's own canteen (any authenticated
+        role — Student, Teaching, Non-Teaching, Company Staff, Company
+        Admin). Always tagged with the caller's own company_id from the
+        JWT (FR-006).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeedbackCreateRequest" }
+      responses:
+        "201":
+          description: Feedback recorded with status "new"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Feedback" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /tenant/feedback:
+    get:
+      tags: [Feedback]
+      summary: >
+        List the caller's own company's feedback (Company Admin only),
+        newest first. Optionally filtered by status.
+      parameters:
+        - $ref: "#/components/parameters/StatusFilterParam"
+      responses:
+        "200":
+          description: The caller's company's feedback records
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Feedback" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tenant/feedback/{feedbackId}:
+    get:
+      tags: [Feedback]
+      summary: >
+        View one feedback record's full detail (Company Admin only).
+        Includes contact_email when contact_requested is true
+        (research.md §3).
+      parameters:
+        - $ref: "#/components/parameters/FeedbackId"
+      responses:
+        "200":
+          description: The feedback record
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeedbackDetail" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tenant/feedback/{feedbackId}/resolve:
+    patch:
+      tags: [Feedback]
+      summary: >
+        Mark a feedback record resolved (Company Admin only). One-way,
+        no request body (research.md §5) — resolving an already-resolved
+        record is a no-op success, not an error.
+      parameters:
+        - $ref: "#/components/parameters/FeedbackId"
+      responses:
+        "200":
+          description: Feedback resolved (or already was)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Feedback" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    FeedbackId:
+      name: feedbackId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    StatusFilterParam:
+      name: status
+      in: query
+      required: false
+      description: Filter by status; omit to return every status
+      schema: { type: string, enum: [new, resolved] }
+
+  responses:
+    Forbidden:
+      description: Caller's role/company scope does not permit this action
+    NotFound:
+      description: Feedback record does not exist or belongs to a different company
+    ValidationError:
+      description: Request failed field-level validation (e.g., missing category/message, rating out of range)
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string, example: "message is required" }
+
+    FeedbackCategory:
+      type: string
+      enum:
+        - app_experience
+        - food_order_quality
+        - payment_issue
+        - pickup_experience
+        - suggestion
+        - other
+
+    FeedbackCreateRequest:
+      type: object
+      required: [category, message]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+          description: Optional (FR-002)
+        category: { $ref: "#/components/schemas/FeedbackCategory" }
+        message:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        contact_requested:
+          type: boolean
+          default: false
+          description: >
+            If true, the caller's already-registered email is surfaced to
+            Company Admin at detail-view time — never re-collected here
+            (FR-005, research.md §3).
+
+    Feedback:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid }
+        rating: { type: integer, nullable: true, minimum: 1, maximum: 5 }
+        category: { $ref: "#/components/schemas/FeedbackCategory" }
+        message: { type: string }
+        contact_requested: { type: boolean }
+        status: { type: string, enum: [new, resolved] }
+        submitted_by:
+          type: object
+          description: The submitter's identity — never anonymous to Company Admin (spec Assumptions)
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    FeedbackDetail:
+      allOf:
+        - { $ref: "#/components/schemas/Feedback" }
+        - type: object
+          properties:
+            contact_email:
+              type: string
+              format: email
+              nullable: true
+              description: Present only when contact_requested is true (research.md §3); otherwise omitted/null
