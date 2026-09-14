@@ -53,6 +53,12 @@ components:
         (specs/001-company-role-user-setup), scoped to the caller's
         company_id from the verified JWT — never a path/query parameter.
       properties:
+        # Added by specs/016-feedback-management (not this feature's own
+        # scope) — the Feedback page needs to interpolate the tenant's
+        # company name (FR-004/FR-008) and this endpoint's role allowlist
+        # already exactly matches Feedback's own submit-role allowlist, so
+        # reusing this already-fetched row avoids a second lookup mechanism.
+        company_name: { type: string, description: "companies.name" }
         contact_person: { type: string }
         phone_number: { type: string, description: "companies.mobile" }
         email: { type: string, format: email }

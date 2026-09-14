@@ -17,7 +17,7 @@ export class ContactUsService {
     return this.tenantPrisma.runInTenantContext(ctx, async (tx) => {
       const company = await tx.company.findFirst({
         where: { id: ctx.companyId ?? undefined, isDeleted: false },
-        select: { contactPerson: true, mobile: true, email: true, address: true, operatingHours: true },
+        select: { name: true, contactPerson: true, mobile: true, email: true, address: true, operatingHours: true },
       });
       if (!company) {
         throw new NotFoundException('Company not found');
