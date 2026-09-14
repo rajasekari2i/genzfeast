@@ -13,6 +13,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ProfileModule } from './profile/profile.module';
 import { DevicesModule } from './devices/devices.module';
+import { ContactUsModule } from './contact-us/contact-us.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { DevicesModule } from './devices/devices.module';
     // -> DevicesModule; imported explicitly here too now that it has its own
     // public controller (POST /me/devices, specs/009), for clarity.
     DevicesModule,
+    ContactUsModule,
   ],
 })
 export class AppModule {}
