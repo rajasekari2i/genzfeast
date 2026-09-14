@@ -10,6 +10,7 @@ export interface CompanyResponse {
   address: string;
   is_open: boolean;
   is_sms: boolean;
+  operating_hours: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +42,7 @@ export function toCompanyResponse(company: Company): CompanyResponse {
     address: company.address,
     is_open: company.isOpen,
     is_sms: company.isSms,
+    operating_hours: company.operatingHours,
     created_at: company.createdAt.toISOString(),
     updated_at: company.updatedAt.toISOString(),
   };

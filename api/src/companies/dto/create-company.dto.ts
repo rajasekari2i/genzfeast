@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 /**
  * Field names are snake_case to match contracts/openapi.yaml's
@@ -15,8 +15,10 @@ export class CreateCompanyDto {
   @IsNotEmpty()
   contact_person!: string;
 
-  @IsString()
-  @IsNotEmpty()
+  // specs/015-contact-us-page FR-007/research.md §8 — every save of this
+  // field is validated, not just PATCH; a company created with a malformed
+  // number would otherwise carry it forward unvalidated.
+  @Matches(/^\d{10}$/, { message: 'mobile must be a 10-digit mobile number' })
   mobile!: string;
 
   @IsEmail()

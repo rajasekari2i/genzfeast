@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: GenzFeast — Contact Us API
+  version: "1.0.0"
+  description: >
+    Contract for feature 015-contact-us-page. This file defines only the one
+    NEW endpoint this feature adds — the tenant-facing read-only view
+    (GET /me/contact-us). The System Admin write path reuses
+    PATCH /admin/companies/{companyId}, extended with `operating_hours`;
+    see specs/001-company-role-user-setup/contracts/openapi.yaml (research.md §2/§4).
+
+servers:
+  - url: https://api.genzfeast.example/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Contact Us
+
+paths:
+  /me/contact-us:
+    get:
+      tags: [Contact Us]
+      summary: >
+        View the caller's own company's Contact Us details. Restricted to
+        company_admin, company_staff, student, teaching, non_teaching —
+        system_admin is not a viewer of this endpoint (research.md §5).
+      responses:
+        "200":
+          description: The caller's own company's Contact Us details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactUs" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Forbidden:
+      description: Caller's role is not permitted to view Contact Us (e.g. system_admin)
+
+  schemas:
+    ContactUs:
+      type: object
+      description: >
+        A read-only projection of the caller's own companies row
+        (specs/001-company-role-user-setup), scoped to the caller's
+        company_id from the verified JWT — never a path/query parameter.
+      properties:
+        # Added by specs/016-feedback-management (not this feature's own
+        # scope) — the Feedback page needs to interpolate the tenant's
+        # company name (FR-004/FR-008) and this endpoint's role allowlist
+        # already exactly matches Feedback's own submit-role allowlist, so
+        # reusing this already-fetched row avoids a second lookup mechanism.
+        company_name: { type: string, description: "companies.name" }
+        contact_person: { type: string }
+        phone_number: { type: string, description: "companies.mobile" }
+        email: { type: string, format: email }
+        address: { type: string }
+        operating_hours:
+          type: string
+          nullable: true
+          description: 'Null when not yet set by a System Admin — mobile renders "Not specified" (FR-005).'

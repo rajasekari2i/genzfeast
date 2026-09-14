@@ -3,6 +3,7 @@ import { Pressable, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CompanyListScreen } from '../screens/system-admin/CompanyListScreen';
 import { CompanyCreateEditScreen } from '../screens/system-admin/CompanyCreateEditScreen';
+import { CompanyContactUsScreen } from '../screens/system-admin/CompanyContactUsScreen';
 import { CreateCompanyAdminScreen } from '../screens/system-admin/CreateCompanyAdminScreen';
 import { UserListScreen } from '../screens/system-admin/UserListScreen';
 import { UserCreateEditScreen } from '../screens/system-admin/UserCreateEditScreen';
@@ -19,6 +20,7 @@ import { colors } from '../theme/tokens';
 export type SystemAdminStackParamList = {
   CompanyList: undefined;
   CompanyCreateEdit: { companyId?: string };
+  CompanyContactUs: { companyId: string };
   CreateCompanyAdmin: { companyId: string };
   UserList: undefined;
   UserCreate: { userId?: string };
@@ -47,6 +49,7 @@ export function SystemAdminNavigator({
         })}
       />
       <Stack.Screen name="CompanyCreateEdit" component={CompanyCreateEditScreen} options={{ title: '' }} />
+      <Stack.Screen name="CompanyContactUs" component={CompanyContactUsScreen} options={{ title: '' }} />
       <Stack.Screen name="CreateCompanyAdmin" component={CreateCompanyAdminScreen} options={{ title: '' }} />
       <Stack.Screen
         name="UserList"

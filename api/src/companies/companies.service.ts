@@ -53,6 +53,9 @@ export class CompaniesService {
           ...(dto.address !== undefined && { address: dto.address }),
           ...(dto.is_open !== undefined && { isOpen: dto.is_open }),
           ...(dto.is_sms !== undefined && { isSms: dto.is_sms }),
+          // specs/015-contact-us-page FR-005 — System Admin only, via the
+          // dedicated Contact Us management screen.
+          ...(dto.operating_hours !== undefined && { operatingHours: dto.operating_hours }),
           updatedBy: ctx.userId,
         },
       });

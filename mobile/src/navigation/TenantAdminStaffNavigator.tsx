@@ -11,6 +11,8 @@ import { ProductListScreen } from '../screens/tenant-admin-staff/ProductListScre
 import { ProductCreateEditScreen } from '../screens/tenant-admin-staff/ProductCreateEditScreen';
 import { IncomingOrdersScreen } from '../screens/tenant-admin-staff/IncomingOrdersScreen';
 import { OrderFulfilmentScreen } from '../screens/tenant-admin-staff/OrderFulfilmentScreen';
+import { FeedbackListScreen } from '../screens/tenant-admin-staff/FeedbackListScreen';
+import { FeedbackDetailScreen } from '../screens/tenant-admin-staff/FeedbackDetailScreen';
 import { secondaryHeaderOptions } from '../theme/navigationHeader';
 
 /** Tenant Admin & Staff App — Company Admin + Staff surface, UI Design §5. */
@@ -27,6 +29,9 @@ export type TenantAdminStaffStackParamList = {
   ProductCreateEdit: { productId?: string };
   IncomingOrders: undefined;
   OrderFulfilment: { orderId: string };
+  /** specs/016-feedback-management User Story 2/3 — Company Admin only. */
+  FeedbackList: undefined;
+  FeedbackDetail: { feedbackId: string };
 };
 
 const Stack = createNativeStackNavigator<TenantAdminStaffStackParamList>();
@@ -43,7 +48,14 @@ export function TenantAdminStaffNavigator({
   initialRouteName = 'Dashboard',
 }: {
   /** Only the no-required-params entry points AppShell.tsx actually mounts this stack at. */
-  initialRouteName?: 'Dashboard' | 'ProductList' | 'IncomingOrders' | 'CategoryList' | 'DepartmentList' | 'UserList';
+  initialRouteName?:
+    | 'Dashboard'
+    | 'ProductList'
+    | 'IncomingOrders'
+    | 'CategoryList'
+    | 'DepartmentList'
+    | 'UserList'
+    | 'FeedbackList';
 }) {
   return (
     <Stack.Navigator initialRouteName={initialRouteName} screenOptions={secondaryHeaderOptions}>
@@ -59,6 +71,8 @@ export function TenantAdminStaffNavigator({
       <Stack.Screen name="ProductCreateEdit" component={ProductCreateEditScreen} options={{ title: '' }} />
       <Stack.Screen name="IncomingOrders" component={IncomingOrdersScreen} options={{ title: '' }} />
       <Stack.Screen name="OrderFulfilment" component={OrderFulfilmentScreen} options={{ title: '' }} />
+      <Stack.Screen name="FeedbackList" component={FeedbackListScreen} options={{ title: '' }} />
+      <Stack.Screen name="FeedbackDetail" component={FeedbackDetailScreen} options={{ title: '' }} />
     </Stack.Navigator>
   );
 }
