@@ -142,6 +142,12 @@ CTA: **Register** → on success, auto-login → navigate to Home.
   - `delivered` → "Delivered" banner + delivery timestamp.
   - `cancelled` → "Cancelled" banner, no action (V1).
 
+### 4.15 Feedback *(new — Module 16)*
+- Reachable by **every** tenant role, not Student-only (Student, Teaching, Non-Teaching, Company Staff, Company Admin) — filed here alongside Profile/§4.10-4.12 by the same precedent, since it's a shared side-menu entry rather than a Student-specific screen.
+- Fields: **Rating** (1–5 stars, optional), **Category** (dropdown: App Experience, Food/Order Quality, Payment Issue, Pickup Experience, Suggestion, Other), **Message** (free text, prompt: "Tell us more — what happened, or what would make {Tenant Company Name} better?"), **Contact me back** (checkbox — when checked, shows the signed-in user's already-registered email read-only, never re-asked).
+- CTA: **Submit** → validates Category + Message are present → on success shows "Thanks! Your feedback helps us improve {Tenant Company Name}." with a way back to Home (not a dead end).
+- Error state: inline error for a missing Category or Message; no record is created until both are present.
+
 ## 5. Screen Specs — Tenant Admin & Staff App
 
 ### 5.1 Company Admin: Dashboard
@@ -170,6 +176,12 @@ CTA: **Register** → on success, auto-login → navigate to Home.
 - **OTP input field** (numeric, 6-digit) + **Verify & Deliver** button.
 - Success: banner "Delivered" + auto-return to Incoming Orders.
 - Failure: inline error "OTP does not match," field clears for retry.
+
+### 5.8 Company Admin: Feedback Review *(new — Module 16)*
+- Company-Admin-only — Company Staff has no access to this screen (spec Assumptions).
+- List: newest-first, each row shows Category, a status pill (New/Resolved), a message preview, star rating (if any), submitter name, and a "Wants contact" flag when requested. Filter chips: All / New / Resolved.
+- Tapping a row opens its full detail: Category, Rating, Message, submitted-by, and — only when "Contact me back" was requested — the submitter's registered email.
+- CTA on the detail screen: **Mark Resolved** (one-way; hidden once the record is already Resolved — no reopening).
 
 ## 6. Screen Specs — System Admin Portal
 
