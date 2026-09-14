@@ -9,7 +9,10 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { AuthProvider } from './src/auth/AuthContext';
 import { CartProvider } from './src/cart/CartContext';
-import { registerForegroundResetCodeListener } from './src/notifications/passwordResetPush';
+import {
+  ensurePasswordResetChannel,
+  registerForegroundResetCodeListener,
+} from './src/notifications/passwordResetPush';
 import { registerOrderNotificationTapListener } from './src/notifications/orderReadyNotifications';
 import { requestIgnoreBatteryOptimizations } from './src/notifications/batteryOptimization';
 import { getDevicePushToken } from './src/notifications/pushToken';
@@ -24,12 +27,11 @@ export default function App() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // specs/003-forgot-password-otp-reset User Story 3 — the background
-    // handler is registered in index.ts (outside the React tree, per
-    // @react-native-firebase/messaging's requirement); see
-    // src/notifications/passwordResetPush.ts for what this foreground
-    // listener does and why real-device/Firebase verification is still
-    // outstanding.
+    // specs/003-forgot-password-otp-reset (revised) — visible push, same
+    // shape as mobile-verification below; see
+    // src/notifications/passwordResetPush.ts. No background handler needed
+    // (FCM auto-displays a visible notification while backgrounded/killed).
+    ensurePasswordResetChannel();
     const unsubscribeForeground = registerForegroundResetCodeListener();
     // specs/009-order-fcm-push-notifications FR-007 — tap-to-open.
     const unsubscribeTap = registerOrderNotificationTapListener();
