@@ -30,6 +30,7 @@ departments (1) ──< users (many, nullable)
 | `address` | `text` | not null |
 | `is_open` | `boolean` | not null, default `true` — governs new order acceptance only (spec Assumptions); does not gate login/registration |
 | `is_sms` | `boolean` | not null, default `true` (FR-002a) — governs specs/014's registration mobile-verification delivery channel: `true` = MSG91 SMS (FCM push only as a failure-fallback, unchanged); `false` = FCM push directly, MSG91 never attempted |
+| `operating_hours` | `text` | nullable (specs/015-contact-us-page FR-005) — free text (e.g. "Mon–Sat, 9:00 AM – 8:00 PM"), set only by System Admin via the Contact Us management screen; `NULL` renders as "Not specified" to tenant viewers |
 | `is_deleted` | `boolean` | not null, default `false` |
 | `created_by`, `updated_by` | `uuid` | references `users(id)`, nullable (the very first company has no creating user row yet — System Admin identity is carried in the JWT, not necessarily a `users` row in this schema; see Open Follow-Up below) |
 | `created_at`, `updated_at` | `timestamptz` | not null, default `now()` |
@@ -101,7 +102,7 @@ departments (1) ──< users (many, nullable)
 
 ## Row Level Security Summary
 
-Applied to `categories`, `departments`, `users` (and `companies` for read scoping — System Admin sees all rows, every other role sees none directly since Company management is System-Admin-only per FR-001/002):
+Applied to `categories`, `departments`, `users` (and `companies` for read scoping — System Admin sees all rows; every other role's write access remains none, since Company management stays System-Admin-only per FR-001/002, but as of specs/015-contact-us-page an additive `companies_tenant_self_read` policy lets any tenant role `SELECT` their own company's row — see that feature's data-model.md §2):
 
 ```sql
 -- Example: categories

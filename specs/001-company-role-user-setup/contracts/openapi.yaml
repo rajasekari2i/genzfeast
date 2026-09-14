@@ -709,6 +709,13 @@ components:
             mobile-verification delivers via MSG91 SMS (FCM push only as a
             failure-fallback); when false, FCM push is used directly and
             MSG91 is never attempted.
+        operating_hours:
+          type: string
+          nullable: true
+          description: >
+            specs/015-contact-us-page FR-005. Free text, set only by System
+            Admin; null when not yet set (renders as "Not specified" to
+            tenant viewers).
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -732,6 +739,7 @@ components:
         address: { type: string }
         is_open: { type: boolean }
         is_sms: { type: boolean, description: "FR-002a." }
+        operating_hours: { type: string, nullable: true, description: "specs/015-contact-us-page FR-005." }
 
     # Global, platform-wide catalog — not per-Company (revised; see
     # migration 20260907170000_global_roles and 20260907180000).

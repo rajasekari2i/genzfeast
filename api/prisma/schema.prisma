@@ -17,23 +17,27 @@ datasource db {
 
 /// A single college canteen operating independently on the platform (data-model.md §1).
 model Company {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String
-  contactPerson String   @map("contact_person")
-  mobile        String
-  email         String
-  address       String
-  isOpen        Boolean  @default(true) @map("is_open")
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  contactPerson  String   @map("contact_person")
+  mobile         String
+  email          String
+  address        String
+  isOpen         Boolean  @default(true) @map("is_open")
   /// specs/001-company-role-user-setup FR-002a. Governs registration-time
   /// mobile-verification's delivery channel (specs/014): true (default) =
   /// MSG91 SMS, with FCM push only as a best-effort failure-fallback
   /// (unchanged); false = FCM push directly, MSG91 never attempted.
-  isSms         Boolean  @default(true) @map("is_sms")
-  isDeleted     Boolean  @default(false) @map("is_deleted")
-  createdBy     String?  @map("created_by") @db.Uuid
-  updatedBy     String?  @map("updated_by") @db.Uuid
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isSms          Boolean  @default(true) @map("is_sms")
+  /// specs/015-contact-us-page. Free-text, optional — set only by
+  /// System Admin via the Contact Us management screen; `NULL` renders as
+  /// "Not specified" to tenant viewers (FR-005).
+  operatingHours String?  @map("operating_hours")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
+  createdBy      String?  @map("created_by") @db.Uuid
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   categories          Category[]
   departments         Department[]
@@ -60,16 +64,16 @@ model Company {
 /// storage is bounded by distinct (company, mobile number) pairs ever
 /// attempted, not by attempt count.
 model MobileVerification {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId    String    @map("company_id") @db.Uuid
-  mobileNumber String    @map("mobile_number")
-  otpHash      String    @map("otp_hash")
-  otpExpiresAt DateTime  @map("otp_expires_at") @db.Timestamptz(6)
-  otpAttempts  Int       @default(0) @map("otp_attempts")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  mobileNumber      String    @map("mobile_number")
+  otpHash           String    @map("otp_hash")
+  otpExpiresAt      DateTime  @map("otp_expires_at") @db.Timestamptz(6)
+  otpAttempts       Int       @default(0) @map("otp_attempts")
   // Resend-cooldown gate (FR-005) — same reasoning as
   // User.resetPasswordOtpLastSentAt: SMS is a real, billed send.
-  lastSentAt   DateTime  @map("last_sent_at") @db.Timestamptz(6)
-  verifiedAt   DateTime? @map("verified_at") @db.Timestamptz(6)
+  lastSentAt        DateTime  @map("last_sent_at") @db.Timestamptz(6)
+  verifiedAt        DateTime? @map("verified_at") @db.Timestamptz(6)
   // Opaque, single-use, short-lived (15-30 min) bearer credential proving
   // this (company, mobile_number) pair was verified — random bytes, not a
   // JWT (no signing-key coupling needed for something this narrowly scoped).
