@@ -11,6 +11,7 @@ import { StudentNavigator } from './StudentNavigator';
 import { TenantAdminStaffNavigator } from './TenantAdminStaffNavigator';
 import { SystemAdminNavigator } from './SystemAdminNavigator';
 import { ProfileNavigator } from './ProfileNavigator';
+import { ContactUsNavigator } from './ContactUsNavigator';
 import { useAuth } from '../auth/AuthContext';
 import { colors } from '../theme/tokens';
 
@@ -136,6 +137,13 @@ export function AppShell() {
           Student-only, this task's own explicit ask), so it's mounted here
           unconditionally rather than inside any of the role branches above. */}
       {role ? <Drawer.Screen name="Profile" component={ProfileNavigator} /> : null}
+
+      {/* specs/015-contact-us-page — every tenant role EXCEPT system_admin
+          (spec Assumptions: System Admin manages this data, it isn't a
+          viewer of the page itself). This is also the first navigation
+          entry point 'teaching'/'non_teaching' users get, beyond Profile —
+          those roles have no other wired-up capability yet (CLAUDE.md). */}
+      {role && role !== 'system_admin' ? <Drawer.Screen name="Contact Us" component={ContactUsNavigator} /> : null}
     </Drawer.Navigator>
   );
 }
