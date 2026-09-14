@@ -128,6 +128,22 @@ export function CompanyListScreen({ navigation }: Props) {
               </Text>
               <Text className="text-caption text-text-secondary mt-0.5">{company.email}</Text>
               <View className="flex-row justify-end gap-2 mt-2">
+                {/* Plain action, not a third RowActionButton variant
+                    (specs/015-contact-us-page research.md §9) — that
+                    component hardcodes a fixed 'edit' | 'delete' visible-text
+                    contract and is shared by 6 other list screens. */}
+                <Pressable
+                  accessibilityLabel={`Contact Us for ${company.name}`}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  className="rounded-pill px-2 py-0.5 border border-primary active:opacity-70"
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    navigation.navigate('CompanyContactUs', { companyId: company.id });
+                  }}
+                >
+                  <Text className="text-caption font-semibold text-primary">Contact Us</Text>
+                </Pressable>
                 <RowActionButton
                   variant="edit"
                   label={`Edit ${company.name}`}
