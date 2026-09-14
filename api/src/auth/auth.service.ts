@@ -381,6 +381,16 @@ export class AuthService {
    * outcome (FR-004). The not-found branch still performs comparable OTP
    * crypto work (research.md §5) so a not-found lookup isn't structurally
    * cheaper than a found one.
+   *
+   * Revised: delivery channel now follows the same per-Company `is_sms`
+   * routing specs/014 already established for registration verification
+   * (specs/001 FR-002a, `companies.is_sms`) — SMS via Msg91SmsAdapter when
+   * the user's own Company has it enabled (default true), with a fallback
+   * to the FCM push below on an SMS failure; straight to FCM push when
+   * disabled. A user with no Company (system_admin) always gets FCM push,
+   * since there's no tenant `is_sms` setting to read. Either way the code
+   * itself, its hash/TTL/attempt-count handling, and the generic response
+   * are unchanged — only which channel actually carries it differs.
    */
   async requestPasswordReset(dto: ForgotPasswordRequestDto, meta: AuditMeta): Promise<{ message: string }> {
     const found = await this.tenantPrisma.runInTenantContext(PRE_AUTH_CONTEXT, (tx) =>
@@ -435,10 +445,31 @@ export class AuthService {
         await this.devicesService.upsertUnauthenticated(user.id, dto.fcm_token).catch(() => undefined);
       }
 
-      // A NotificationPort failure/timeout must never fail this request —
-      // the code is already persisted regardless of delivery outcome
-      // (User Story 3 / tasks.md T014).
-      await this.notificationPort.sendPasswordResetCode(user.id, code).catch(() => undefined);
+      // Per-Company `is_sms` routing (see this method's own doc comment).
+      // A null companyId (system_admin) has no Company row to read, so it
+      // always takes the FCM branch.
+      const smsCompany = user.companyId
+        ? await this.tenantPrisma.runInTenantContext(userContext(user), (tx) =>
+            tx.company.findFirst({ where: { id: user.companyId as string, isDeleted: false }, select: { isSms: true } }),
+          )
+        : null;
+      const isSmsEnabled = smsCompany?.isSms ?? false;
+
+      // A delivery failure/timeout on either channel must never fail this
+      // request — the code is already persisted regardless of delivery
+      // outcome (User Story 3 / tasks.md T014).
+      if (isSmsEnabled) {
+        try {
+          await this.msg91SmsAdapter.sendPasswordResetCode(user.username, code);
+        } catch {
+          // SMS failed — fall back to FCM push, matching
+          // sendMobileVerification's own SMS-failure-falls-back-to-push
+          // behavior (research.md/FR-006/FR-007 there).
+          await this.notificationPort.sendPasswordResetCode(user.id, code).catch(() => undefined);
+        }
+      } else {
+        await this.notificationPort.sendPasswordResetCode(user.id, code).catch(() => undefined);
+      }
 
       await this.authAudit.passwordResetRequested(user.id, user.companyId, meta);
       if (willLock) {
