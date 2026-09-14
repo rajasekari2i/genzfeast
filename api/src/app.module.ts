@@ -14,6 +14,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { ProfileModule } from './profile/profile.module';
 import { DevicesModule } from './devices/devices.module';
 import { ContactUsModule } from './contact-us/contact-us.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ContactUsModule } from './contact-us/contact-us.module';
     // public controller (POST /me/devices, specs/009), for clarity.
     DevicesModule,
     ContactUsModule,
+    FeedbackModule,
   ],
 })
 export class AppModule {}
