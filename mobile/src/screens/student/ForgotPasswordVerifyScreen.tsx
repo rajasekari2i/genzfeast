@@ -1,13 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient } from '../../api/client';
 import { getBuildCompanyId } from '../../config/tenant';
-import { consumePendingResetCode } from '../../notifications/pendingResetCode';
 import type { paths } from '../../api/generated/003-forgot-password-otp-reset';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPasswordVerify'>;
@@ -20,13 +18,11 @@ const client = createTypedClient<paths>();
  * generic error is shown as-is for a wrong/expired/exhausted code (FR-012) —
  * fields are left untouched either way so the user can correct and resubmit.
  *
- * User Story 3's FCM data-payload fallback: whenever this screen gains
- * focus, it checks for a code the background task or foreground listener
- * (src/notifications/passwordResetPush.ts) already wrote and pre-fills it —
- * covers both "push arrived while this screen was already open" and
- * "push arrived while backgrounded, user reopens the app." Not verified
- * against a real device/Firebase project in this session (see that file's
- * own note); manual entry always still works regardless.
+ * Revised (per-Company `is_sms` routing): the code always arrives as
+ * something the user reads and types in themselves — a visible push
+ * notification (src/notifications/passwordResetPush.ts) when the user's
+ * Company has `is_sms=false`, or an SMS when `is_sms=true` — so this screen
+ * no longer auto-fills from a silently-stored code.
  */
 export function ForgotPasswordVerifyScreen({ route, navigation }: Props) {
   const { username } = route.params;
@@ -35,21 +31,6 @@ export function ForgotPasswordVerifyScreen({ route, navigation }: Props) {
   const [retypePassword, setRetypePassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false;
-      (async () => {
-        const pending = await consumePendingResetCode();
-        if (pending && !cancelled) {
-          setCode(pending);
-        }
-      })();
-      return () => {
-        cancelled = true;
-      };
-    }, []),
-  );
 
   async function handleSubmit() {
     setErrorMessage(null);

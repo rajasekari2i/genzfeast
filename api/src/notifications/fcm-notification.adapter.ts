@@ -51,6 +51,16 @@ export class FcmNotificationAdapter extends NotificationPort {
     return this.app;
   }
 
+  /**
+   * specs/003-forgot-password-otp-reset (revised) — the FCM branch of the
+   * per-Company `is_sms` routing (AuthService.requestPasswordReset calls
+   * this when the requesting user's own Company has `is_sms=false`, or as a
+   * fallback if an `is_sms=true` Company's MSG91 send fails). A visible
+   * `notification`, matching sendMobileVerificationPush's own shape — the
+   * user reads the code off the notification and types it in themselves,
+   * the same way they would off an SMS; there is no auto-fill on the client
+   * side and no silent/data-only push anymore.
+   */
   async sendPasswordResetCode(userId: string, code: string): Promise<void> {
     const tokens = await this.devicesService.listTokensForUser(userId);
     if (tokens.length === 0) {
@@ -58,14 +68,15 @@ export class FcmNotificationAdapter extends NotificationPort {
       return;
     }
 
-    // FR-003 / User Story 3 (spec.md Clarifications 2026-09-06): the code
-    // travels ONLY inside the data payload, never a display `notification`
-    // field — the mobile app's background handler is what reads it.
     await this.sendMulticast(userId, tokens, {
       tokens,
+      notification: {
+        title: 'GenzFeast Password Reset',
+        body: `Your password reset code is ${code}`,
+      },
       data: { type: 'password_reset', code },
       android: { priority: 'high' },
-      apns: { headers: { 'apns-priority': '10' }, payload: { aps: { contentAvailable: true } } },
+      apns: { headers: { 'apns-priority': '10' } },
     });
   }
 

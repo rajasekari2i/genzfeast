@@ -1,44 +1,54 @@
+import notifee, { AndroidImportance } from '@notifee/react-native';
 import messaging, { type FirebaseMessagingTypes } from '@react-native-firebase/messaging';
-import { storePendingResetCode } from './pendingResetCode';
 
 /**
- * specs/003-forgot-password-otp-reset User Story 3: the backend
- * (fcm-notification.adapter.ts) sends the reset code as a **data-only** FCM
- * message, never a display notification, so the app itself is what
- * surfaces it. `setBackgroundMessageHandler` (registered in index.ts, outside
- * the React tree per Firebase's own requirement) handles the
- * backgrounded/killed-app case; the foreground case is handled separately by
- * registerForegroundResetCodeListener below, since the background handler
- * doesn't fire while the app is active.
- *
- * NOT verified against a real device/Firebase project in this session — the
- * shape follows @react-native-firebase/messaging's documented
- * setBackgroundMessageHandler pattern, but actual delivery behavior
- * (especially on iOS, which is stricter about waking an app for a data-only
- * push) needs confirming once real Firebase credentials and a development
- * build exist.
+ * specs/003-forgot-password-otp-reset (revised): the backend
+ * (fcm-notification.adapter.ts) sends the reset code as a visible push when
+ * the user's Company has `is_sms=false` — FCM auto-displays it while the
+ * app is backgrounded/killed, but not while the app is in the foreground,
+ * so this file's foreground listener covers that gap by calling notifee
+ * directly, exactly mirroring mobileVerificationPush.ts. There is
+ * deliberately no background handler here anymore (nothing to do — FCM's
+ * own OS-level display already handles backgrounded/killed) and no
+ * AsyncStorage-based auto-fill: the user reads the code off the
+ * notification (or, when their Company has `is_sms=true`, off the SMS
+ * instead) and types it into ForgotPasswordVerifyScreen themselves, the
+ * same way registration's own OTP already works.
  */
-export async function registerBackgroundResetCodeHandler(
-  message: FirebaseMessagingTypes.RemoteMessage,
-): Promise<void> {
-  const payload = extractPasswordResetPayload(message.data);
-  if (payload) {
-    await storePendingResetCode(payload.code);
-  }
+const CHANNEL_ID = 'password-reset';
+
+/** Call once at app startup (App.tsx) — notifee's createChannel is idempotent. */
+export async function ensurePasswordResetChannel(): Promise<void> {
+  await notifee.createChannel({
+    id: CHANNEL_ID,
+    name: 'Password Reset',
+    importance: AndroidImportance.HIGH,
+  });
 }
 
-function extractPasswordResetPayload(data: unknown): { code: string } | null {
-  const parsed = data as { type?: string; code?: string } | undefined;
-  return parsed?.type === 'password_reset' && typeof parsed.code === 'string' ? { code: parsed.code } : null;
+function isPasswordResetMessage(message: FirebaseMessagingTypes.RemoteMessage): boolean {
+  return (message.data as { type?: string } | undefined)?.type === 'password_reset';
+}
+
+async function displayPasswordResetNotification(message: FirebaseMessagingTypes.RemoteMessage): Promise<void> {
+  try {
+    await notifee.displayNotification({
+      title: message.notification?.title ?? 'GenzFeast Password Reset',
+      body: message.notification?.body ?? 'Your password reset code has arrived.',
+      android: { channelId: CHANNEL_ID, pressAction: { id: 'default' } },
+    });
+  } catch (error) {
+    // Best-effort, like every other NotificationPort display path — a
+    // display failure here must never crash whatever screen is mounted.
+    console.warn('Failed to display password-reset notification', error);
+  }
 }
 
 /** Call once at app startup (App.tsx); returns an unsubscribe function for cleanup. */
 export function registerForegroundResetCodeListener(): () => void {
-  const unsubscribe = messaging().onMessage(async (message) => {
-    const payload = extractPasswordResetPayload(message.data);
-    if (payload) {
-      await storePendingResetCode(payload.code);
+  return messaging().onMessage(async (message) => {
+    if (isPasswordResetMessage(message)) {
+      await displayPasswordResetNotification(message);
     }
   });
-  return unsubscribe;
 }
