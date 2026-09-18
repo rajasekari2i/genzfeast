@@ -24,7 +24,7 @@ This repo also uses **spec-kit** (`.specify/`, `specs/`) for spec-driven feature
 | Backend API | Node.js + **NestJS**, **TypeScript** (decided in `specs/001-company-role-user-setup/research.md` §1 — DI/Guards map cleanly onto this project's per-request tenant/role scoping) |
 | ORM | **Prisma** — see `coding_standard.md` §4 for the RLS/session-variable interaction, which Prisma does not handle automatically |
 | Database | **Supabase (managed PostgreSQL)** — relational, not Firestore |
-| File storage | Supabase Storage (product images) |
+| File storage | Railway Bucket (S3-compatible object storage; product images). Private-only — served via this API's own `GET /products/image/:key` proxy route, not a direct public bucket URL |
 | Auth | **Stateless JWT** access tokens (short-lived, 15–60 min) issued/verified by the Node API, + DB-tracked revocable refresh tokens. NOT Supabase Auth, NOT Firebase Auth, NOT session cookies |
 | Push notifications | **Firebase Cloud Messaging only** — no other Firebase product (no Firestore, no Firebase Auth, no Firebase Storage). Used for password-reset OTP and order-pickup OTP delivery |
 | SMS | **MSG91** — `specs/014-msg91-sms-otp-mobile-verification`. Used for registration-time mobile-verification, and (per-Company `companies.is_sms`) for forgot-password OTP delivery; order-pickup OTP stays FCM-only regardless of `is_sms`. Each distinct message has its own DLT-approved template |

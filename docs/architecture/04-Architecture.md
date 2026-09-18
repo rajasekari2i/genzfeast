@@ -86,11 +86,11 @@ Logout / forced revocation
  └───────────────┘        │                     │        │   RLS enabled)     │
                           │  - JWT verify/issue  │        └────────────────────┘
  ┌───────────────┐        │  - Tenant scoping    │        ┌────────────────────┐
- │ Student App    │◄──────►│  - Order/Payment     │◄──────►│  Supabase Storage  │
- │ (React Native, │  HTTPS │    orchestration     │        │  (product images)  │
- │  per-tenant    │        │  - OTP generation    │        └────────────────────┘
- │  build)        │        └──────────┬───────────┘
- └───────────────┘                    │
+ │ Student App    │◄──────►│  - Order/Payment     │◄──────►│  Railway Bucket    │
+ │ (React Native, │  HTTPS │    orchestration     │        │  (product images,  │
+ │  per-tenant    │        │  - OTP generation    │        │   private, served  │
+ │  build)        │        └──────────┬───────────┘        │   via API proxy)   │
+ └───────────────┘                    │                    └────────────────────┘
                                        ├──────────────► Firebase Cloud Messaging (OTP / status push ONLY)
                                        │
                                        └──────────────► Razorpay (UPI-restricted checkout + webhook)
