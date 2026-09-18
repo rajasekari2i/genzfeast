@@ -18,15 +18,20 @@ const envSchema = z.object({
   // specs/003-forgot-password-otp-reset spec.md Assumptions.
   RESET_PASSWORD_OTP_TTL_MINUTES: z.coerce.number().int().positive().default(10),
   RESET_PASSWORD_OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
-  // specs/004-company-admin-product-crud research.md §1 (Architecture §1's
-  // own Supabase Storage decision). Deliberately optional, unlike every
-  // other var here: the app must still boot without Storage configured —
-  // ProductsModule's image-upload path fails clearly at request time
-  // instead (see ProductImageStoragePort), not at startup. No bucket-name
-  // var — one bucket per Company, named by its company_id, created
-  // on-demand (see ProductImageStoragePort.ensureBucketExists).
-  SUPABASE_URL: z.string().optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  // specs/004-company-admin-product-crud, revised to Railway Buckets
+  // (S3-compatible) — see ProductImageStoragePort. Deliberately optional,
+  // unlike every other var here: the app must still boot without Storage
+  // configured — ProductsModule's image-upload/read paths fail clearly at
+  // request time instead, not at startup.
+  RAILWAY_BUCKET_ENDPOINT: z.string().optional(),
+  RAILWAY_BUCKET_ACCESS_KEY_ID: z.string().optional(),
+  RAILWAY_BUCKET_SECRET_ACCESS_KEY: z.string().optional(),
+  RAILWAY_BUCKET_NAME: z.string().optional(),
+  // This API's own public base URL (e.g. https://api.genzfeast.in) — used
+  // to build the GET /products/image/:key URL returned by upload(), since
+  // Railway Buckets have no public bucket URL of their own to point at
+  // directly (ProductImageStoragePort's own doc comment).
+  PUBLIC_API_BASE_URL: z.string().optional(),
   // Firebase Admin SDK service-account credentials (specs/003 FR-003,
   // specs/009 research.md §7) — for sending the forgot-password OTP as an
   // FCM data-message push. Deliberately optional, same reasoning as the
