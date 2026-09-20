@@ -713,9 +713,9 @@ components:
           type: string
           nullable: true
           description: >
-            specs/015-contact-us-page FR-005. Free text, set only by System
-            Admin; null when not yet set (renders as "Not specified" to
-            tenant viewers).
+            specs/015. Free-text canteen hours (e.g. "Mon–Sat, 9:00 AM –
+            8:00 PM"), shown on the tenant-facing Contact Us screen
+            (GET /me/contact-us). Null until a System Admin sets it.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -739,7 +739,7 @@ components:
         address: { type: string }
         is_open: { type: boolean }
         is_sms: { type: boolean, description: "FR-002a." }
-        operating_hours: { type: string, nullable: true, description: "specs/015-contact-us-page FR-005." }
+        operating_hours: { type: string, nullable: true, description: "specs/015." }
 
     # Global, platform-wide catalog — not per-Company (revised; see
     # migration 20260907170000_global_roles and 20260907180000).
