@@ -9,7 +9,6 @@ import {
 } from '@react-navigation/drawer';
 import { StudentNavigator } from './StudentNavigator';
 import { TenantAdminStaffNavigator } from './TenantAdminStaffNavigator';
-import { SystemAdminNavigator } from './SystemAdminNavigator';
 import { ProfileNavigator } from './ProfileNavigator';
 import { ContactUsNavigator } from './ContactUsNavigator';
 import { FeedbackNavigator } from './FeedbackNavigator';
@@ -56,13 +55,6 @@ function CompanyAdminUsersEntry() {
 function CompanyAdminFeedbackEntry() {
   return <TenantAdminStaffNavigator initialRouteName="FeedbackList" />;
 }
-function SystemAdminCompaniesEntry() {
-  return <SystemAdminNavigator initialRouteName="CompanyList" />;
-}
-function SystemAdminUsersEntry() {
-  return <SystemAdminNavigator initialRouteName="UserList" />;
-}
-
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const { user, signOut } = useAuth();
 
@@ -134,30 +126,22 @@ export function AppShell() {
         </>
       )}
 
-      {role === 'system_admin' && (
-        <>
-          <Drawer.Screen name="Companies" component={SystemAdminCompaniesEntry} />
-          <Drawer.Screen name="Users" component={SystemAdminUsersEntry} />
-        </>
-      )}
-
       {/* specs/007-user-profile-management — common to every role (not
           Student-only, this task's own explicit ask), so it's mounted here
           unconditionally rather than inside any of the role branches above. */}
       {role ? <Drawer.Screen name="Profile" component={ProfileNavigator} /> : null}
 
-      {/* specs/015-contact-us-page — every tenant role EXCEPT system_admin
-          (spec Assumptions: System Admin manages this data, it isn't a
-          viewer of the page itself). This is also the first navigation
-          entry point 'teaching'/'non_teaching' users get, beyond Profile —
-          those roles have no other wired-up capability yet (CLAUDE.md). */}
-      {role && role !== 'system_admin' ? <Drawer.Screen name="Contact Us" component={ContactUsNavigator} /> : null}
+      {/* specs/015-contact-us-page — every role in this tenant-scoped build
+          (system_admin has no company and never uses this app at all — see
+          RootNavigator/tenant config; this build is per-Company). This is
+          also the first navigation entry point 'teaching'/'non_teaching'
+          users get, beyond Profile — those roles have no other wired-up
+          capability yet (CLAUDE.md). */}
+      {role ? <Drawer.Screen name="Contact Us" component={ContactUsNavigator} /> : null}
 
-      {/* specs/016-feedback-management User Story 1 — every tenant role
-          EXCEPT system_admin (spec Assumptions: System Admin has no
-          feedback surface in this feature), same condition as Contact Us
-          above. */}
-      {role && role !== 'system_admin' ? <Drawer.Screen name="Feedback" component={FeedbackNavigator} /> : null}
+      {/* specs/016-feedback-management User Story 1 — every role in this
+          tenant-scoped build, same reasoning as Contact Us above. */}
+      {role ? <Drawer.Screen name="Feedback" component={FeedbackNavigator} /> : null}
     </Drawer.Navigator>
   );
 }
