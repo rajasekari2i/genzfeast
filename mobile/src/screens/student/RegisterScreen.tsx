@@ -3,6 +3,7 @@ import { ActivityIndicator, AppState, ScrollView, Text, TextInput, View } from '
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { PasswordInput } from '../../components/PasswordInput';
 import { CategoryChip } from '../../components/CategoryChip';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient, storeSession } from '../../api/client';
@@ -323,13 +324,7 @@ export function RegisterScreen() {
             receive your registration OTP.
           </Text>
         ) : null}
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Password (min 8 characters)"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <PasswordInput placeholder="Password (min 8 characters)" value={password} onChangeText={setPassword} />
         <TextInput
           className="border border-border rounded-lg px-3 py-2 text-text-primary"
           placeholder="Email"

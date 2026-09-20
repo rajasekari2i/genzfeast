@@ -3,6 +3,7 @@ import { Alert, Image, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { PasswordInput } from '../../components/PasswordInput';
 import { BrandRationaleSlider } from '../../components/BrandRationaleSlider';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient, storeSession } from '../../api/client';
@@ -84,13 +85,7 @@ export function LoginScreen({ navigation }: Props) {
           value={username}
           onChangeText={setUsername}
         />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <PasswordInput placeholder="Password" value={password} onChangeText={setPassword} />
         {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
         <PrimaryButton label="Login" onPress={handleSubmit} loading={loading} disabled={loading} />
         <Text className="text-center text-slate-500" onPress={() => navigation.navigate('ForgotPasswordRequest')}>
