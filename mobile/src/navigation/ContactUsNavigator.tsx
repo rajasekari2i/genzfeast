@@ -5,7 +5,7 @@ import { primaryHeaderOptions } from '../theme/navigationHeader';
 
 /**
  * specs/015-contact-us-page — single-screen stack, mounted as its own
- * "Contact Us" side-menu entry for every tenant role except system_admin
+ * "Contact Us" side-menu entry for every role in this tenant-scoped build
  * (AppShell.tsx), the same minimal shape ProfileNavigator.tsx had before
  * Edit/Change Password existed.
  */

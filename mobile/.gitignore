@@ -36,6 +36,7 @@ android/.kotlin/
 *.p12
 *.key
 *.mobileprovision
+android/keystore.properties
 
 # iOS build output/machine-local config
 ios/build/

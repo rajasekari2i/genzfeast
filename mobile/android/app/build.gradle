@@ -37,8 +37,11 @@ react {
     //   The name of the generated asset file containing your JS bundle
     // bundleAssetName = "MyApplication.android.bundle"
     //
-    //   The entry file for bundle generation. Default is 'index.android.js' or 'index.js'
-    // entryFile = file("../js/MyApplication.android.js")
+    //   The entry file for bundle generation. Default is 'index.android.js' or 'index.js' —
+    //   this project's entry point is index.ts (TypeScript), which the plugin never
+    //   auto-detects, so this must be explicit or createBundleReleaseJsAndAssets fails
+    //   looking for a nonexistent index.js.
+    entryFile = file("../../index.ts")
     //
     //   A list of extra flags to pass to the 'bundle' commands.
     //   See https://github.com/react-native-community/cli/blob/main/docs/commands.md#bundle
@@ -59,6 +62,19 @@ react {
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
 def enableProguardInReleaseBuilds = false
+
+/**
+ * Release signing credentials, loaded from android/keystore.properties (per-
+ * developer/per-machine, gitignored — see mobile/.gitignore). Falls back to
+ * null values when the file doesn't exist (e.g. a fresh checkout that hasn't
+ * generated a release key yet) so debug builds keep working regardless —
+ * only `assembleRelease`/`bundleRelease` actually need this to be present.
+ */
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -93,16 +109,27 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['RELEASE_STORE_FILE'])
+                storePassword keystoreProperties['RELEASE_STORE_PASSWORD']
+                keyAlias keystoreProperties['RELEASE_KEY_ALIAS']
+                keyPassword keystoreProperties['RELEASE_KEY_PASSWORD']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Falls back to the debug keystore only when keystore.properties
+            // doesn't exist yet (e.g. a fresh checkout) — Play Store will
+            // reject an upload signed this way, but this keeps
+            // `bundleRelease` from hard-failing before a real key is set up.
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
