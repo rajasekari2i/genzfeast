@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Alert, Text, TextInput, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { PasswordInput } from '../../components/PasswordInput';
 import { createTypedClient, getStoredRefreshToken } from '../../api/client';
 import type { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 import type { paths } from '../../api/generated/007-user-profile-management';
@@ -67,27 +68,9 @@ export function ChangePasswordScreen({ navigation }: Props) {
   return (
     <Screen title="Change Password" specRef="UI Design §4.12">
       <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Current Password"
-          secureTextEntry
-          value={currentPassword}
-          onChangeText={setCurrentPassword}
-        />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="New Password"
-          secureTextEntry
-          value={newPassword}
-          onChangeText={setNewPassword}
-        />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Retype New Password"
-          secureTextEntry
-          value={retypePassword}
-          onChangeText={setRetypePassword}
-        />
+        <PasswordInput placeholder="Current Password" value={currentPassword} onChangeText={setCurrentPassword} />
+        <PasswordInput placeholder="New Password" value={newPassword} onChangeText={setNewPassword} />
+        <PasswordInput placeholder="Retype New Password" value={retypePassword} onChangeText={setRetypePassword} />
         {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
         <PrimaryButton label="Update Password" onPress={handleSubmit} loading={saving} disabled={saving} />
       </View>
