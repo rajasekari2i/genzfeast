@@ -6,6 +6,7 @@ import { RegisterScreen } from '../screens/student/RegisterScreen';
 import { ForgotPasswordRequestScreen } from '../screens/student/ForgotPasswordRequestScreen';
 import { ForgotPasswordVerifyScreen } from '../screens/student/ForgotPasswordVerifyScreen';
 import { primaryHeaderOptions } from '../theme/navigationHeader';
+import { colors } from '../theme/tokens';
 
 /**
  * The pre-login stack — shared by every role (one app, not separate apps
@@ -29,8 +30,22 @@ export function AuthNavigator() {
   return (
     <Stack.Navigator initialRouteName="Splash" screenOptions={{ ...primaryHeaderOptions, headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
-      {/* Header bar stays (its brand-orange background), but no title text — the logo/tagline hero underneath already identifies the screen. */}
-      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: true, title: '' }} />
+      {/* Header bar stays shown (for the back gesture area) but matches the
+          screen's own background instead of the brand-orange used
+          elsewhere in this stack — the logo/tagline hero underneath already
+          identifies the screen, so a contrasting header bar here was just
+          an unwanted stripe, not a deliberate title bar (Login only). */}
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{
+          headerShown: true,
+          title: '',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.textPrimary,
+          headerShadowVisible: false,
+        }}
+      />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Register' }} />
       <Stack.Screen
         name="ForgotPasswordRequest"
