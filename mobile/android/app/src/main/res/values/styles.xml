@@ -10,9 +10,13 @@
     </style>
 
     <!-- Cold-start launch theme: shown via the activity's window background before
-         MainActivity.onCreate swaps back to AppTheme (see setTheme call there). -->
+         MainActivity.onCreate swaps back to AppTheme (see setTheme call there).
+         Plain color, not a logo image — splashscreen_logo.png was a leftover
+         placeholder grid/target graphic, not real branding (visible as
+         unwanted grid lines on launch); swap in a real logo drawable here
+         later if/when one exists. -->
     <style name="Theme.App.SplashScreen" parent="AppTheme">
-        <item name="android:windowBackground">@drawable/splashscreen_logo</item>
+        <item name="android:windowBackground">@color/splashscreen_background</item>
     </style>
 
 </resources>
