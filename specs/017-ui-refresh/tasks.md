@@ -23,13 +23,13 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **Purpose**: Get the five bundled typefaces onto the device before anything depends on them.
 
-- [ ] T001 [P] Pin `react-native-asset` in `mobile/package.json` devDependencies (never invoked via `npx` — supply-chain risk)
-- [ ] T002 [P] Add a `fonts:link` script to `mobile/package.json` that runs `react-native-asset`
-- [ ] T003 [P] Add the five **static instance** faces to `mobile/assets/fonts/`: `BricolageGrotesque-ExtraBold.ttf`, `Inter-Medium.ttf`, `Inter-SemiBold.ttf`, `Inter-Bold.ttf`, `Inter-ExtraBold.ttf` (variable fonts will NOT work — see research R7)
-- [ ] T004 [P] Add the OFL licence text to `mobile/assets/fonts/OFL.txt` (both families are OFL; the licence must ship with the app)
-- [ ] T005 Create `mobile/react-native.config.js` declaring `assets: ['./assets/fonts']`
-- [ ] T006 Run `npm run fonts:link` and confirm the five faces land in `mobile/android/app/src/main/assets/fonts/` (depends on T001–T005)
-- [ ] T007 Rebuild natively and render one sample per face on a device (a throwaway screen, not committed). **`Inter-Bold` and `BricolageGrotesque-ExtraBold` are the critical checks** — faces at weight ≥700 are the ones that fall back to the system font silently. All five must visibly differ from each other and from the system face.
+- [X] T001 [P] Pin `react-native-asset` in `mobile/package.json` devDependencies (never invoked via `npx` — supply-chain risk)
+- [X] T002 [P] Add a `fonts:link` script to `mobile/package.json` that runs `react-native-asset`
+- [!] T003 ⛔ BLOCKED (font binaries not in repo) — [P] Add the five **static instance** faces to `mobile/assets/fonts/`: `BricolageGrotesque-ExtraBold.ttf`, `Inter-Medium.ttf`, `Inter-SemiBold.ttf`, `Inter-Bold.ttf`, `Inter-ExtraBold.ttf` (variable fonts will NOT work — see research R7)
+- [!] T004 ⛔ BLOCKED (OFL text ships with the fonts) — [P] Add the OFL licence text to `mobile/assets/fonts/OFL.txt` (both families are OFL; the licence must ship with the app)
+- [X] T005 Create `mobile/react-native.config.js` declaring `assets: ['./assets/fonts']`
+- [!] T006 ⛔ BLOCKED (needs T003) — Run `npm run fonts:link` and confirm the five faces land in `mobile/android/app/src/main/assets/fonts/` (depends on T001–T005)
+- [!] T007 ⛔ BLOCKED (needs T003 + a device) — Rebuild natively and render one sample per face on a device (a throwaway screen, not committed). **`Inter-Bold` and `BricolageGrotesque-ExtraBold` are the critical checks** — faces at weight ≥700 are the ones that fall back to the system font silently. All five must visibly differ from each other and from the system face.
 
 **Checkpoint**: fonts resolve on-device. If T007 fails, stop — every later type decision is invalid.
 
@@ -41,8 +41,8 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **⚠️ CRITICAL**: No user story work may begin until this phase completes.
 
-- [ ] T008 Spike in `mobile/tailwind.config.js`: prove a plugin using `addUtilities` emits `fontFamily` + `fontSize` + `lineHeight` + `letterSpacing` as **one** utility under NativeWind 4.2. Tailwind's `fontSize` tuple cannot carry `fontFamily`, so without this every text node needs a second `font-*` class.
-- [ ] T009 Record the spike outcome in `specs/017-ui-refresh/research.md`. **If the plugin route fails**, adopt the paired-class convention (`text-body font-body`) and re-scope US4–US7 to add a family class to ~154 text nodes.
+- [X] T008 Spike in `mobile/tailwind.config.js`: prove a plugin using `addUtilities` emits `fontFamily` + `fontSize` + `lineHeight` + `letterSpacing` as **one** utility under NativeWind 4.2. Tailwind's `fontSize` tuple cannot carry `fontFamily`, so without this every text node needs a second `font-*` class.
+- [X] T009 Record the spike outcome in `specs/017-ui-refresh/research.md`. **If the plugin route fails**, adopt the paired-class convention (`text-body font-body`) and re-scope US4–US7 to add a family class to ~154 text nodes.
 
 **Checkpoint**: emission strategy decided and written down.
 
@@ -54,20 +54,20 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **Independent Test**: launch the app — every screen shows the new ground, espresso text and the bundled typefaces, with no screen file edited.
 
-- [ ] T010 [P] [US1] Create `mobile/src/theme/tokens.raw.js` — plain CommonJS, JSDoc `@type` annotated so string literals don't widen and break the typed re-export
-- [ ] T011 [US1] Rewrite `mobile/src/theme/tokens.ts` as a typed re-export of `tokens.raw.js`, preserving the exported `colors`, `typography`, `spacing`, `radius`, `tokens` shape (depends on T010)
-- [ ] T012 [P] [US1] Create `mobile/src/theme/accents.ts` with the seven `{soft, strong, dot?}` families — tangerine, sun, mint, red, violet, blue, neutral (FR-003a)
-- [ ] T013 [US1] Rewrite `mobile/src/theme/statusColors.ts` on top of `accents.ts`; unmapped status falls back to `neutral` with its raw label, never blank (FR-004, depends on T012)
-- [ ] T014 [US1] Rewrite `mobile/tailwind.config.js` to `require('./src/theme/tokens.raw.js')` instead of restating values (depends on T010)
-- [ ] T015 [US1] Add the class-compatibility map to `mobile/tailwind.config.js` — keep `text-h1`, `text-h2`, `text-body`, `text-body-bold`, `text-price`, `text-caption`, `text-button` as names and remap their values, so none of the 154 call sites changes (depends on T014)
-- [ ] T016 [US1] Add the text-style emission to `mobile/tailwind.config.js` per the T008 decision. **No `fontSize` tuple may carry `fontWeight`** — a bundled family plus a numeric weight ≥700 silently renders in the system font (FR-007a, depends on T008, T014)
-- [ ] T017 [US1] Add `fontFamily` entries to `mobile/tailwind.config.js` for the five bundled faces (depends on T014)
-- [ ] T018 [US1] Update `mobile/src/theme/navigationHeader.ts` for the two grounds, and **remove `fontWeight: '700'` at lines 12 and 27** — these apply to every stack header in the app (FR-007a, FR-011)
-- [ ] T019 [US1] Reduce the gate in `mobile/src/theme/brand/resolveBrandTheme.ts` to the **single** espresso-on-brand leg and delete the brand-as-foreground leg. Keeping both is unsatisfiable — it demands `L(brand) ≥ 0.2403` and `≤ 0.1717` (FR-010, research R8)
-- [ ] T020 [US1] Update `mobile/src/theme/brand/contrastCheck.ts` for the single pairing (depends on T019)
-- [ ] T021 [US1] Swap the fixtures in `mobile/test/theme/resolveBrandTheme.spec.ts`: `:19`'s `#004D40` (1.66, was the passing case) and `:45`'s `#FFF9C4` (15.19, was the rejection case) both invert. Re-derive as `#FFB020` passing and `#E4572E` failing (depends on T019)
-- [ ] T022 [US1] Run `npm run typecheck` — must pass with all **13** files importing `theme/tokens` unedited
-- [ ] T023 [US1] Device check: open five screens across three roles and confirm the new ground, text colour and typefaces are applied with **no file under `mobile/src/screens/` edited**
+- [X] T010 [P] [US1] Create `mobile/src/theme/tokens.raw.js` — plain CommonJS, JSDoc `@type` annotated so string literals don't widen and break the typed re-export
+- [X] T011 [US1] Rewrite `mobile/src/theme/tokens.ts` as a typed re-export of `tokens.raw.js`, preserving the exported `colors`, `typography`, `spacing`, `radius`, `tokens` shape (depends on T010)
+- [X] T012 [P] [US1] Create `mobile/src/theme/accents.ts` with the seven `{soft, strong, dot?}` families — tangerine, sun, mint, red, violet, blue, neutral (FR-003a)
+- [X] T013 [US1] Rewrite `mobile/src/theme/statusColors.ts` on top of `accents.ts`; unmapped status falls back to `neutral` with its raw label, never blank (FR-004, depends on T012)
+- [X] T014 [US1] Rewrite `mobile/tailwind.config.js` to `require('./src/theme/tokens.raw.js')` instead of restating values (depends on T010)
+- [X] T015 [US1] Add the class-compatibility map to `mobile/tailwind.config.js` — keep `text-h1`, `text-h2`, `text-body`, `text-body-bold`, `text-price`, `text-caption`, `text-button` as names and remap their values, so none of the 154 call sites changes (depends on T014)
+- [X] T016 [US1] Add the text-style emission to `mobile/tailwind.config.js` per the T008 decision. **No `fontSize` tuple may carry `fontWeight`** — a bundled family plus a numeric weight ≥700 silently renders in the system font (FR-007a, depends on T008, T014)
+- [X] T017 [US1] Add `fontFamily` entries to `mobile/tailwind.config.js` for the five bundled faces (depends on T014)
+- [X] T018 [US1] Update `mobile/src/theme/navigationHeader.ts` for the two grounds, and **remove `fontWeight: '700'` at lines 12 and 27** — these apply to every stack header in the app (FR-007a, FR-011)
+- [X] T019 [US1] Reduce the gate in `mobile/src/theme/brand/resolveBrandTheme.ts` to the **single** espresso-on-brand leg and delete the brand-as-foreground leg. Keeping both is unsatisfiable — it demands `L(brand) ≥ 0.2403` and `≤ 0.1717` (FR-010, research R8)
+- [X] T020 [US1] Update `mobile/src/theme/brand/contrastCheck.ts` for the single pairing (depends on T019)
+- [X] T021 [US1] Swap the fixtures in `mobile/test/theme/resolveBrandTheme.spec.ts`: `:19`'s `#004D40` (1.66, was the passing case) and `:45`'s `#FFF9C4` (15.19, was the rejection case) both invert. Re-derive as `#FFB020` passing and `#E4572E` failing (depends on T019)
+- [X] T022 [US1] Run `npm run typecheck` — must pass with all **13** files importing `theme/tokens` unedited
+- [!] T023 ⛔ BLOCKED (needs a device) — [US1] Device check: open five screens across three roles and confirm the new ground, text colour and typefaces are applied with **no file under `mobile/src/screens/` edited**
 
 **Checkpoint**: US1 complete. The whole app has visibly changed and is demoable.
 

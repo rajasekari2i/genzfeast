@@ -284,6 +284,21 @@ Also `src/theme/navigationHeader.ts:12,27` set `headerTitleStyle: { fontWeight: 
 
 ---
 
+## R11a — Plugin spike result (T008/T009): the `addUtilities` route works
+
+**Question**: can a `tailwind.config.js` plugin emit `fontFamily` + `fontSize` + `lineHeight` + `letterSpacing` as ONE utility, so a text node needs one class rather than a `text-*` plus a `font-*` pair? Tailwind's `fontSize` tuple accepts lineHeight/letterSpacing/fontWeight but **not** fontFamily, so without this every text node would need a second class (~154 extra edits).
+
+**Result: yes.** Executing the plugin handler emits **18 utilities** — the 15 new styles plus the 3 legacy aliases that do not collide by name (`text-h1`, `text-h2`, `text-button`; `text-body`, `text-body-bold`, `text-price`, `text-caption` already exist under their own names). Verified:
+
+- All seven legacy classes resolve with remapped values, e.g. `.text-h1` → Bricolage-ExtraBold 34/38/-1.2, `.text-body` → Inter-Medium 15/21/0.
+- **Zero utilities carry `fontWeight`** — the property that would silently defeat the bundled faces (R7).
+
+**Decision**: plugin route adopted. `theme.extend.fontSize` is deliberately left unset so the plugin owns every `text-*` style utility and family can never drift from size. A `fontFamily` theme entry is kept as an escape hatch only.
+
+**Caveat — not yet verified under NativeWind at runtime.** The emission is confirmed at the Tailwind layer; that the compiled utility survives NativeWind 4's CSS-to-RN transform is supported by `react-native-css-interop` handling `font-family` and `letter-spacing`, but has not been observed on a device. The fallback, if it ever fails, is the paired-class convention and a re-scope of US4–US7.
+
+---
+
 ## R12 — HomeScreen has no virtualisation to preserve
 
 **Finding**: The plan claimed the two-column grid "must preserve list virtualisation". `HomeScreen.tsx:60,72` is already a `.map()` over products inside `<Screen>`, and `Screen.tsx:47` wraps children in a plain `ScrollView`. There is no `FlatList` on this screen — `FlatList` appears only in `CategoryListScreen`, `FeedbackListScreen`, `ProductListScreen` and `DepartmentListScreen`.
