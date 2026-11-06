@@ -2,191 +2,251 @@
 
 **Feature Branch**: `017-ui-refresh`
 
-**Created**: 2026-11-06
+**Created**: 2026-11-06 · **Re-specified**: 2026-11-06 (explicit constraints and 7-layer priority order)
 
 **Status**: Draft
 
-**Input**: User description: "Visual-only UI refresh of the GenzFeast mobile app to match the GenzFeast App Redesign canvas (27 artboards). Every screen keeps today's fields, rules and flows. No backend, API, navigation or behaviour changes."
+**Input**: Restyle the React Native Android app to the GenzFeast redesign canvas. UI only. Supersedes `013-blue-theme-visual-design`.
 
 ---
 
 ## Overview
 
-GenzFeast's mobile app works, but it looks like scaffolding: flat greys, system type, one uniform corner radius, and a product list that shows barely two items per screen. A canteen is a competitive, impression-driven setting — a student deciding between the queue and the app decides in seconds.
+GenzFeast works, but it looks like scaffolding: flat greys, system type, one corner radius, and a menu that shows barely two dishes per screen. The approved redesign gives it an identity — a warm cream ground, espresso as the serious text-and-action colour, tangerine reserved for the moments that matter, a display typeface with real hierarchy, and a two-column menu.
 
-The approved redesign gives the product a deliberate identity: a warm cream ground, espresso as the serious text-and-action colour, tangerine reserved for the moments that matter, a display typeface with real hierarchy, and a two-column menu that shows six dishes where it used to show two.
+**This feature changes only what the user sees.** Every field, validation rule, request, route and permission check stays exactly as it is. The redesign's own foundation board states the contract: *"Fresh look, same app: every screen keeps today's fields, rules and flows. Tangerine stays the only colour a canteen can rebrand."*
 
-This feature changes **only what the user sees**. Every field, validation rule, permission check, request and navigation path stays exactly as it is today. The redesign's own foundation board states the contract: *"Fresh look, same app: every screen keeps today's fields, rules and flows. Tangerine stays the only colour a canteen can rebrand."*
+This specification **supersedes `013-blue-theme-visual-design`**, whose blue palette no longer reflects the shipped app. The mechanism 013 established — one token module, one tenant-overridable colour, a build-time contrast gate — is retained; only values and structure grow.
 
 ---
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - The design foundations exist and are the only source of truth (Priority: P1)
+> Priorities are **implementation order**. P1–P3 are foundation layers whose consumer is the next layer; P4–P7 are the user-facing journeys. Each is independently verifiable.
 
-A designer or developer opens the app and sees the new brand language applied consistently: the cream ground, espresso text, the two typefaces, the full corner-radius scale and the shared component shapes. Any screen built from these foundations inherits the look automatically, and no screen can drift by hardcoding its own colour or size.
+### User Story 1 - Design foundations exist and are the only source of truth (Priority: P1)
 
-**Why this priority**: Nothing else in this feature can land without it. Every subsequent story is an application of these foundations; shipping them first means every later screen is a small, low-risk change rather than a bespoke one. It is also independently valuable: on its own it already shifts the whole app's colour and type, because every screen reads from the shared definitions.
+The shared definition of colour, typography, spacing, radius, status colours and navigation chrome exists, and every screen reads from it. Applying it shifts the whole app's colour and type with no per-screen work.
 
-**Independent Test**: Launch the app and move through any existing screen. The ground is cream, body text is espresso rather than grey, and the display typeface renders on headings. The foundations define a named value for every colour, text style and radius the design uses. *(Whole-tree discipline — that no screen still defines its own value — is only achievable once every screen has been restyled, so it is asserted in the close-out unit once every parallel unit has landed, not here.)*
+**Why this priority**: nothing else can land without it, and it is independently valuable — every screen changes the moment it exists.
+
+**Independent Test**: launch the app; the ground, text colour and typefaces are the new ones on every screen, with no screen-level edits made.
 
 **Acceptance Scenarios**:
-
-1. **Given** the foundations are in place, **When** any existing screen is opened, **Then** it renders on the cream ground with espresso text and the new typefaces, with no further per-screen work.
-2. **Given** a canteen has supplied its own brand colour, **When** the app is built for that canteen, **Then** that colour replaces tangerine everywhere tangerine appears, and no other part of the palette changes.
-3. **Given** a canteen supplies a brand colour that would make text on a brand-filled button unreadable, **When** the brand is resolved, **Then** the colour is rejected with a warning and the default brand is used instead — an unreadable colour is never applied.
-4. **Given** a developer adds a new screen, **When** they need a colour, size, radius or text style, **Then** a named foundation value exists for it.
+1. **Given** the foundations exist, **When** any screen opens, **Then** it renders on the new ground with espresso text and the bundled typefaces.
+2. **Given** a canteen supplies its own brand colour, **When** the app is built for it, **Then** that colour replaces tangerine everywhere tangerine appears, and nothing else in the palette changes.
+3. **Given** a canteen supplies a brand colour that would make espresso text on it unreadable, **When** the brand is resolved, **Then** it is rejected with a warning and the default is used.
+4. **Given** a developer needs a colour, size, radius or text style, **When** they look for it, **Then** the foundations define a named value for it.
 
 ---
 
-### User Story 2 - A student sees a menu worth ordering from (Priority: P2)
+### User Story 2 - Shared components carry the design (Priority: P2)
 
-A student opens the app between classes. The menu shows a two-column grid of dishes with clear photos, veg and non-veg marks, prices and a prominent ADD control. Sold-out dishes are unmistakably unavailable — stamped, not faintly dimmed. Adding items, reviewing the cart, paying and receiving the pickup code all look like one designed product, and the pickup code is the visual hero of a paid order.
+Buttons, status badges, the product card, the cart bar, inputs, the pickup-code display, the pickup-code entry field, the sold-out switch row and the picker surface are rebuilt on the foundations. Every screen that uses them inherits the design.
 
-**Why this priority**: This is the journey that the overwhelming majority of users take, and the one where appearance most directly drives whether the app gets used instead of the queue. It is the business case for the whole feature.
+**Why this priority**: these appear on nearly every screen; rebuilding them once is what makes P4–P7 small, low-risk edits.
 
-**Independent Test**: Sign in as a student and complete a full order — browse, add, cart, pay, view the pickup code, check order history, open a profile. Every screen matches its artboard. The order completes exactly as it does today.
+**Independent Test**: open any screen using each component and compare against the Foundations artboard; confirm every interactive element meets the minimum touch target.
 
 **Acceptance Scenarios**:
-
-1. **Given** a canteen with six or more dishes, **When** the student opens the menu, **Then** dishes appear two per row, and noticeably more of the menu is visible without scrolling than before.
-2. **Given** a dish is sold out, **When** it appears in the menu, **Then** it carries a clear sold-out stamp and its add control is unavailable — not merely faded.
-3. **Given** an order has been paid for, **When** the student opens it, **Then** the six-digit pickup code is the most prominent element on the screen, each digit individually legible at arm's length.
-4. **Given** an order has failed payment, **When** the student opens it, **Then** the status is shown as a labelled chip with its own colour and a dot, and the pay-again action is immediately obvious.
-5. **Given** a student performs any action in this journey, **When** the action completes, **Then** the outcome is identical to the current app in every respect other than appearance.
+1. **Given** a primary and a brand action side by side, **When** rendered, **Then** they are distinguishable by fill and text colour, both fully rounded and the same height.
+2. **Given** an unavailable action, **When** rendered, **Then** it differs from an available one by **outline style as well as colour**, not colour alone.
+3. **Given** an item not in the cart, **When** the add control is tapped, **Then** it becomes a quantity stepper whose decrease and increase targets each meet the minimum.
+4. **Given** an order with a pickup code, **When** displayed, **Then** the six digits render as individual cells, legible at arm's length.
+5. **Given** staff entering a pickup code, **When** the code is wrong, **Then** the entry boxes clear for retry and nothing about the order changes.
 
 ---
 
-### User Story 3 - Staff and Company Admins get the same designed product (Priority: P3)
+### User Story 3 - The app carries the new brand mark (Priority: P3)
 
-A counter staff member works the incoming-orders queue and verifies pickup codes; a Company Admin manages products, categories, departments, users and the feedback queue. Both see the same visual language as students, with the navy chrome that distinguishes back-of-house work, and forms that are legible under canteen lighting at speed.
+The launcher icon and splash screen use the new logo, so the redesign is visible before the app even opens.
 
-**Why this priority**: Fewer people, but they are in the app for longer and under more time pressure than students. It is deliberately after the student journey because the business impact is lower, and because these screens reuse components proven in Story 2.
+**Why this priority**: small, self-contained, and the first thing a user sees. Independent of every screen.
 
-**Independent Test**: Sign in as staff, then as a Company Admin. Work through the queue, verify a code, and create and edit a product, category, department and user. Every screen matches its artboard and behaves exactly as it does today.
+**Independent Test**: install the build; the launcher icon is the new mark and adapts correctly to the device's icon shape; the splash shows the new logo.
 
 **Acceptance Scenarios**:
-
-1. **Given** staff open the incoming-orders queue, **When** orders are waiting, **Then** each is a card in the new language, ordered as it is today.
-2. **Given** staff enter a pickup code, **When** it matches, **Then** fulfilment completes as today; **When** it does not match, **Then** the error is shown in the new language and nothing changes.
-3. **Given** a Company Admin opens any management list, **When** the list loads, **Then** rows, actions and empty states follow the shared component patterns.
-4. **Given** a Company Admin opens a create or edit form, **When** a field is read-only, **Then** it is visibly distinguishable from an editable field without relying on colour alone.
+1. **Given** the app is installed, **When** the launcher is viewed, **Then** the new mark appears and renders correctly under the platform's adaptive-icon masking (round, squircle, square).
+2. **Given** the app is launched cold, **When** the splash shows, **Then** it presents the new logo on a brand-consistent ground.
 
 ---
 
-### User Story 4 - No screen is left behind (Priority: P4)
+### User Story 4 - Signing in and signing up (Priority: P4)
 
-A user who forgets their password, changes it, edits their profile, launches the app cold, or (as an admin) adds a product, sees the same designed product as everywhere else — even though the redesign supplied no artboard for these screens.
+Login, registration and the two forgot-password steps are in the new design. Fields, validation and messages are unchanged.
 
-**Why this priority**: Last because these are lower-traffic screens, but genuinely required: without it the app is visibly two-tone, and the screens left behind are disproportionately ones users reach when already frustrated (a forgotten password). These are restyled by applying the established foundations and component patterns — no new layouts are invented.
+**Why this priority**: the first screens a new user sees, and the smallest coherent screen group.
 
-**Independent Test**: Visit each of the six screens without an artboard and confirm none of them still shows the old grey-on-white treatment, and that each uses only components and values defined by the foundations.
+**Independent Test**: register an account, sign out, sign in, and run a full password reset. Every step matches its artboard, and every field, rule and message is identical to before.
 
 **Acceptance Scenarios**:
+1. **Given** the registration screen, **When** it renders, **Then** it shows exactly today's fields — including **gender**, which the artboard omits — in today's order.
+2. **Given** a validation failure, **When** the message appears, **Then** the wording is unchanged and it uses the foundations' error colour.
+3. **Given** the forgot-password screens, which have no artboard, **When** they render, **Then** they use only foundation values and existing component patterns, with no new layout invented.
 
-1. **Given** any screen without a supplied design, **When** it is opened, **Then** it uses the cream ground, espresso text, the new typefaces and the shared component shapes.
-2. **Given** a screen without a supplied design, **When** it is reviewed against the artboards, **Then** its field order, labels, validation messages and actions are unchanged from today.
-3. **Given** the whole app is reviewed end to end, **When** moving between any two screens, **Then** no screen looks like it belongs to the previous design.
+---
+
+### User Story 5 - The student journey (Priority: P5)
+
+Menu, side menu, cart, order confirmation, order detail and order history in the new design. The menu is a two-column grid; sold-out dishes are unmistakable; the pickup code is the hero of a paid order.
+
+**Why this priority**: the journey almost every user takes, and the business case for the feature.
+
+**Independent Test**: place an order end to end — browse, add, cart, pay, view the code, check history. Every screen matches its artboard; the order behaves exactly as today.
+
+**Acceptance Scenarios**:
+1. **Given** a canteen with six or more dishes, **When** the menu opens, **Then** dishes appear two per row and noticeably more of the menu is visible without scrolling.
+2. **Given** a sold-out dish, **When** it appears, **Then** it carries an explicit stamp and an unavailable add control — not a faint dim.
+3. **Given** a paid order, **When** opened, **Then** the pickup code is the most prominent element on the screen.
+4. **Given** a failed payment, **When** opened, **Then** the status shows as a labelled badge with its own colour and the pay-again action is immediately obvious.
+5. **Given** the side menu, **When** opened, **Then** it shows the user's **name and canteen only** — never their role.
+
+---
+
+### User Story 6 - Screens every role shares (Priority: P6)
+
+Profile, edit profile, change password, Contact Us and Feedback in the new design.
+
+**Why this priority**: reached by every role, but less often than P5; reuses components already proven there.
+
+**Independent Test**: as each role, open all five screens; each matches its artboard (or, where none exists, the established patterns), with fields and rules unchanged.
+
+**Acceptance Scenarios**:
+1. **Given** the profile screen, **When** a read-only field renders, **Then** it is distinguishable from an editable one by border style as well as colour.
+2. **Given** Contact Us, **When** phone and email render, **Then** they are presented as **information, not actions** — no dialler or mail client is launched.
+3. **Given** the feedback form, **When** it renders, **Then** the rating, the six fixed categories and the contact-back option are unchanged.
+
+---
+
+### User Story 7 - Company Admin and Staff (Priority: P7)
+
+Dashboard, product list (admin and staff variants), product form, categories, departments, users, feedback review and detail, incoming orders, fulfilment, and both back-of-house side menus.
+
+**Why this priority**: fewer people, but longer sessions under time pressure. Last because the components are proven by then and the business impact is lower than P5.
+
+**Independent Test**: as staff, work the queue and verify a code; as Company Admin, create and edit a product, category, department and user, and resolve a feedback item. Every screen matches its artboard and behaves as today.
+
+**Acceptance Scenarios**:
+1. **Given** the staff product list, **When** it renders, **Then** it offers **only** the sold-out switch — no create, edit or delete.
+2. **Given** the fulfilment screen, **When** it renders, **Then** the pickup code is never displayed to staff; they can only submit a candidate.
+3. **Given** the user form, **When** the role options render, **Then** they are Company Staff, Student, Teaching and Non-Teaching — **Company Admin is absent** — and Category is required when the role is Student.
+4. **Given** a feedback item marked resolved, **When** the screen renders, **Then** there is no path back to unresolved.
+5. **Given** the dashboard, **When** it renders, **Then** it contains **no open/closed toggle**.
 
 ---
 
 ### Edge Cases
 
-- **A canteen's brand colour is dark.** Brand-filled buttons place espresso text on the brand colour. A dark brand colour makes that unreadable. The contrast check must evaluate this pairing and reject the colour — warning and falling back to the default — rather than applying it.
-- **A dish has no photo.** The menu grid must show a designed placeholder, not an empty box or a broken-image icon.
-- **A dish name is long.** In a two-column grid each card is roughly half the previous width. Names must truncate cleanly on one line and descriptions to a fixed height, so cards in a row stay the same height.
-- **A canteen has one dish, or none.** The grid must not leave a visually broken half-row, and the empty state must be designed.
-- **A bundled typeface is missing or fails to resolve.** A font file absent at build time must fail the `theme/fonts.spec` gate, so `npm test` goes red before release. A face that fails to resolve at runtime must fall back to a readable system face rather than rendering invisibly or collapsing layout. These are different failures with different handling, and the distinction must be explicit.
-- **The device is set to a large system font size.** Pickup-code digits, status chips and buttons must remain legible and un-clipped.
-- **A very small screen.** The two-column grid must still render two readable columns at the narrowest supported width.
-- **A status value outside the four designed ones.** Any order status without a designed chip must still render a readable, non-blank label.
+- **A canteen's brand colour is dark.** Brand-filled buttons carry espresso text. The contrast check must reject such a colour — warning and falling back to the default — rather than applying it.
+- **A dish has no photo.** The grid shows a designed placeholder, never a broken-image icon.
+- **A dish name is long.** In a two-column grid each card is about half the previous width; names truncate on one line and descriptions to a fixed height so cards in a row stay equal.
+- **A canteen has one dish, or none.** No broken half-row; the empty state is designed.
+- **A bundled typeface is missing or fails to resolve.** A font file absent at build time must fail the font gate so the test suite goes red before release. A face that fails to resolve at runtime must fall back to a readable system face rather than rendering invisibly. These are different failures with different handling.
+- **The device uses a large system font size.** Pickup-code digits, badges and buttons stay legible and un-clipped.
+- **A very small screen.** The two-column grid still renders two readable columns at the narrowest supported width.
+- **An order status outside the four designed ones.** It renders a readable, non-blank label rather than an empty badge.
 
 ---
 
 ## Requirements *(mandatory)*
 
-### Functional Requirements
+### Functional Requirements — Foundations (P1)
 
-**Foundations**
-
-- **FR-001**: The app MUST define a single shared set of design foundations — colours, typefaces, text styles, spacing and corner radii — that every screen and component reads from.
-- **FR-002**: No screen or component MUST define a colour, text style or corner radius that the shared foundations already define — whether as a literal value **or as a styling class name drawn from outside the foundations**. A class that resolves to an off-palette colour is as much a violation as a hardcoded one.
-- **FR-003**: The palette MUST comprise: tangerine `#FF6B35` (brand), espresso `#2B1D16` (primary text and primary action fill), **two grounds** — cream `#FFF8F1` for student-facing screens and warm grey `#F5F3EF` for back-of-house (Company Admin and Staff) screens — navy `#183153` (back-of-house chrome), sun `#FFC857` (highlights), mint `#0B7A55` (veg), plus the supporting neutrals `#4A4756`, `#5B5866`, `#F1E6DA`, `#EFE3D6`, `#CFC6BB`, `#F4EEE7`, `#6E6A78`, `#D6D4DD` and link `#B23C0E`.
-- **FR-003b**: The palette MUST additionally define a **scrim** (modal overlay) and a **shadow** (elevation) colour. Both name values already present in the shipped app; neither changes any pixel.
-- **FR-003a**: Soft-accent pairs MUST be defined once and reused by status chips, icon tiles and product-image tints alike, in seven families: tangerine, sun, mint, red, violet, blue and neutral. No component may define its own accent colour.
-- **FR-004**: Order status MUST be presented as a labelled chip with a matching dot, in four defined pairings: payment pending `#FFF1D6`/`#8A5300`/`#F59E0B`; order placed `#FFE6DA`/`#B23C0E`/`#FF6B35`; payment failed `#FDE2E1`/`#B42318`/`#DC2626`; delivered `#DDF4EA`/`#0B6B4B`/`#16A34A`.
-- **FR-005**: Dietary marks MUST use mint `#0B7A55` for veg and `#9A3412` for non-veg, each a bordered glyph that differs in shape as well as colour.
-- **FR-006**: The app MUST render a display typeface (Bricolage Grotesque) for headings and a body typeface (Inter) for everything else, both shipped with the app so they render without network access.
-- **FR-007**: The text scale MUST provide fifteen styles across two families. The display family (Bricolage Grotesque) MUST be used at a single weight for `hero` 36, `display` 34, `title` 28, `titleSm` 24, `subtitle` 20 and `subtitleSm` 17. The body family (Inter) MUST provide `price` 16, `bodyLg` 16, `body` 15, `bodyBold` 15, `labelLg` 14, `label` 13, `eyebrow` 12 (uppercase, widened tracking), `caption` 12 and `captionSm` 11.
-- **FR-007a**: Because the platform selects a bundled face by file name rather than by numeric weight, each weight MUST ship as its own font family, and **no numeric font weight may be set anywhere** — not in a text style, not as a styling class name, and not in navigation header options. Weight is carried by the family alone. A style that sets both a bundled family and a numeric weight of 700 or above silently renders in the system font, with no error at compile or build time.
+- **FR-001**: The app MUST define a single shared set of design foundations — colours, typefaces, text styles, spacing, radii, status colours and navigation chrome — that every screen and component reads from.
+- **FR-002**: No screen or component MUST define a colour, text style or corner radius the foundations already define, **whether as a literal value or as a styling class name drawn from outside the foundations**. A class resolving to an off-palette colour is as much a violation as a hardcoded one.
+- **FR-003**: The palette MUST comprise: **Tangerine `#FF6B35`** (brand), **Espresso `#2B1D16`** (primary text and primary action fill), **two grounds** — **Cream `#FFF8F1`** for student-facing screens and **warm grey `#F5F3EF`** for back-of-house screens — **Navy `#183153`** (admin and staff chrome), **Sun `#FFC857`** (highlights), **Mint `#0B7A55`** (veg), plus the supporting neutrals `#4A4756`, `#5B5866`, `#F1E6DA`, `#EFE3D6`, `#CFC6BB`, `#F4EEE7`, `#6E6A78`, `#D6D4DD` and link `#B23C0E`.
+- **FR-003a**: Soft-accent pairs MUST be defined once and reused by status badges, icon tiles and product-image tints alike, across seven families: tangerine, sun, mint, red, violet, blue and neutral. No component may define its own accent colour.
+- **FR-003b**: The palette MUST additionally define a **scrim** (overlay) and a **shadow** (elevation) colour. Both name values already present in the shipped app; neither changes any pixel.
+- **FR-004**: Order status MUST be presented as a labelled badge with a matching dot, in four defined pairings: payment pending `#FFF1D6`/`#8A5300`/`#F59E0B`; order placed `#FFE6DA`/`#B23C0E`/`#FF6B35`; payment failed `#FDE2E1`/`#B42318`/`#DC2626`; delivered `#DDF4EA`/`#0B6B4B`/`#16A34A`.
+- **FR-005**: Dietary marks MUST use mint `#0B7A55` for veg and `#9A3412` for non-veg, each a bordered glyph differing in **shape as well as colour**.
+- **FR-006**: The app MUST render **Bricolage Grotesque** for display text and **Inter** for body text, both shipped with the app so they render without network access.
+- **FR-007**: The text scale MUST provide fifteen styles across the two families: display family at `hero` 36, `display` 34, `title` 28, `titleSm` 24, `subtitle` 20, `subtitleSm` 17; body family at `price` 16, `bodyLg` 16, `body` 15, `bodyBold` 15, `labelLg` 14, `label` 13, `eyebrow` 12 (uppercase, widened tracking), `caption` 12, `captionSm` 11.
+- **FR-007a**: Because the platform selects a bundled face by **file name** rather than numeric weight, each weight MUST ship as its own font family, and **no numeric font weight may be set anywhere** — not in a text style, not as a styling class, not in navigation header options. Weight is carried by the family alone. A style setting both a bundled family and a weight of 700 or above silently renders in the system font, with no error at compile or build time.
 - **FR-008**: The corner-radius scale MUST provide twelve steps: 3 (dietary glyph), 8, 10, 12, 14, 16, 18, 20, 22, 24, 28 and fully-rounded.
-- **FR-009**: Tangerine MUST remain the only value a canteen can override for its own branded build. Every other foundation value MUST be fixed across all canteens.
-- **FR-010**: A canteen brand colour MUST be evaluated against **exactly one pairing** — espresso text on the brand fill, ≥4.5:1. A failing colour warns and falls back to the default; it does not fail the build. The former brand-as-foreground leg is **removed**: requiring both legs is mathematically unsatisfiable (it demands a brand both light enough to carry espresso text and dark enough to read on cream), and the redesign never uses the brand colour as text.
+- **FR-009**: **Tangerine MUST remain the only value a canteen can override.** Every other foundation value MUST be identical across all canteens.
+- **FR-010**: A canteen brand colour MUST be evaluated against **exactly one pairing** — espresso text on the brand fill, ≥4.5:1. A failing colour warns and falls back to the default; it does not fail the build. A brand-as-foreground leg MUST NOT be added: requiring both is mathematically unsatisfiable, since it demands a colour simultaneously light enough to carry espresso text and dark enough to read on cream.
+- **FR-011**: Navigation chrome MUST be defined centrally, with back-of-house surfaces using navy and student surfaces using the student ground.
 
-**Shared components**
+### Functional Requirements — Shared components (P2)
 
-- **FR-011**: A primary action MUST render as a fully-rounded 52-unit-tall espresso button with light text.
-- **FR-012**: A brand action MUST render as a fully-rounded 52-unit-tall brand-coloured button with espresso text.
-- **FR-013**: An unavailable action MUST render as a fully-rounded 52-unit-tall dashed-outline button on a muted fill, distinguishable from an available one by outline style as well as colour.
-- **FR-014**: The add-to-cart control MUST be a fully-rounded brand-coloured control with a plus mark; once an item is in the cart it MUST become a quantity stepper with decrease and increase controls.
-- **FR-015**: Every interactive control MUST present a touch target of at least 44 units in both dimensions.
-- **FR-016**: A text field MUST be 48 units tall with a 14-unit radius and a defined border; a read-only field MUST be visually distinct by border style and fill, not colour alone.
-- **FR-017**: The pickup code MUST render as six individual digit cells on a dark panel, each cell brand-filled with the display typeface at large size.
-- **FR-018**: A content card MUST render on a light fill with a 24-unit radius and a hairline border.
+- **FR-012**: A primary action MUST render as a fully-rounded espresso button with light text; a brand action as a fully-rounded brand-filled button with espresso text.
+- **FR-013**: An unavailable action MUST be distinguishable by **outline style as well as colour**.
+- **FR-014**: The add-to-cart control MUST become a quantity stepper once the item is in the cart.
+- **FR-015**: Every interactive control MUST present a touch target of at least 44 units in both dimensions, **including where an artboard shows less**.
+- **FR-016**: A text field MUST carry the defined height, radius and border; a read-only field MUST be distinct by **border style and fill, not colour alone**.
+- **FR-017**: The pickup code MUST render as six individual digit cells on a dark panel.
+- **FR-018**: Pickup-code **entry** MUST render as six segmented boxes which clear on an incorrect code so the operator can retry.
+- **FR-019**: The sold-out control MUST render as a labelled switch row.
+- **FR-020**: Selection of a category, department or role MUST use the shared picker surface rather than a bespoke control per screen.
+- **FR-021**: A content card MUST render on a light fill with the defined radius and a hairline border.
 
-**Screens**
+### Functional Requirements — Brand (P3)
 
-- **FR-019**: Each of the 26 screens with a supplied artboard MUST match that artboard's layout, hierarchy and component usage.
-- **FR-020**: The menu MUST present dishes in a two-column grid.
-- **FR-021**: A sold-out dish MUST carry an explicit sold-out stamp over its image and an unavailable add control.
-- **FR-022**: The six screens without a supplied artboard — forgot-password request, forgot-password verify, change password, edit profile, app launch, and product create/edit — MUST be restyled using only the foundations and shared components defined above, with no new layout patterns invented.
-- **FR-023**: The side menu MUST present the three role variants shown in the artboards, driven by the signed-in user's role exactly as it is today.
+- **FR-022**: The launcher icon MUST use the new mark and MUST render correctly under the platform's adaptive-icon masking.
+- **FR-023**: The splash screen MUST present the new logo on a brand-consistent ground.
 
-**Preservation**
+### Functional Requirements — Screens (P4–P7)
 
-- **FR-024**: No screen's fields, field order, labels, validation rules or error messages MUST change.
-- **FR-025**: No navigation path, screen-to-screen transition or role-based routing rule MUST change.
-- **FR-026**: No request the app makes, and no data it sends or expects, MUST change.
-- **FR-027**: No business rule — ordering, payment, fulfilment, permissions — MUST change.
-- **FR-028**: Every screen that exists today MUST still exist, and no new screen MUST be added.
+- **FR-024**: Each of the 26 artboards MUST be matched by its corresponding screen in layout, hierarchy and component usage.
+- **FR-025**: The menu MUST present dishes in a two-column grid.
+- **FR-026**: A sold-out dish MUST carry an explicit stamp and an unavailable add control.
+- **FR-027**: Side menus MUST display the signed-in user's **name and canteen only**. They MUST NOT display the user's role.
+- **FR-028**: The three side-menu variants MUST be driven by the signed-in user's role exactly as they are today, with identical menu items per role.
+- **FR-029**: Screens with no artboard — forgot-password request, forgot-password verify, change password, edit profile, app launch, and product create/edit — MUST be restyled using only the foundations and shared components, with **no new layout patterns invented**.
+
+### Functional Requirements — Preservation (binding across all priorities)
+
+- **FR-030**: No screen's fields, field order, labels, validation rules or error messages MUST change.
+- **FR-031**: No navigation **route name or parameter**, screen-to-screen transition, or role-based routing rule MUST change.
+- **FR-032**: No request the app makes, and no data it sends or expects, MUST change. The generated API type definitions MUST NOT be modified.
+- **FR-033**: No backend code MUST be modified.
+- **FR-034**: No business rule — ordering, payment, fulfilment, permissions — MUST change.
+- **FR-035**: Every screen that exists today MUST still exist, and **no new screen MUST be added**.
+
+### Functional Requirements — Explicit non-goals (verifiable prohibitions)
+
+These exist because the restyle creates an opportunity to add them. Each is a **defect if implemented**.
+
+- **FR-036**: A canteen open/closed toggle MUST NOT be added.
+- **FR-037**: Search or filtering of the menu MUST NOT be added.
+- **FR-038**: Tap-to-call or tap-to-email MUST NOT be added; contact details remain information.
+- **FR-039**: A Company Admin MUST NOT gain the ability to create or edit another Company Admin.
+- **FR-040**: Category MUST remain required when creating or registering a Student.
+- **FR-041**: Feedback resolution MUST remain one-way; no path back to unresolved may be added.
 
 ### Key Entities
 
-- **Design foundation set**: The single shared definition of colour, typography, spacing and radius that the entire app reads from. One per app; overridable by exactly one value (brand colour) per canteen.
-- **Canteen brand override**: A canteen-supplied brand colour applied at build time, subject to a contrast gate.
-- **Artboard**: One approved screen design. 27 exist; 26 map to an existing screen, 1 is the foundation reference.
+- **Design foundation set**: the single shared definition of colour, typography, spacing, radius, status colours and chrome. One per app; overridable by exactly one value per canteen.
+- **Canteen brand override**: a canteen-supplied brand colour applied at build time, subject to a contrast gate.
+- **Artboard**: one approved screen design. 27 exist — 26 map to existing screens, 1 is the foundation reference.
 
 ---
 
 ## Success Criteria *(mandatory)*
 
-### Measurable Outcomes
-
-- **SC-001**: A student sees at least **three times as many dishes** without scrolling as in the current single-column menu (six versus two on a typical screen).
-- **SC-002**: **100% of the app's screens** render in the new design language — all 27 screen files plus the role-routed navigation shell, including the six screens with no supplied artboard.
-- **SC-003**: **Zero behavioural differences** are observable between the current app and the refreshed app: every field, validation message, action outcome and navigation path is identical.
-- **SC-004**: **Zero hardcoded design values** remain in screens or components for any property the foundations define, and **zero styling class names remain that the foundations no longer define** — a name that silently stops applying is as much a defect as a hardcoded value.
-- **SC-005**: All body text meets a contrast ratio of **at least 4.5:1** against its background, and all large text at least **3:1**.
+- **SC-001**: A diner sees at least **three times as many dishes** without scrolling as in the current single-column menu.
+- **SC-002**: **100% of the app's screens** render in the new design language — all 27 screen files plus the role-routed navigation shell, including the six with no artboard.
+- **SC-003**: **Zero behavioural differences** are observable: every field, validation message, action outcome, route and permission is identical.
+- **SC-004**: **Zero hardcoded design values and zero off-foundation styling class names** remain in screens or components. A class that silently stops applying, or that silently applies an off-palette colour, counts as a failure.
+- **SC-005**: All body text meets a contrast ratio of **at least 4.5:1**; large text at least **3:1**.
 - **SC-006**: Every interactive control meets the **44-unit minimum touch target**.
-- **SC-007**: A reviewer comparing each of the 26 designed screens against its artboard finds **no layout or hierarchy mismatch**.
-- **SC-008**: A canteen brand colour that would render espresso text on it unreadable is rejected and replaced by the default, with a warning. At least one non-default brand colour is demonstrably **accepted**, proving the override path still works.
+- **SC-007**: A reviewer comparing each of the 26 artboards against its screen finds **no layout or hierarchy mismatch**.
+- **SC-008**: A brand colour that would render espresso text unreadable is rejected and replaced with the default, with a warning; and **at least one non-default brand colour is demonstrably accepted**, proving the override path still works.
 - **SC-009**: The sold-out state is correctly identified by **every participant** in an informal review, without prompting.
+- **SC-010**: **None of the six prohibited features (FR-036 … FR-041) is present** in the shipped build.
 
 ---
 
 ## Assumptions
 
-- **The redesign canvas is the authority on appearance; the current app is the authority on behaviour.** Where an artboard appears to show different fields, copy or logic from the shipped screen, the shipped screen wins and the difference is recorded rather than implemented. The canvas's own foundation board states this intent.
-- **The canvas's `OrderSuccess` artboard is a state, not a screen.** The app presents the paid-order confirmation inside the existing order detail screen; that artboard therefore specifies how that screen looks in its `order_placed` state. No new screen is created.
-- **The canvas's three side-menu artboards are role variants of the one existing side menu**, not three separate menus.
-- **Artboards are specified at a single phone size.** They are treated as proportional intent, to be realised responsively across supported devices rather than reproduced at fixed pixel sizes.
-- **The existing brand-override and contrast-check mechanism is retained**, with the contrast gate **narrowed to a single pairing** — espresso text on the brand fill. Its former brand-as-foreground leg is removed, because the redesign never uses the brand colour as text: links use the dedicated link colour and controls use espresso. Keeping both legs was proven to reject every colour in the sRGB gamut.
-- **Bundling the two typefaces requires a platform build change** and therefore a fresh install rather than a reload; this is accepted and is sequenced first so that a font problem cannot block screen work.
-- **Android is the only target.** The project has no iOS build today, so iOS rendering is out of scope.
-- **Updated brand artwork is out of scope for this feature.** The new icon, logo and white mark are committed to the repository but are not applied here; replacing the launcher icon is a platform-resource change no artboard covers, and is deferred.
-- **No automated visual-regression tooling exists**, so artboard fidelity is verified by structured human review against each artboard rather than by snapshot tests.
+- **The canvas governs appearance; the shipped app governs behaviour.** Where an artboard implies different fields, copy or logic, the shipped app wins and the difference is recorded rather than implemented.
+- **The Register artboard omits the required gender field.** It is retained and styled to match the artboard's own segmented-chip pattern.
+- **The `OrderSuccess` artboard is a state, not a screen** — it specifies how the existing order-detail screen looks once paid. No new screen or route is created.
+- **The three side-menu artboards are role variants of the one existing side menu**, not three separate menus.
+- **Artboards are drawn at a single phone size** and are treated as proportional intent, realised responsively rather than reproduced at fixed pixel sizes.
+- **The brand-override resolver is dormant** — it has no production call site and no tenant brand configuration exists in the repository. This feature corrects its contrast logic; it does not wire it up, which would be new non-visual behaviour. Scenarios about a tenant colour being applied are verified as unit assertions, not on a device.
+- **Bundling the typefaces requires a platform build change**, so a fresh install is needed rather than a reload. **Reverting the feature therefore also requires a new build** — there is no partial rollback.
+- **Android is the only target**; no iOS project exists.
+- **Styling is applied through utility class names, not only through the token module.** Changing or removing a class name screens already use is a breaking change even when nothing fails to compile.
 - **Dark mode is not in scope.** The redesign defines a single light appearance.
-- **The brand-override resolver is dormant.** It has no production call site — only its own test imports it, and no tenant brand configuration exists in the repository. This feature corrects the resolver's contrast logic; it does **not** wire it into the running app, which would be new non-visual behaviour. Acceptance scenarios about a tenant colour being applied are therefore verified as unit assertions, not on a device.
-- **The Register artboard omits the required gender field.** The shipped app requires it; the artboard does not show it. Per the standing rule that the shipped app governs behaviour, the field is retained and styled to match the artboard's own segmented-chip pattern.
-- **Reverting this feature after release requires a new application build**, because bundled font files are platform assets rather than part of the reloadable bundle. There is no partial rollback: the change ships, and is withdrawn, as one unit.
-- **The application's styling is applied through utility class names, not only through the token module.** Changing or removing a class name that screens already use is therefore a breaking change even when nothing fails to compile.
+- **No automated visual-regression tooling exists**, so artboard fidelity is verified by structured human review against each artboard rather than by snapshot tests.
