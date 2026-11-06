@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Alert, Text, TextInput, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { FormField } from '../../components/FormField';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient } from '../../api/client';
 import { getBuildCompanyId } from '../../config/tenant';
@@ -57,20 +58,26 @@ export function ForgotPasswordRequestScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Forgot Password" specRef="UI Design §4.3">
-      <View className="gap-3">
-        <Text className="text-body text-text-secondary">
-          Enter your username and we'll send a one-time code to reset your password.
-        </Text>
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Username (mobile number)"
+    <Screen title="Forgot Password">
+      <View className="gap-lg">
+        {/* No artboard for this screen (FR-029) — composed from Login's
+            own heading + field + primary-button pattern, with no new
+            layout invented. */}
+        <View className="gap-xs">
+          <Text className="text-title text-text-primary">Forgot password?</Text>
+          <Text className="text-body text-text-secondary">
+            Enter your username and we'll send a one-time code to reset your password.
+          </Text>
+        </View>
+        <FormField
+          label="Username (mobile number)"
+          placeholder="9876543210"
           keyboardType="phone-pad"
           autoCapitalize="none"
           value={username}
           onChangeText={setUsername}
         />
-        <PrimaryButton label="Send Code" onPress={handleSubmit} loading={loading} disabled={loading} />
+        <PrimaryButton label="Send code" onPress={handleSubmit} loading={loading} disabled={loading} />
       </View>
     </Screen>
   );

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Alert, Image, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { PasswordInput } from '../../components/PasswordInput';
-import { BrandRationaleSlider } from '../../components/BrandRationaleSlider';
+import { FormField } from '../../components/FormField';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient, storeSession } from '../../api/client';
-import { getBuildCompanyId } from '../../config/tenant';
+import { getBuildCompanyId, getTenantDisplayName } from '../../config/tenant';
 import { useAuth } from '../../auth/AuthContext';
+import { colors, radius } from '../../theme/tokens';
 import type { paths } from '../../api/generated/002-registration-login-jwt-auth';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -16,11 +17,21 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 const client = createTypedClient<paths>();
 
 /**
- * UI Design §4.2. Fields: Username, Password. Shared entry point for every
- * role (not Student-only) — after a successful login this calls
- * `useAuth().signIn`, which flips RootNavigator over to the role-based
- * AppShell, rather than navigating to a route that may not even exist in
- * this stack for a non-Student role.
+ * Login — the `Login` artboard.
+ *
+ * Fields, validation and the 401-vs-403 message split are unchanged
+ * (FR-030); only the layout is new: a brand-filled hero card carrying the
+ * logo and tagline, then the form, then the register link pinned to the
+ * bottom.
+ *
+ * The brand-rationale slider that used to sit under the form is not in the
+ * artboard and is dropped here — it is decorative marketing content, not a
+ * field, rule or flow, so removing it is a presentational change. The
+ * component itself is kept and restyled rather than deleted.
+ *
+ * Shared entry point for every role: on success this calls signIn, which
+ * flips RootNavigator to the role-based AppShell rather than navigating to
+ * a route that may not exist in this stack for a non-Student role.
  */
 export function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
@@ -28,6 +39,7 @@ export function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const canteen = getTenantDisplayName();
 
   async function handleSubmit() {
     setErrorMessage(null);
@@ -66,36 +78,88 @@ export function LoginScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Login" specRef="UI Design §4.2">
-      <View className="items-center gap-1 mb-6">
-        <Image
-          source={require('../../../assets/brand/genzfeast-login-logo.png')}
-          style={{ width: 220, height: 169 }}
-          resizeMode="contain"
-          accessibilityLabel="GenzFeast"
-        />
-        <Text className="text-body-bold text-text-secondary text-center">Good Food Meets Greater Tomorrows</Text>
+    <Screen title="Login">
+      <View className="gap-lg">
+        {/* Hero: brand-filled, with a sun-coloured disc behind the mark. */}
+        <View
+          style={{ height: 320, borderRadius: radius['6xl'], backgroundColor: colors.primary }}
+          className="p-lg justify-between overflow-hidden"
+        >
+          <View
+            style={{
+              position: 'absolute',
+              width: 180,
+              height: 180,
+              borderRadius: radius.pill,
+              backgroundColor: colors.accent,
+              top: -40,
+              right: -40,
+            }}
+          />
+          <View className="flex-row items-center gap-sm">
+            <View
+              style={{ borderRadius: radius.md }}
+              className="w-touch h-touch bg-espresso items-center justify-center overflow-hidden"
+            >
+              <Image
+                source={require('../../../assets/brand/gf-mark-white.png')}
+                style={{ width: 32, height: 32 }}
+                resizeMode="contain"
+                accessibilityLabel=""
+              />
+            </View>
+            <Text className="text-titleSm text-espresso">
+              Genz<Text className="text-surface">Feast</Text>
+            </Text>
+          </View>
+
+          <Text className="text-display text-espresso" style={{ maxWidth: 210 }}>
+            Skip the queue. Grab the good stuff.
+          </Text>
+        </View>
+
+        <View className="gap-xs">
+          <Text className="text-title text-text-primary">Welcome back</Text>
+          <Text className="text-body text-text-secondary">
+            {canteen ? `Log in to order from ${canteen}` : 'Log in to order'}
+          </Text>
+        </View>
+
+        <View className="gap-md">
+          <FormField
+            label="Username (mobile number)"
+            placeholder="9876543210"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            value={username}
+            onChangeText={setUsername}
+          />
+          <PasswordInput placeholder="Password" value={password} onChangeText={setPassword} />
+
+          <Pressable
+            onPress={() => navigation.navigate('ForgotPasswordRequest')}
+            className="self-end min-h-touch justify-center"
+            accessibilityRole="button"
+          >
+            <Text className="text-labelLg text-link">Forgot password?</Text>
+          </Pressable>
+
+          {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+
+          <PrimaryButton label="Log in" onPress={handleSubmit} loading={loading} disabled={loading} />
+        </View>
+
+        <View className="flex-row justify-center items-center gap-xs">
+          <Text className="text-body text-text-secondary">New here?</Text>
+          <Pressable
+            onPress={() => navigation.navigate('Register')}
+            className="min-h-touch justify-center"
+            accessibilityRole="button"
+          >
+            <Text className="text-bodyBold text-link">Create an account</Text>
+          </Pressable>
+        </View>
       </View>
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Username (mobile number)"
-          keyboardType="phone-pad"
-          autoCapitalize="none"
-          value={username}
-          onChangeText={setUsername}
-        />
-        <PasswordInput placeholder="Password" value={password} onChangeText={setPassword} />
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
-        <PrimaryButton label="Login" onPress={handleSubmit} loading={loading} disabled={loading} />
-        <Text className="text-center text-slate-500" onPress={() => navigation.navigate('ForgotPasswordRequest')}>
-          Forgot password?
-        </Text>
-        <Text className="text-center text-slate-500 mt-4" onPress={() => navigation.navigate('Register')}>
-          New here? Register
-        </Text>
-      </View>
-      <BrandRationaleSlider />
     </Screen>
   );
 }

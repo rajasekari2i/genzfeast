@@ -4,6 +4,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { FormField } from '../../components/FormField';
 import { createTypedClient, uploadFile } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/004-company-admin-product-crud';
@@ -184,16 +185,16 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
   }
 
   if (loading) {
-    return <Screen title="Edit Product" specRef="UI Design §5.3" />;
+    return <Screen surface="admin" title="Edit Product" specRef="UI Design §5.3" />;
   }
 
   const previewUri = pickedImage?.uri ?? existingImageUrl ?? undefined;
 
   return (
     <Screen title={isEdit ? 'Edit Product' : 'Add Product'} specRef="UI Design §5.3">
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
+      <View className="gap-md">
+        <FormField
+          label="Name"
           placeholder="Name"
           value={name}
           onChangeText={setName}
@@ -210,20 +211,20 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
 
         <View className="gap-2">
           {previewUri ? (
-            <Image source={{ uri: previewUri }} className="w-full h-40 rounded-lg bg-background" resizeMode="cover" />
+            <Image source={{ uri: previewUri }} className="w-full h-40 rounded-lg bg-neutral-soft" resizeMode="cover" />
           ) : null}
           <Pressable
             className="rounded-pill items-center justify-center px-6 py-3 border border-border"
             onPress={handlePickImage}
           >
-            <Text className="font-semibold text-center text-button text-text-secondary">
+            <Text className="text-center text-button text-text-secondary">
               {previewUri ? 'Change Image' : 'Pick Image (JPEG/PNG, max 2MB)'}
             </Text>
           </Pressable>
         </View>
 
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
+        <FormField
+          label="Price (paise)"
           placeholder="Price (paise, whole number)"
           keyboardType="number-pad"
           value={price}
@@ -238,7 +239,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
           <Switch value={isSoldout} onValueChange={setIsSoldout} />
         </View>
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         <View className="flex-row gap-3">
           <Pressable
@@ -246,7 +247,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
             onPress={() => navigation.goBack()}
             disabled={saving}
           >
-            <Text className="font-semibold text-center text-button text-text-secondary">Cancel</Text>
+            <Text className="text-center text-button text-text-secondary">Cancel</Text>
           </Pressable>
           <View className="flex-1">
             <PrimaryButton label={isEdit ? 'Update' : 'Save'} onPress={handleSave} loading={saving} disabled={saving} />

@@ -3,6 +3,8 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { InfoCard, InfoRow } from '../../components/InfoCard';
+import { colors, radius } from '../../theme/tokens';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -84,7 +86,7 @@ export function FeedbackDetailScreen({ route }: Props) {
 
   if (loading) {
     return (
-      <Screen title="Feedback">
+      <Screen surface="admin" title="Feedback">
         <ActivityIndicator />
       </Screen>
     );
@@ -93,7 +95,7 @@ export function FeedbackDetailScreen({ route }: Props) {
   if (errorMessage && !feedback) {
     return (
       <Screen title="Feedback">
-        <Text className="text-body text-red-600">{errorMessage}</Text>
+        <Text className="text-body text-red-strong">{errorMessage}</Text>
       </Screen>
     );
   }
@@ -103,45 +105,75 @@ export function FeedbackDetailScreen({ route }: Props) {
   }
 
   return (
-    <Screen title="Feedback">
-      <View className="gap-4">
-        <View
-          className={`self-start rounded-pill px-3 py-1 border ${
-            feedback.status === 'resolved' ? 'border-green-600 bg-green-50' : 'border-amber-500 bg-amber-50'
-          }`}
-        >
-          <Text
-            className={`text-caption font-semibold ${
-              feedback.status === 'resolved' ? 'text-green-700' : 'text-amber-700'
+    <Screen surface="admin" title="Feedback">
+      <View className="gap-md">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-title text-text-primary">Feedback</Text>
+          <View
+            className={`rounded-pill px-sm py-xs ${
+              feedback.status === 'resolved' ? 'bg-mint-soft' : 'bg-sun-soft'
             }`}
           >
-            {feedback.status === 'resolved' ? 'Resolved' : 'New'}
-          </Text>
+            <Text
+              className={`text-eyebrow ${
+                feedback.status === 'resolved' ? 'text-mint-strong' : 'text-sun-strong'
+              }`}
+            >
+              {feedback.status === 'resolved' ? 'Resolved' : 'New'}
+            </Text>
+          </View>
         </View>
 
-        <Field label="Category" value={CATEGORY_LABELS[feedback.category] ?? feedback.category} />
-        {feedback.rating ? <Field label="Rating" value={'★'.repeat(feedback.rating)} /> : null}
-        <Field label="Message" value={feedback.message} />
-        <Field label="Submitted by" value={feedback.submitted_by.name} />
-        {feedback.contact_requested ? (
-          <Field label="Wants contact back at" value={feedback.contact_email ?? '—'} />
-        ) : null}
+        <InfoCard>
+          <InfoRow
+            label="Category"
+            value={CATEGORY_LABELS[feedback.category] ?? feedback.category}
+            icon={{ glyph: '🏷️', accent: 'violet' }}
+          />
+          {feedback.rating ? (
+            <InfoRow
+              label="Rating"
+              value={'★'.repeat(feedback.rating)}
+              icon={{ glyph: '★', accent: 'sun' }}
+            />
+          ) : null}
+          <InfoRow
+            label="Submitted by"
+            value={feedback.submitted_by.name}
+            icon={{ glyph: '👤', accent: 'neutral' }}
+            last={!feedback.contact_requested}
+          />
+          {feedback.contact_requested ? (
+            <InfoRow
+              label="Wants contact back at"
+              value={feedback.contact_email ?? '—'}
+              icon={{ glyph: '✉️', accent: 'mint' }}
+              last
+            />
+          ) : null}
+        </InfoCard>
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        <View
+          style={{ borderRadius: radius['5xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+          className="bg-surface p-md gap-xs"
+        >
+          <Text className="text-label text-text-body">Message</Text>
+          <Text className="text-body text-text-primary">{feedback.message}</Text>
+        </View>
+
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         {feedback.status === 'new' ? (
-          <PrimaryButton label="Mark Resolved" onPress={handleResolve} loading={resolving} disabled={resolving} />
+          <View className="gap-xs">
+            <PrimaryButton label="Mark resolved" onPress={handleResolve} loading={resolving} disabled={resolving} />
+            {/* One-way by design (FR-041) — there is no un-resolve path, and
+                the screen says so before the action rather than after. */}
+            <Text className="text-caption text-text-secondary text-center">
+              Resolved feedback can't be reopened.
+            </Text>
+          </View>
         ) : null}
       </View>
     </Screen>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="border-b border-border pb-2">
-      <Text className="text-caption text-text-secondary">{label}</Text>
-      <Text className="text-body text-text-primary">{value}</Text>
-    </View>
   );
 }

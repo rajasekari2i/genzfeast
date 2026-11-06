@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { colors, radius } from '../../theme/tokens';
 import { CategoryChip } from '../../components/CategoryChip';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -78,7 +79,7 @@ export function FeedbackListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Feedback Review" scroll={false}>
+    <Screen surface="admin" title="Feedback Review" scroll={false}>
       <View className="flex-row mb-3">
         {FILTERS.map((filter) => (
           <CategoryChip
@@ -90,13 +91,14 @@ export function FeedbackListScreen({ navigation }: Props) {
         ))}
       </View>
 
-      {errorMessage ? <Text className="text-body text-red-600 mb-3">{errorMessage}</Text> : null}
+      {errorMessage ? <Text className="text-body text-red-strong mb-3">{errorMessage}</Text> : null}
 
       {loading ? (
         <ActivityIndicator />
       ) : (
         <FlatList
           className="flex-1"
+          contentContainerStyle={{ gap: 10 }}
           data={feedback}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -104,19 +106,20 @@ export function FeedbackListScreen({ navigation }: Props) {
           }
           renderItem={({ item }) => (
             <Pressable
-              className="border-b border-border py-3"
+              style={{ borderRadius: radius['3xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+              className="bg-surface p-md gap-xs active:opacity-80"
               onPress={() => navigation.navigate('FeedbackDetail', { feedbackId: item.id })}
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-body-bold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-bodyBold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
                 <View
-                  className={`rounded-pill px-3 py-1 border ${
-                    item.status === 'resolved' ? 'border-green-600 bg-green-50' : 'border-amber-500 bg-amber-50'
+                  className={`rounded-pill px-sm py-xs ${
+                    item.status === 'resolved' ? 'bg-mint-soft' : 'bg-sun-soft'
                   }`}
                 >
                   <Text
-                    className={`text-caption font-semibold ${
-                      item.status === 'resolved' ? 'text-green-700' : 'text-amber-700'
+                    className={`text-eyebrow ${
+                      item.status === 'resolved' ? 'text-mint-strong' : 'text-sun-strong'
                     }`}
                   >
                     {item.status === 'resolved' ? 'Resolved' : 'New'}
@@ -129,7 +132,7 @@ export function FeedbackListScreen({ navigation }: Props) {
               <View className="flex-row items-center gap-3 mt-1">
                 {item.rating ? <Text className="text-caption text-text-secondary">{'★'.repeat(item.rating)}</Text> : null}
                 <Text className="text-caption text-text-secondary">{item.submitted_by.name}</Text>
-                {item.contact_requested ? <Text className="text-caption text-primary">Wants contact</Text> : null}
+                {item.contact_requested ? <Text className="text-label text-link">Wants contact</Text> : null}
               </View>
             </Pressable>
           )}

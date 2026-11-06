@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { OtpInput } from '../../components/OtpInput';
 import { createTypedClient } from '../../api/client';
 import { formatRupees } from '../../theme/money';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -69,6 +70,9 @@ export function OrderFulfilmentScreen({ route, navigation }: Props) {
               ? 'This order has already been delivered.'
               : 'That code does not match. Please try again.'),
         );
+        // Clear the held value as well as the boxes, so Verify can never
+        // resubmit a stale code after a mismatch.
+        setCode('');
         return;
       }
 
@@ -85,7 +89,7 @@ export function OrderFulfilmentScreen({ route, navigation }: Props) {
   }
 
   if (loadingOrder) {
-    return <Screen title="Order Fulfilment" specRef="UI Design §5.7" />;
+    return <Screen surface="admin" title="Order Fulfilment" specRef="UI Design §5.7" />;
   }
 
   return (
@@ -110,16 +114,20 @@ export function OrderFulfilmentScreen({ route, navigation }: Props) {
 
         {!delivered ? (
           <>
-            <Text className="text-body text-text-secondary mt-2">Ask the student for their pickup code.</Text>
-            <TextInput
-              className="border border-border rounded-lg px-3 py-2 text-text-primary"
-              placeholder="6-digit pickup code"
-              keyboardType="number-pad"
-              maxLength={6}
-              value={code}
-              onChangeText={setCode}
+            {/* The `Fulfilment` artboard: six segmented boxes, and on a
+                wrong code "the boxes clear so you can retry". Clearing is
+                driven by `error` rather than by the component judging the
+                code — only the server knows, and a mismatch leaves the
+                order completely untouched (FR-018). */}
+            <Text className="text-bodyBold text-text-primary mt-sm">Enter the student's code</Text>
+            <Text className="text-caption text-text-secondary">6 digits, shown on their phone</Text>
+            <OtpInput
+              onComplete={setCode}
+              error={Boolean(errorMessage)}
+              editable={!verifying}
+              accessibilityLabel="Enter the 6-digit pickup code"
             />
-            {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+            {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
             <PrimaryButton
               label="Verify & Deliver"
               onPress={handleVerify}
@@ -128,7 +136,7 @@ export function OrderFulfilmentScreen({ route, navigation }: Props) {
             />
           </>
         ) : (
-          <Text className="text-body-bold text-green-700">Delivered ✓</Text>
+          <Text className="text-body-bold text-mint-strong">Delivered ✓</Text>
         )}
       </View>
     </Screen>

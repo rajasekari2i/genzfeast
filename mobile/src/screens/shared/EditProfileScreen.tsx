@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { FormField } from '../../components/FormField';
 import { CategoryChip } from '../../components/CategoryChip';
 import { createTypedClient } from '../../api/client';
 import type { ProfileStackParamList } from '../../navigation/ProfileNavigator';
@@ -91,43 +92,47 @@ export function EditProfileScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Edit Profile" specRef="UI Design §4.11">
-      <View className="gap-3">
-        <Text className="text-caption text-text-secondary">Name (read-only)</Text>
-        <TextInput className="border border-border rounded-lg px-3 py-2 text-text-secondary" value={name} editable={false} />
+    <Screen title="Edit Profile">
+      <View className="gap-lg">
+        {/* No artboard (FR-029) — the Profile and UserForm field patterns.
+            Name and Username are permanently read-only (FR-030), and the
+            dashed border + muted fill says so by SHAPE, not colour alone. */}
+        <Text className="text-title text-text-primary">Edit profile</Text>
 
-        <Text className="text-caption text-text-secondary">Username (read-only)</Text>
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-secondary"
-          value={username}
-          editable={false}
-        />
+        <View className="gap-md">
+          <FormField label="Name" value={name} readOnly />
+          <FormField label="Username" value={username} readOnly hint="Your username cannot be changed." />
+          <FormField
+            label="Email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
 
-        <Text className="text-caption text-text-secondary">Email</Text>
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+          {isStudent ? (
+            <View className="gap-sm">
+              <Text className="text-label text-text-body">Department</Text>
+              {departments.length === 0 ? (
+                <ActivityIndicator />
+              ) : (
+                <View className="flex-row flex-wrap">
+                  {departments.map((d) => (
+                    <CategoryChip
+                      key={d.id}
+                      label={d.name}
+                      selected={departmentId === d.id}
+                      onPress={() => setDepartmentId(d.id)}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : null}
 
-        {isStudent ? (
-          <>
-            <Text className="text-caption text-text-secondary">Department</Text>
-            {departments.length === 0 ? (
-              <ActivityIndicator />
-            ) : (
-              <View className="flex-row flex-wrap">
-                {departments.map((d) => (
-                  <CategoryChip key={d.id} label={d.name} selected={departmentId === d.id} onPress={() => setDepartmentId(d.id)} />
-                ))}
-              </View>
-            )}
-          </>
-        ) : null}
+          {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+        </View>
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
         <PrimaryButton label="Save" onPress={handleSave} loading={saving} disabled={saving} />
       </View>
     </Screen>

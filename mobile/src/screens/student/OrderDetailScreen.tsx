@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import RazorpayCheckout from 'react-native-razorpay';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { OtpDisplay } from '../../components/OtpDisplay';
 import { createTypedClient } from '../../api/client';
 import { formatRupees } from '../../theme/money';
 import { getRazorpayKeyId } from '../../config/tenant';
@@ -114,7 +115,7 @@ export function OrderDetailScreen({ route }: Props) {
   if (!order) {
     return (
       <Screen title="Order Detail" specRef="UI Design §4.14">
-        <Text className="text-body text-red-600">Order not found.</Text>
+        <Text className="text-body text-red-strong">Order not found.</Text>
       </Screen>
     );
   }
@@ -142,23 +143,28 @@ export function OrderDetailScreen({ route }: Props) {
             <Text className="text-caption text-text-secondary text-center">
               Stuck here? If your payment didn't go through, you can resume it below without losing your order.
             </Text>
-            {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+            {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
             <PrimaryButton label="Resume Payment" onPress={handlePayAgain} loading={retrying} disabled={retrying} />
           </View>
         ) : null}
 
-        {order.status === 'order_placed' ? (
-          <View className="items-center gap-2 mt-4">
-            <Text className="text-h2 text-green-700">Order Placed Successfully!</Text>
-            <Text className="text-caption text-text-secondary">Show this code at the counter to pick up your order</Text>
-            <Text className="text-h1 text-primary">{order.otp}</Text>
+        {/* The `OrderSuccess` artboard: a paid order's pickup code is the
+            hero of the screen, not a line of text. Six individual cells,
+            legible at arm's length across a counter. Rendered through
+            OtpDisplay so it can never drift from the Fulfilment screen's
+            entry field. Still only present while `order_placed` — the API
+            stops returning it once delivered (FR-030). */}
+        {order.status === 'order_placed' && order.otp ? (
+          <View className="gap-sm mt-md">
+            <Text className="text-title text-mint-strong">Order placed</Text>
+            <OtpDisplay code={order.otp} caption="Show this code at the counter" />
           </View>
         ) : null}
 
         {order.status === 'payment_failed' ? (
           <View className="gap-2 mt-4">
-            <Text className="text-h2 text-red-600">Payment Failed</Text>
-            {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+            <Text className="text-h2 text-red-strong">Payment Failed</Text>
+            {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
             <PrimaryButton label="Pay Again" onPress={handlePayAgain} loading={retrying} disabled={retrying} />
           </View>
         ) : null}

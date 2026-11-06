@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Alert, Text, TextInput, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { PasswordInput } from '../../components/PasswordInput';
+import { OtpInput } from '../../components/OtpInput';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient } from '../../api/client';
 import { getBuildCompanyId } from '../../config/tenant';
@@ -72,22 +73,30 @@ export function ForgotPasswordVerifyScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen title="Verify OTP" specRef="UI Design §4.4">
-      <View className="gap-3">
-        <Text className="text-body text-text-secondary">
-          Enter the code sent to your device, along with your new password.
-        </Text>
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="6-character code"
-          autoCapitalize="characters"
-          maxLength={6}
-          value={code}
-          onChangeText={setCode}
+    <Screen title="Verify OTP">
+      <View className="gap-lg">
+        {/* No artboard (FR-029) — the code entry borrows the `Fulfilment`
+            board's segmented boxes, the rest is Login's field pattern. */}
+        <View className="gap-xs">
+          <Text className="text-title text-text-primary">Check your messages</Text>
+          <Text className="text-body text-text-secondary">
+            Enter the code sent to your device, along with your new password.
+          </Text>
+        </View>
+        {/* Same segmented entry as staff fulfilment (FR-029 — this screen
+            has no artboard and borrows the established pattern), but in
+            ALPHANUMERIC mode: the reset code is 6 characters, not 6 digits.
+            Filtering to digits here would silently reject a valid code. */}
+        <OtpInput
+          mode="alphanumeric"
+          onComplete={setCode}
+          error={Boolean(errorMessage)}
+          editable={!loading}
+          accessibilityLabel="Enter the 6-character reset code"
         />
         <PasswordInput placeholder="New Password" value={newPassword} onChangeText={setNewPassword} />
         <PasswordInput placeholder="Retype Password" value={retypePassword} onChangeText={setRetypePassword} />
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
         <PrimaryButton label="Reset Password" onPress={handleSubmit} loading={loading} disabled={loading} />
       </View>
     </Screen>

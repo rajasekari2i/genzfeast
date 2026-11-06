@@ -66,13 +66,24 @@ export function ChangePasswordScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Change Password" specRef="UI Design §4.12">
-      <View className="gap-3">
-        <PasswordInput placeholder="Current Password" value={currentPassword} onChangeText={setCurrentPassword} />
-        <PasswordInput placeholder="New Password" value={newPassword} onChangeText={setNewPassword} />
-        <PasswordInput placeholder="Retype New Password" value={retypePassword} onChangeText={setRetypePassword} />
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
-        <PrimaryButton label="Update Password" onPress={handleSubmit} loading={saving} disabled={saving} />
+    <Screen title="Change Password">
+      <View className="gap-lg">
+        {/* No artboard (FR-029) — Login's password-field pattern. */}
+        <View className="gap-xs">
+          <Text className="text-title text-text-primary">Change password</Text>
+          <Text className="text-body text-text-secondary">
+            Changing your password signs you out of your other devices.
+          </Text>
+        </View>
+
+        <View className="gap-md">
+          <PasswordInput placeholder="Current password" value={currentPassword} onChangeText={setCurrentPassword} />
+          <PasswordInput placeholder="New password" value={newPassword} onChangeText={setNewPassword} />
+          <PasswordInput placeholder="Retype new password" value={retypePassword} onChangeText={setRetypePassword} />
+          {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+        </View>
+
+        <PrimaryButton label="Update password" onPress={handleSubmit} loading={saving} disabled={saving} />
       </View>
     </Screen>
   );

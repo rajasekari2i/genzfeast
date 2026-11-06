@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { IconTile, SectionLabel } from '../../components/AdminList';
 import { createTypedClient, getCurrentUser } from '../../api/client';
-import { colors } from '../../theme/tokens';
+import { colors, radius, typography } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths as ProductPaths } from '../../api/generated/004-company-admin-product-crud';
 import type { paths as CorePaths } from '../../api/generated/001-company-role-user-setup';
@@ -70,40 +71,84 @@ export function DashboardScreen({ navigation }: Props) {
   }, []);
 
   return (
-    <Screen title="Dashboard" subtitle="Company Admin" specRef="UI Design §5.1">
-      <Text className="text-h1 text-text-primary mb-1">
-        {adminName ? `Welcome back, ${adminName.split(' ')[0]}` : 'Dashboard'}
-      </Text>
-      <Text className="text-body text-text-secondary mb-5">Manage your canteen from here.</Text>
+    <Screen surface="admin" title="Dashboard">
+      <View className="gap-md">
+        <View className="gap-xs">
+          <Text className="text-caption text-text-secondary">Company Admin</Text>
+          <Text className="text-title text-text-primary">
+            {adminName ? `Morning, ${adminName.split(' ')[0]}.` : 'Dashboard'}
+          </Text>
+          <Text className="text-body text-text-secondary">What's on the menu?</Text>
+        </View>
 
-      <View className="flex-row flex-wrap justify-between gap-y-3">
-        {(Object.keys(CARDS) as CardKey[]).map((key) => {
-          const card = CARDS[key];
-          const count = counts[key];
-          return (
-            <Pressable
-              key={key}
-              onPress={() => navigation.navigate(card.route)}
-              className="bg-surface rounded-lg p-4 border border-border active:opacity-80"
-              style={{ width: '48%' }}
-            >
-              <View
-                className="w-12 h-12 rounded-full items-center justify-center mb-3"
-                style={{ backgroundColor: `${card.color}1F` }}
-              >
-                <Text style={{ fontSize: 22 }}>{card.icon}</Text>
-              </View>
-              <Text className="text-body-bold text-text-primary">{card.label}</Text>
-              {loadingCounts ? (
-                <ActivityIndicator size="small" style={{ alignSelf: 'flex-start', marginTop: 6 }} />
-              ) : (
-                <Text className="text-caption text-text-secondary mt-1">
-                  {count !== undefined ? `${count} ${count === 1 ? 'item' : 'items'}` : 'Manage'}
-                </Text>
-              )}
-            </Pressable>
-          );
-        })}
+        <SectionLabel>Manage</SectionLabel>
+
+        {/* Products leads as a full-width brand row — it is what a Company
+            Admin opens most. The rest sit in a two-up grid.
+            NOTE: the artboard also shows a Feedback card here. Feedback
+            Review is already one tap away in the side menu, so adding a
+            second entry point is a new affordance rather than a restyle
+            and is deliberately not added. */}
+        <Pressable
+          onPress={() => navigation.navigate(CARDS.products.route)}
+          accessibilityRole="button"
+          style={{ backgroundColor: colors.primary, borderRadius: radius['5xl'] }}
+          className="flex-row items-center gap-md p-md active:opacity-80"
+        >
+          <View
+            style={{ borderRadius: radius['2xl'] }}
+            className="w-control h-control bg-espresso items-center justify-center"
+          >
+            <Text style={{ fontSize: typography.subtitle.fontSize }}>{CARDS.products.icon}</Text>
+          </View>
+          <View className="flex-1">
+            <Text className="text-subtitle text-espresso">{CARDS.products.label}</Text>
+            {loadingCounts ? (
+              <ActivityIndicator size="small" style={{ alignSelf: 'flex-start' }} />
+            ) : (
+              <Text className="text-label text-espresso">
+                {counts.products !== undefined
+                  ? `${counts.products} ${counts.products === 1 ? 'item' : 'items'}`
+                  : 'Manage'}
+              </Text>
+            )}
+          </View>
+        </Pressable>
+
+        <View className="flex-row flex-wrap justify-between gap-y-sm">
+          {(Object.keys(CARDS) as CardKey[])
+            .filter((key) => key !== 'products')
+            .map((key) => {
+              const card = CARDS[key];
+              const count = counts[key];
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() => navigation.navigate(card.route)}
+                  accessibilityRole="button"
+                  style={{
+                    width: '48%',
+                    borderRadius: radius['5xl'],
+                    borderWidth: 1,
+                    borderColor: colors.borderSoft,
+                  }}
+                  className="bg-surface p-md gap-md active:opacity-80"
+                >
+                  <IconTile glyph={card.icon} accent="neutral" size="lg" />
+                  <View>
+                    <Text className="text-subtitleSm text-text-primary">{card.label}</Text>
+                    {loadingCounts ? (
+                      <ActivityIndicator size="small" style={{ alignSelf: 'flex-start' }} />
+                    ) : (
+                      <Text className="text-caption text-text-secondary">
+                        {count !== undefined ? `${count} ${count === 1 ? 'item' : 'items'}` : 'Manage'}
+                      </Text>
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
+        </View>
       </View>
     </Screen>
   );

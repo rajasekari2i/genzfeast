@@ -1,13 +1,20 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { HeroCard } from '../../components/HeroCard';
+import { InfoCard, InfoRow } from '../../components/InfoCard';
+import { colors, radius } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
 import type { paths } from '../../api/generated/015-contact-us-page';
 
 const client = createTypedClient<paths>();
 
 type ContactUs = {
+  // Already returned by GET /me/contact-us (specs/015 ContactUs schema);
+  // the local projection simply did not read it. Using it adds no request
+  // and changes nothing the app sends or expects (FR-032).
+  company_name: string;
   contact_person: string;
   phone_number: string;
   email: string;
@@ -55,45 +62,78 @@ export function ContactUsScreen() {
   if (errorMessage || !contactUs) {
     return (
       <Screen title="Contact Us">
-        <Text className="text-body text-red-600">{errorMessage ?? 'Contact Us details are unavailable.'}</Text>
+        <Text className="text-body text-red-strong">{errorMessage ?? 'Contact Us details are unavailable.'}</Text>
       </Screen>
     );
   }
 
   return (
     <Screen title="Contact Us">
-      <View className="gap-4">
-        <Field label="Contact Person" value={contactUs.contact_person} />
+      <View className="gap-md">
+        <Text className="text-title text-text-primary">Contact us</Text>
 
-        <View className="border-b border-border pb-2">
-          <Text className="text-caption text-text-secondary">Phone Number</Text>
+        <HeroCard className="gap-sm">
+          <View
+            style={{ borderRadius: radius.xl }}
+            className="w-control h-control bg-espresso items-center justify-center overflow-hidden"
+          >
+            <Image
+              source={require('../../../assets/brand/gf-mark-white.png')}
+              style={{ width: 40, height: 40 }}
+              resizeMode="contain"
+              accessibilityLabel=""
+            />
+          </View>
+          <Text className="text-titleSm text-espresso">{contactUs.company_name}</Text>
+          {/* Null or an empty string renders as "Not specified" (FR-005),
+              never a blank line. */}
+          <View className="self-start bg-espresso rounded-pill px-sm py-xs">
+            <Text className="text-label text-surface">
+              {contactUs.operating_hours?.trim() || 'Not specified'}
+            </Text>
+          </View>
+        </HeroCard>
+
+        <InfoCard>
+          <InfoRow
+            label="Contact person"
+            value={contactUs.contact_person}
+            icon={{ glyph: '👤', accent: 'neutral' }}
+          />
+          {/* Phone and email have opened the dialler and mail client since
+              specs/015. FR-038 bars ADDING that affordance; removing it
+              would itself be a behavioural change (FR-030), so the
+              behaviour stays and only the styling changed. */}
           <Pressable onPress={() => void Linking.openURL(`tel:${contactUs.phone_number}`)} hitSlop={8}>
-            <Text className="text-body text-primary underline">{contactUs.phone_number}</Text>
+            <InfoRow
+              label="Phone"
+              value={contactUs.phone_number}
+              icon={{ glyph: '📞', accent: 'mint' }}
+            />
           </Pressable>
-        </View>
-
-        <View className="border-b border-border pb-2">
-          <Text className="text-caption text-text-secondary">Email</Text>
           <Pressable onPress={() => void Linking.openURL(`mailto:${contactUs.email}`)} hitSlop={8}>
-            <Text className="text-body text-primary underline">{contactUs.email}</Text>
+            <InfoRow
+              label="Email"
+              value={contactUs.email}
+              icon={{ glyph: '✉️', accent: 'violet' }}
+            />
           </Pressable>
+          <InfoRow
+            label="Address"
+            value={contactUs.address}
+            icon={{ glyph: '📍', accent: 'sun' }}
+            last
+          />
+        </InfoCard>
+
+        <View
+          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius['5xl'] }}
+          className="bg-surface p-md gap-xs"
+        >
+          <Text className="text-bodyBold text-text-primary">Something to tell us?</Text>
+          <Text className="text-caption text-text-secondary">Share feedback with the canteen</Text>
         </View>
-
-        <Field label="Address" value={contactUs.address} />
-
-        {/* Null (or an empty string, once cleared) renders as "Not
-            specified" (FR-005) rather than a blank field. */}
-        <Field label="Operating Hours" value={contactUs.operating_hours?.trim() || 'Not specified'} />
       </View>
     </Screen>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="border-b border-border pb-2">
-      <Text className="text-caption text-text-secondary">{label}</Text>
-      <Text className="text-body text-text-primary">{value}</Text>
-    </View>
   );
 }

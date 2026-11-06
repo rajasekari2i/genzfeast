@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { RowActionButton } from '../../components/RowActionButton';
+import { AdminListRow, AdminSearchField, SectionLabel } from '../../components/AdminList';
 import { createTypedClient } from '../../api/client';
 import { colors } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -61,7 +62,7 @@ export function DepartmentListScreen({ navigation }: Props) {
     navigation.setOptions({
       headerRight: () => (
         <Pressable onPress={() => navigation.navigate('DepartmentCreateEdit', {})} hitSlop={8}>
-          <Text style={{ color: colors.surface, fontWeight: '700', fontSize: 15 }}>+ Add</Text>
+          <Text style={{ color: colors.surface }} className="text-button">+ Add</Text>
         </Pressable>
       ),
     });
@@ -108,17 +109,16 @@ export function DepartmentListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Departments" specRef="UI Design §5.4" scroll={false}>
-      <View className="gap-3 mb-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
+    <Screen surface="admin" title="Departments" specRef="UI Design §5.4" scroll={false}>
+      <View className="gap-sm mb-md">
+        <Text className="text-caption text-text-secondary">Academic departments students belong to</Text>
+        <AdminSearchField
           placeholder="Search by name"
-          autoCapitalize="none"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
       </View>
 
       {loading ? (
@@ -126,6 +126,12 @@ export function DepartmentListScreen({ navigation }: Props) {
       ) : (
         <FlatList
           className="flex-1"
+          contentContainerStyle={{ gap: 10 }}
+          ListHeaderComponent={
+            departments.length > 0 ? (
+              <SectionLabel>{`${departments.length} departments`}</SectionLabel>
+            ) : null
+          }
           data={departments}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -137,24 +143,26 @@ export function DepartmentListScreen({ navigation }: Props) {
           onEndReached={handleEndReached}
           ListFooterComponent={loadingMore ? <ActivityIndicator className="my-3" /> : null}
           renderItem={({ item: department }) => (
-            <View className="flex-row items-center justify-between gap-2 border-b border-border py-3">
-              <Text className="flex-1 text-body-bold text-text-primary" numberOfLines={1}>
-                {department.name}
-              </Text>
-              <View className="flex-row gap-2">
-                <RowActionButton
-                  variant="edit"
-                  label={`Edit ${department.name}`}
-                  onPress={() => navigation.navigate('DepartmentCreateEdit', { departmentId: department.id })}
-                />
-                <RowActionButton
-                  variant="delete"
-                  label={`Delete ${department.name}`}
-                  loading={deletingId === department.id}
-                  onPress={() => confirmDelete(department)}
-                />
-              </View>
-            </View>
+            <AdminListRow
+              glyph="🏫"
+              accent="blue"
+              title={department.name}
+              actions={
+                <>
+                  <RowActionButton
+                    variant="edit"
+                    label={`Edit ${department.name}`}
+                    onPress={() => navigation.navigate('DepartmentCreateEdit', { departmentId: department.id })}
+                  />
+                  <RowActionButton
+                    variant="delete"
+                    label={`Delete ${department.name}`}
+                    loading={deletingId === department.id}
+                    onPress={() => confirmDelete(department)}
+                  />
+                </>
+              }
+            />
           )}
         />
       )}

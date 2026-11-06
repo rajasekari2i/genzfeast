@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, AppState, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { PasswordInput } from '../../components/PasswordInput';
 import { CategoryChip } from '../../components/CategoryChip';
+import { FormField } from '../../components/FormField';
+import { OtpInput } from '../../components/OtpInput';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient, storeSession } from '../../api/client';
-import { getBuildCompanyId } from '../../config/tenant';
+import { getBuildCompanyId, getTenantDisplayName } from '../../config/tenant';
 import { areNotificationsEnabled, getDevicePushToken } from '../../notifications/pushToken';
 import { useAuth } from '../../auth/AuthContext';
 import type { paths as RegisterPaths } from '../../api/generated/002-registration-login-jwt-auth';
@@ -51,6 +53,7 @@ function toOptions(raw: { id?: string; name?: string }[] | undefined): Option[] 
  */
 export function RegisterScreen() {
   const { signIn } = useAuth();
+  const canteen = getTenantDisplayName();
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -301,70 +304,81 @@ export function RegisterScreen() {
           };
 
   return (
-    <Screen title="Register" specRef="UI Design §4.1">
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Username (10-digit mobile number)"
-          keyboardType="phone-pad"
-          autoCapitalize="none"
-          maxLength={10}
-          value={username}
-          onChangeText={setUsername}
-        />
-        {notificationsEnabled === false && otpStatus !== 'verified' ? (
-          <Text className="text-body text-red-600">
-            Notifications are turned off for GenzFeast. Please enable them in your phone's Settings so you can
-            receive your registration OTP.
+    <Screen title="Register">
+      <View className="gap-lg">
+        {/* The artboard's own back affordance is the stack header's — not
+            duplicated here. Only the canteen context line is rendered. */}
+        {canteen ? <Text className="text-label text-text-secondary">{canteen}</Text> : null}
+
+        <View className="gap-xs">
+          <Text className="text-title text-text-primary">
+            Join the <Text className="text-title text-espresso bg-primary"> feast </Text>
           </Text>
-        ) : null}
-        <PasswordInput placeholder="Password (min 8 characters)" value={password} onChangeText={setPassword} />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <View className="gap-1">
-          <Text className="text-body-bold text-text-primary">Gender</Text>
-          <View className="flex-row flex-wrap">
-            {GENDER_OPTIONS.map((option) => (
-              <CategoryChip
-                key={option.value}
-                label={option.label}
-                selected={gender === option.value}
-                onPress={() => setGender(option.value)}
-              />
-            ))}
-          </View>
+          <Text className="text-body text-text-secondary">
+            One minute. Then your canteen is in your pocket.
+          </Text>
         </View>
 
-        {loadingOptions ? (
-          <ActivityIndicator />
-        ) : (
-          <>
-            <Text className="text-body-bold text-text-primary">Category</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View className="flex-row">
-                {categories.map((c) => (
-                  <CategoryChip key={c.id} label={c.name} selected={categoryId === c.id} onPress={() => setCategoryId(c.id)} />
-                ))}
-              </View>
-            </ScrollView>
+        <View className="gap-md">
+          <FormField label="Full name" value={name} onChangeText={setName} placeholder="Priya Raman" />
 
-            {departments.length > 0 ? (
-              <>
-                <Text className="text-body-bold text-text-primary">Department (optional)</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View className="flex-row">
+          <View className="gap-xs">
+            <Text className="text-label text-text-body">Mobile number (your username)</Text>
+            <View className="flex-row gap-sm items-start">
+              <View className="flex-1">
+                <FormField
+                  label=""
+                  placeholder="9876543210"
+                  keyboardType="phone-pad"
+                  autoCapitalize="none"
+                  maxLength={10}
+                  value={username}
+                  onChangeText={setUsername}
+                />
+              </View>
+              {otpStatus === 'verified' ? (
+                <View className="h-field px-md rounded-xl bg-mint-soft items-center justify-center">
+                  <Text className="text-label text-mint-strong">✓ Verified</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          {notificationsEnabled === false && otpStatus !== 'verified' ? (
+            <Text className="text-caption text-red-strong">
+              Notifications are turned off for GenzFeast. Please enable them in your phone's Settings so you
+              can receive your registration OTP.
+            </Text>
+          ) : null}
+
+          <PasswordInput placeholder="Password (min 8 characters)" value={password} onChangeText={setPassword} />
+
+          {/* "I am a…" — the registrant's Category. Required for a Student,
+              which is why it is a visible chip row rather than a dropdown. */}
+          {loadingOptions ? (
+            <ActivityIndicator />
+          ) : (
+            <>
+              <View className="gap-sm">
+                <Text className="text-label text-text-body">I am a…</Text>
+                <View className="flex-row flex-wrap">
+                  {categories.map((c) => (
+                    <CategoryChip
+                      key={c.id}
+                      label={c.name}
+                      selected={categoryId === c.id}
+                      onPress={() => setCategoryId(c.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              {departments.length > 0 ? (
+                <View className="gap-sm">
+                  <Text className="text-label text-text-body">
+                    Department <Text className="text-caption text-text-secondary">(optional)</Text>
+                  </Text>
+                  <View className="flex-row flex-wrap">
                     {departments.map((d) => (
                       <CategoryChip
                         key={d.id}
@@ -374,48 +388,75 @@ export function RegisterScreen() {
                       />
                     ))}
                   </View>
-                </ScrollView>
-              </>
-            ) : null}
-          </>
-        )}
+                </View>
+              ) : null}
+            </>
+          )}
 
-        {otpStatus === 'sent' ? (
-          <TextInput
-            className="border border-border rounded-lg px-3 py-2 text-text-primary"
-            placeholder="6-digit code"
-            keyboardType="number-pad"
-            maxLength={6}
-            value={code}
-            onChangeText={setCode}
+          {/* Gender is REQUIRED by the API but absent from the artboard
+              (research R6). Kept, and rendered in the artboard's own
+              segmented-chip pattern so it does not look bolted on. */}
+          <View className="gap-sm">
+            <Text className="text-label text-text-body">Gender</Text>
+            <View className="flex-row flex-wrap">
+              {GENDER_OPTIONS.map((option) => (
+                <CategoryChip
+                  key={option.value}
+                  label={option.label}
+                  selected={gender === option.value}
+                  onPress={() => setGender(option.value)}
+                />
+              ))}
+            </View>
+          </View>
+
+          <FormField
+            label="Email"
+            placeholder="priya@college.edu"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
           />
-        ) : null}
-        {otpStatus === 'verified' ? (
-          <Text className="text-body text-text-secondary">Mobile number verified.</Text>
-        ) : null}
-        {otpMessage ? <Text className="text-body text-text-secondary">{otpMessage}</Text> : null}
-        {otpError ? <Text className="text-body text-red-600">{otpError}</Text> : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
-        <PrimaryButton
-          label={primaryButton.label}
-          onPress={primaryButton.onPress}
-          loading={primaryButton.loading}
-          disabled={primaryButton.disabled}
-        />
-        {otpStatus === 'sent' ? (
-          <Text className="text-center text-body text-text-secondary" onPress={otpBusy ? undefined : handleSendOtp}>
-            Resend code
-          </Text>
-        ) : null}
-        {otpStatus !== 'verified' ? (
-          <Text
-            className="text-center text-body text-text-secondary"
-            onPress={submitting ? undefined : () => submitRegistration(undefined)}
-          >
-            Skip for now
-          </Text>
-        ) : null}
+          {otpStatus === 'sent' ? (
+            <View className="gap-xs">
+              <Text className="text-label text-text-body">Verification code</Text>
+              <OtpInput onComplete={setCode} error={Boolean(otpError)} editable={!otpBusy} />
+            </View>
+          ) : null}
+
+          {otpMessage ? <Text className="text-caption text-text-secondary">{otpMessage}</Text> : null}
+          {otpError ? <Text className="text-caption text-red-strong">{otpError}</Text> : null}
+          {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+        </View>
+
+        <View className="gap-sm">
+          <PrimaryButton
+            label={primaryButton.label}
+            onPress={primaryButton.onPress}
+            loading={primaryButton.loading}
+            disabled={primaryButton.disabled}
+          />
+          {otpStatus === 'sent' ? (
+            <Pressable
+              onPress={otpBusy ? undefined : handleSendOtp}
+              className="min-h-touch justify-center items-center"
+              accessibilityRole="button"
+            >
+              <Text className="text-labelLg text-link">Resend code</Text>
+            </Pressable>
+          ) : null}
+          {otpStatus !== 'verified' ? (
+            <Pressable
+              onPress={submitting ? undefined : () => submitRegistration(undefined)}
+              className="min-h-touch justify-center items-center"
+              accessibilityRole="button"
+            >
+              <Text className="text-labelLg text-text-secondary">Skip for now</Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </Screen>
   );
