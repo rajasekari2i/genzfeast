@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { HeroCard } from '../../components/HeroCard';
+import { InfoCard, InfoRow } from '../../components/InfoCard';
+import { radius } from '../../theme/tokens';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { createTypedClient } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
@@ -55,30 +58,68 @@ export function ProfileScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Profile" specRef="UI Design §4.10">
-      <View className="gap-4">
-        <View className="gap-3">
-          <Field label="Name" value={profile.name} />
-          <Field label="Username" value={profile.username} />
-          <Field label="Email" value={profile.email} />
-          {profile.category !== undefined ? <Field label="Category" value={profile.category ?? '—'} /> : null}
-          {profile.department !== undefined ? <Field label="Department" value={profile.department ?? '—'} /> : null}
-          {profile.company !== undefined ? <Field label="Company" value={profile.company ?? '—'} /> : null}
+    <Screen title="Profile">
+      <View className="gap-md">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-title text-text-primary">Profile</Text>
+          <Pressable
+            onPress={() => navigation.navigate('EditProfile')}
+            accessibilityRole="button"
+            className="h-touch px-md bg-espresso rounded-pill items-center justify-center"
+          >
+            <Text className="text-labelLg text-surface">Edit</Text>
+          </Pressable>
         </View>
 
-        <PrimaryButton label="Edit Profile" onPress={() => navigation.navigate('EditProfile')} />
-        <PrimaryButton label="Change Password" onPress={() => navigation.navigate('ChangePassword')} />
-        <PrimaryButton label="Logout" onPress={() => void signOut()} />
+        <HeroCard className="items-center gap-sm">
+          <View
+            style={{ borderRadius: radius['5xl'] }}
+            className="w-6xl h-6xl bg-espresso items-center justify-center"
+          >
+            <Text className="text-titleSm text-surface">
+              {profile.name.trim().charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <View className="items-center gap-xs">
+            <Text className="text-titleSm text-espresso">{profile.name}</Text>
+            {/* The ROLE badge is correct here. FR-027 bars the role from
+                SIDE MENUS, where it read as debug output; on the profile
+                it is information about the account the user is viewing,
+                and the artboard shows it. */}
+            <View className="bg-espresso rounded-pill px-sm py-xs">
+              <Text className="text-caption text-surface">{profile.role}</Text>
+            </View>
+          </View>
+        </HeroCard>
+
+        <InfoCard>
+          {/* Username is permanently read-only — not editable here or via
+              the API (FR-030). The lock glyph says so without a disabled
+              input, since this is a read-only list, not a form. */}
+          <InfoRow label="Username" note="🔒" value={profile.username} />
+          <InfoRow label="Email" value={profile.email} />
+          {profile.category !== undefined ? (
+            <InfoRow label="Category" value={profile.category ?? '—'} />
+          ) : null}
+          {profile.department !== undefined ? (
+            <InfoRow label="Department" value={profile.department ?? '—'} />
+          ) : null}
+          {profile.company !== undefined ? (
+            <InfoRow label="Company" value={profile.company ?? '—'} last />
+          ) : null}
+        </InfoCard>
+
+        <View className="gap-sm">
+          <PrimaryButton label="Change password" onPress={() => navigation.navigate('ChangePassword')} />
+          <Pressable
+            onPress={() => void signOut()}
+            accessibilityRole="button"
+            className="h-control items-center justify-center"
+          >
+            <Text className="text-bodyBold text-link">Log out</Text>
+          </Pressable>
+        </View>
       </View>
     </Screen>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="border-b border-border pb-2">
-      <Text className="text-caption text-text-secondary">{label}</Text>
-      <Text className="text-body text-text-primary">{value}</Text>
-    </View>
   );
 }

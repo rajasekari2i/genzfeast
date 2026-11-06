@@ -3,7 +3,9 @@ import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { colors, typography } from '../../theme/tokens';
+import { CategoryChip } from '../../components/CategoryChip';
+import { SwitchRow } from '../../components/SwitchRow';
+import { colors, radius } from '../../theme/tokens';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { Dropdown, DropdownOption } from '../../components/Dropdown';
 import { createTypedClient, getCurrentUser } from '../../api/client';
@@ -140,30 +142,65 @@ export function FeedbackScreen({ navigation }: Props) {
 
   return (
     <Screen title="Feedback">
-      <View className="gap-4">
-        <View className="gap-1">
-          <Text className="text-body-bold text-text-primary">Rating (optional)</Text>
-          <View className="flex-row gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Pressable key={star} onPress={() => setRating(rating === star ? undefined : star)} hitSlop={6}>
-                <Text style={{ fontSize: typography.title.fontSize }}>{rating !== undefined && star <= rating ? '★' : '☆'}</Text>
-              </Pressable>
+      <View className="gap-lg">
+        <Text className="text-title text-text-primary">Feedback</Text>
+
+        {/* Rating — a brand-filled panel with five fillable tiles rather
+            than a row of glyphs. Optional (FR-013.2); tapping the current
+            value clears it. */}
+        <View
+          style={{ backgroundColor: colors.primary, borderRadius: radius['5xl'] }}
+          className="p-md gap-sm"
+        >
+          <Text className="text-subtitle text-espresso">
+            How was it? <Text className="text-label text-espresso">(optional)</Text>
+          </Text>
+          <View className="flex-row gap-xs">
+            {[1, 2, 3, 4, 5].map((star) => {
+              const filled = rating !== undefined && star <= rating;
+              return (
+                <Pressable
+                  key={star}
+                  onPress={() => setRating(rating === star ? undefined : star)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${star} star${star > 1 ? 's' : ''}`}
+                  accessibilityState={{ selected: filled }}
+                  style={{
+                    backgroundColor: filled ? colors.espresso : colors.surface,
+                    borderRadius: radius.xl,
+                  }}
+                  className="flex-1 h-control items-center justify-center"
+                >
+                  <Text className={filled ? 'text-subtitle text-accent' : 'text-subtitle text-text-secondary'}>
+                    ★
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* The six fixed categories as chips — the artboard shows them all
+            at once rather than behind a picker, so the choice is visible. */}
+        <View className="gap-sm">
+          <Text className="text-label text-text-body">What's it about?</Text>
+          <View className="flex-row flex-wrap">
+            {CATEGORY_OPTIONS.map((option) => (
+              <CategoryChip
+                key={option.value}
+                label={option.label}
+                selected={category === option.value}
+                onPress={() => setCategory(option.value)}
+              />
             ))}
           </View>
         </View>
 
-        <Dropdown<Category>
-          label="Category"
-          value={category}
-          options={CATEGORY_OPTIONS}
-          onChange={setCategory}
-          placeholder="Select a category..."
-        />
-
-        <View className="gap-1">
-          <Text className="text-body-bold text-text-primary">Message</Text>
+        <View className="gap-xs">
+          <Text className="text-label text-text-body">Message</Text>
           <TextInput
-            className="border border-border rounded-lg px-3 py-2 text-text-primary min-h-24"
+            style={{ borderWidth: 1.5, borderColor: colors.espresso, borderRadius: radius['2xl'], height: 118 }}
+            className="bg-surface px-md py-sm text-bodyLg text-text-primary"
             placeholder={`Tell us more — what happened, or what would make ${tenantName} better?`}
             placeholderTextColor={colors.textSecondary}
             multiline
@@ -174,19 +211,35 @@ export function FeedbackScreen({ navigation }: Props) {
           />
         </View>
 
-        <View className="flex-row items-center justify-between border-t border-border pt-3">
-          <Text className="text-body text-text-primary flex-1 mr-2">Contact me back</Text>
-          <Switch value={contactRequested} onValueChange={setContactRequested} />
+        <View
+          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius['2xl'] }}
+          className="bg-surface p-md gap-sm"
+        >
+          <SwitchRow
+            label="Contact me back"
+            value={contactRequested}
+            onValueChange={setContactRequested}
+            onLabel="We'll reply to your registered email"
+            offLabel="No reply needed"
+          />
+          {contactRequested ? (
+            <View
+              style={{
+                borderWidth: 1.5,
+                borderStyle: 'dashed',
+                borderColor: colors.borderDashed,
+                borderRadius: radius.md,
+              }}
+              className="h-touch px-sm justify-center bg-disabled-fill"
+            >
+              <Text className="text-body text-text-secondary">{userEmail ?? '—'}</Text>
+            </View>
+          ) : null}
         </View>
-        {contactRequested ? (
-          <Text className="text-caption text-text-secondary -mt-2">
-            We'll reach out at your registered email: {userEmail ?? '—'}
-          </Text>
-        ) : null}
 
         {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
-        <PrimaryButton label="Submit" onPress={handleSubmit} loading={submitting} disabled={submitting} />
+        <PrimaryButton label="Send feedback" onPress={handleSubmit} loading={submitting} disabled={submitting} />
       </View>
     </Screen>
   );

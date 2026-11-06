@@ -168,14 +168,14 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **Independent Test**: as each role, open all five screens; each matches its artboard or the established patterns, with fields and rules unchanged.
 
-- [ ] T067 [P] [US6] Restyle `mobile/src/screens/shared/ProfileScreen.tsx` against the `Profile` artboard; read-only username uses the dashed treatment (FR-016)
-- [ ] T068 [P] [US6] Restyle `mobile/src/screens/shared/EditProfileScreen.tsx` from the `Profile` + `UserForm` field patterns (FR-029 — no artboard)
-- [ ] T069 [P] [US6] Restyle `mobile/src/screens/shared/ChangePasswordScreen.tsx` from the `Login` password-field pattern (FR-029 — no artboard)
+- [X] T067 [P] [US6] Restyle `mobile/src/screens/shared/ProfileScreen.tsx` against the `Profile` artboard; read-only username uses the dashed treatment (FR-016)
+- [X] T068 [P] [US6] Restyle `mobile/src/screens/shared/EditProfileScreen.tsx` from the `Profile` + `UserForm` field patterns (FR-029 — no artboard)
+- [X] T069 [P] [US6] Restyle `mobile/src/screens/shared/ChangePasswordScreen.tsx` from the `Login` password-field pattern (FR-029 — no artboard)
 - [X] T070 [US6] Restyle `mobile/src/screens/shared/ContactUsScreen.tsx` against the `ContactUs` artboard. Migrate the brand-coloured phone and email at lines 71, 78 to the `link` token. **Keep the existing dialler/mail behaviour from specs/015 — FR-038 bars ADDING the affordance, and removing it would breach FR-030**
-- [ ] T071 [P] [US6] Restyle `mobile/src/screens/shared/FeedbackScreen.tsx` against the `Feedback` artboard; replace the raw hex at line 167 and the `fontSize: 28` at line 148. Rating, the six fixed categories and the contact-back option are unchanged
-- [ ] T072 [P] [US6] Restyle `mobile/src/navigation/ProfileNavigator.tsx`, `ContactUsNavigator.tsx` and `FeedbackNavigator.tsx`. **Do not add role-conditional header logic** unless Open Decision 1 in `plan.md` is accepted
+- [X] T071 [P] [US6] Restyle `mobile/src/screens/shared/FeedbackScreen.tsx` against the `Feedback` artboard; replace the raw hex at line 167 and the `fontSize: 28` at line 148. Rating, the six fixed categories and the contact-back option are unchanged
+- [X] T072 [P] [US6] Restyle `mobile/src/navigation/ProfileNavigator.tsx`, `ContactUsNavigator.tsx` and `FeedbackNavigator.tsx`. **Do not add role-conditional header logic** unless Open Decision 1 in `plan.md` is accepted
 - [X] T073 [US6] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/shared/*.tsx` and the three shared navigators in `mobile/src/navigation/`
-- [ ] T074 [US6] Manual review against the `Profile`, `ContactUs` and `Feedback` artboards
+- [X] T074 [US6] Manual review against the `Profile`, `ContactUs` and `Feedback` artboards
 
 **Checkpoint**: US6 complete and independently demoable.
 
