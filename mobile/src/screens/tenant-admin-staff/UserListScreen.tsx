@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { RowActionButton } from '../../components/RowActionButton';
+import { AdminListRow, AdminSearchField, SectionLabel } from '../../components/AdminList';
 import { createTypedClient } from '../../api/client';
 import { colors } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -97,11 +98,9 @@ export function UserListScreen({ navigation }: Props) {
 
   return (
     <Screen surface="admin" title="Users" specRef="UI Design §5.4">
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
+      <View className="gap-sm">
+        <AdminSearchField
           placeholder="Search by name or username"
-          autoCapitalize="none"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -115,20 +114,32 @@ export function UserListScreen({ navigation }: Props) {
             {users.length === 0 ? 'No users yet. Tap + Add to create one.' : 'No users match your search.'}
           </Text>
         ) : (
-          filteredUsers.map((user) => (
-            <View key={user.id} className="border border-border rounded-lg p-4 bg-surface">
-              <View className="flex-row items-start justify-between gap-2">
-                <Text className="text-body-bold text-text-primary flex-1" numberOfLines={1}>
-                  {user.name}
-                </Text>
-                <View className={`rounded-pill px-2 py-0.5 ${user.status === 'active' ? 'bg-secondary' : 'bg-border'}`}>
-                  <Text className="text-caption text-surface">{user.status}</Text>
-                </View>
-              </View>
-              <Text className="text-body text-text-secondary mt-1">
-                {user.username} · {user.role}
-              </Text>
-              <View className="flex-row justify-end gap-2 mt-2">
+          <>
+            <SectionLabel>{`${filteredUsers.length} users`}</SectionLabel>
+            {filteredUsers.map((user) => (
+            <View key={user.id} className="gap-xs">
+              <AdminListRow
+                glyph="👥"
+                accent="neutral"
+                title={user.name}
+                subtitle={`${user.username} · ${user.role}`}
+                actions={
+                  <View
+                    className={`rounded-pill px-sm py-xs justify-center ${
+                      user.status === 'active' ? 'bg-mint-soft' : 'bg-disabled-fill'
+                    }`}
+                  >
+                    <Text
+                      className={`text-caption ${
+                        user.status === 'active' ? 'text-mint-strong' : 'text-disabled-text'
+                      }`}
+                    >
+                      {user.status}
+                    </Text>
+                  </View>
+                }
+              />
+              <View className="flex-row justify-end gap-xs">
                 <RowActionButton
                   variant="edit"
                   label={`Edit ${user.name}`}
@@ -142,7 +153,8 @@ export function UserListScreen({ navigation }: Props) {
                 />
               </View>
             </View>
-          ))
+            ))}
+          </>
         )}
       </View>
     </Screen>

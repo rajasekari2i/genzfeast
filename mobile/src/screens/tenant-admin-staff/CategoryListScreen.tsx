@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { RowActionButton } from '../../components/RowActionButton';
+import { AdminListRow, AdminSearchField, SectionLabel } from '../../components/AdminList';
 import { createTypedClient } from '../../api/client';
 import { colors } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -111,11 +112,10 @@ export function CategoryListScreen({ navigation }: Props) {
 
   return (
     <Screen surface="admin" title="Categories" specRef="UI Design §5.4" scroll={false}>
-      <View className="gap-3 mb-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
+      <View className="gap-sm mb-md">
+        <Text className="text-caption text-text-secondary">Who's signing up — picked at registration</Text>
+        <AdminSearchField
           placeholder="Search by name"
-          autoCapitalize="none"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -128,6 +128,12 @@ export function CategoryListScreen({ navigation }: Props) {
       ) : (
         <FlatList
           className="flex-1"
+          contentContainerStyle={{ gap: 10 }}
+          ListHeaderComponent={
+            categories.length > 0 ? (
+              <SectionLabel>{`${categories.length} categories`}</SectionLabel>
+            ) : null
+          }
           data={categories}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -139,24 +145,26 @@ export function CategoryListScreen({ navigation }: Props) {
           onEndReached={handleEndReached}
           ListFooterComponent={loadingMore ? <ActivityIndicator className="my-3" /> : null}
           renderItem={({ item: category }) => (
-            <View className="flex-row items-center justify-between gap-2 border-b border-border py-3">
-              <Text className="flex-1 text-body-bold text-text-primary" numberOfLines={1}>
-                {category.name}
-              </Text>
-              <View className="flex-row gap-2">
-                <RowActionButton
-                  variant="edit"
-                  label={`Edit ${category.name}`}
-                  onPress={() => navigation.navigate('CategoryCreateEdit', { categoryId: category.id })}
-                />
-                <RowActionButton
-                  variant="delete"
-                  label={`Delete ${category.name}`}
-                  loading={deletingId === category.id}
-                  onPress={() => confirmDelete(category)}
-                />
-              </View>
-            </View>
+            <AdminListRow
+              glyph="🎓"
+              accent="violet"
+              title={category.name}
+              actions={
+                <>
+                  <RowActionButton
+                    variant="edit"
+                    label={`Edit ${category.name}`}
+                    onPress={() => navigation.navigate('CategoryCreateEdit', { categoryId: category.id })}
+                  />
+                  <RowActionButton
+                    variant="delete"
+                    label={`Delete ${category.name}`}
+                    loading={deletingId === category.id}
+                    onPress={() => confirmDelete(category)}
+                  />
+                </>
+              }
+            />
           )}
         />
       )}
