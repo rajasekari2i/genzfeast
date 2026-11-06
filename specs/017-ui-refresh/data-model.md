@@ -1,10 +1,10 @@
 # Phase 1 Data Model: Design Token Architecture
 
-**Feature**: 017-ui-refresh | **Date**: 2026-11-06 | **Revision**: 2 (post review gate)
+**Feature**: 017-ui-refresh | **Date**: 2026-11-06 | **Revision**: 3 (post review round 3)
 
 This feature introduces no database entities and no API types. Its "data model" is the **design token set**. Values are measured from the 27 artboards (see [research.md](./research.md)).
 
-> **Revision 2 changes**: typography carries **no numeric weight** (R7 — weight lives in the family name); the class-name mapping layer is now first-class (R11); the contrast gate is **additive** (R8); all touch targets raised to 44 (review finding); `#6EE7B7` named; aliasing rule added (R14).
+> **Revision 3 changes**: typography carries **no numeric weight anywhere** — style, class or header option (R7); the class-name mapping layer is first-class (R11); the contrast gate is **narrowed to a single fill leg**, because keeping two was proven unsatisfiable (R8); all touch targets raised to 44; `#6EE7B7` and a scrim token named; aliasing rule added (R14).
 
 ---
 
@@ -47,9 +47,18 @@ The seven existing class names are a **stable interface**. They keep their names
 | Family | Count / files | Migration |
 |---|---|---|
 | `font-bold` (4), `font-semibold` (15) | **19 / 14 files** | **Delete every one.** Weight is carried by the family (FR-007a). `font-bold` compiles to `fontWeight: 700`, which sends a bundled family to `<family>_bold.ttf` → absent → system font. Replace with the text style whose family already encodes the weight (`text-body-bold`, `text-price`, …). |
-| `text-red-600` (29), `text-green-700` (4), `text-amber-700` (2), `text-slate-500` (2), `border-green-600` (2), `border-amber-500` (2), `bg-green-50` (2), `bg-amber-50` (2), `border-red-600` (1) | **46 / 22 files** | **Map to foundation tokens**: error text → `accents.red.strong` `#B42318` (not `#DC2626`, which is `red.dot`); success → `accents.mint.strong`; warning → `accents.sun.strong`; muted → `textSecondary`; tinted backgrounds → the matching `accents.*.soft`. |
+| `text-red-600` (29), `text-green-700` (4), `text-amber-700` (2), `text-slate-500` (2), `border-green-600` (2), `border-amber-500` (2), `bg-green-50` (2), `bg-amber-50` (2), `border-red-600` (1) | **47 / 23 files** | **Map to foundation tokens**: error text → `accents.red.strong` `#B42318` (not `#DC2626`, which is `red.dot`); success → `accents.mint.strong`; warning → `accents.sun.strong`; muted → `textSecondary`; tinted backgrounds → the matching `accents.*.soft`; `Dropdown.tsx:48` `bg-black/40` → the new `scrim` token. |
 
 Also `src/theme/navigationHeader.ts:12,27` set `headerTitleStyle: { fontWeight: '700' }`, applied to **every stack header**. WU7 must remove the weight when it adds a family, or every header title renders in the system face.
+
+**A third numeric-weight surface — inline style props** (neither a token nor a class, so neither G3's original wording nor G7 covered it):
+
+| Site | Literal | Migration |
+|---|---|---|
+| `CategoryListScreen.tsx:66`, `DepartmentListScreen.tsx:64`, `ProductListScreen.tsx:84`, `UserListScreen.tsx:57` | `{ color, fontWeight: '700', fontSize: 15 }` — the `headerRight` "+ Add" buttons | Replace with the `labelLg` style; **WU6** |
+| `DashboardScreen.tsx:94` (`fontSize: 22`), `FeedbackScreen.tsx:148` (`28`), `BrandRationaleSlider.tsx:71` (`26`) | raw `fontSize` | Snap to the nearest scale step — 22→`subtitle` 20, 28→`title` 28, 26→`titleSm` 24 — the same rule §4 applies to radius |
+| `BrandRationaleSlider.tsx:86` | `borderRadius: 3` | `glyph` (3) — exact match, no change in value |
+| `CartSummaryBar.tsx:30` | `shadowColor: '#000'` | the new `shadow` token |
 
 New styles are added under new names alongside these. **No existing class name may be deleted** without migrating every call site in the same work unit.
 
@@ -86,6 +95,8 @@ A naive re-export of `tokens.raw.js` **fails typecheck**: string literals widen 
 | `disabledFill` | `#F4EEE7` | Disabled / read-only fill | **new** |
 | `disabledText` | `#6E6A78` | Disabled label | **new** |
 | `nonVeg` | `#9A3412` | Non-veg mark | **new** |
+| `scrim` | `rgba(0,0,0,0.40)` | Modal overlay — `Dropdown.tsx:48` `bg-black/40`, the only off-palette class carrying an opacity modifier | **new** |
+| `shadow` | `#000000` | Elevation shadow colour — `CartSummaryBar.tsx:30` `shadowColor` | **new** |
 
 ### 2.2 Accent pairs (R4)
 
@@ -119,7 +130,7 @@ One family, three consumers — status chips, icon tiles, product tints. Each `{
 
 | Token | Family | Size | Line height | Tracking | Use |
 |---|---|---|---|---|---|
-| `hero` | BricolageGrotesque-ExtraBold | 48 | 52 | -1.5 | Pickup digits (OrderSuccess 36) |
+| `hero` | BricolageGrotesque-ExtraBold | **36** | 40 | -1.2 | Pickup digits. **Corrected**: revision 2 set 48, which no artboard uses — `OrderSuccess` measures 36 (research R5). The Foundations board's 24 is a component-library sample, not a screen value. |
 | `display` | BricolageGrotesque-ExtraBold | 34 | 38 | -1.2 | Screen hero · **`text-h1`** |
 | `title` | BricolageGrotesque-ExtraBold | 28 | 32 | -0.8 | Screen title |
 | `titleSm` | BricolageGrotesque-ExtraBold | 24 | 28 | -0.5 | Section title |
@@ -148,7 +159,7 @@ One family, three consumers — status chips, icon tiles, product tints. Each `{
 | `sm` | 10 | Pickup-code cell — **was 4** |
 | `md` | 12 | Small icon tile |
 | `lg` | 14 | Input, icon tile — **was 20**, 31 call sites |
-| `xl` | 16 | Toast, list row |
+| `xl` | 16 | List row |
 | `2xl` | 18 | Product image |
 | `3xl` | 20 | Panel |
 | `4xl` | 22 | Pickup-code panel |
@@ -181,8 +192,8 @@ Unchanged: `xs 4`, `sm 8`, `md 16`, `lg 24`, `xl 32`. Add intermediate steps onl
 | Icon tile | 44 | `md`/`lg` | `accent.soft` | `accent.strong` | |
 | Input | 48 | `lg` | `surface` | `espresso`, `bodyLg` | 1.5 solid `espresso` |
 | Read-only input | 48 | `lg` | `disabledFill` | `textSecondary` | 1.5 **dashed** |
-| Toast | — | `xl` | `espresso` | `surface`, `label` | `accents.mint.glyph` check |
-| Pickup-code cell | 44 | `sm` | `primary` | `espresso`, `hero`/`display` | Six cells |
+
+| Pickup-code cell | 44 | `sm` | `primary` | `espresso`, **`hero`** (36) | Six cells |
 | Product card | — | `5xl` | `surface` | — | 1px `border`; image `2xl` |
 | Sold-out stamp | — | `xs` | `surface` | `espresso`, `label` | 2px border, rotated −8° |
 

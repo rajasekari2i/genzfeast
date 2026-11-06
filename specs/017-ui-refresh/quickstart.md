@@ -32,16 +32,16 @@ npm test                      # includes the new token-discipline and contrast t
 | Gate | Asserts | Spec |
 |---|---|---|
 | `theme/tokens.spec` | `tokens.ts` deep-equals `tokens.raw.js` | G5 |
-| `theme/contrast.spec` | 7 accent pairs ≥4.5:1; espresso-on-brand **and** brand-on-ground per swatch; a failing colour warns + falls back | G2, G4, SC-005 |
+| `theme/contrast.spec` | 7 accent pairs ≥4.5:1; **espresso-on-brand only** per swatch; a failing colour warns + falls back **and a passing colour is accepted** | G2, G4, SC-005 |
 | `theme/fonts.spec` | every typography token's family is bundled **and no token sets a numeric weight** | G3, FR-007a |
 | **`theme/classnames.spec`** | **no `text-*`/`bg-*`/`border-*`/`rounded-*` in `src/**` is missing from the generated theme** | **G7, SC-004** |
 | `theme/token-discipline.spec` | no raw hex / radius / size literal in screens or components | O1, SC-004 |
 | `theme/brand.spec` | only `primary` differs across resolved themes | G1 |
 | `theme/statusColors.spec` | unknown status → `neutral` + raw label; no screen imports `accents` directly | G6, O3 |
 | `theme/surface.spec` | every screen declares `background` or `backgroundAlt`; none hardcodes a ground | O2 |
-| `theme/touch-targets.spec` | every component contract entry ≥44 | O4, SC-006 |
+| `theme/touch-targets.spec` | AST scan: every pressable's `h-`/`min-h-`/`height` ≥44 | O4, SC-006 |
 
-**Nine gates.** `classnames.spec` and `fonts.spec` are the two that catch *silent* failures — an unknown class and a wrong font face both leave `tsc` and the build green.
+**Eleven gates (G1–G7, O1–O4) across nine spec files** — G2/G4 share `contrast.spec`, G6/O3 share `statusColors.spec`. `classnames.spec` and `fonts.spec` are the two that catch *silent* failures — an unknown class and a wrong font face both leave `tsc` and the build green.
 
 **Font check — do this first.** A wrong convention fails *silently*, and only for weights ≥700, so body text looks right while every heading is the system font:
 
@@ -126,8 +126,8 @@ Each row names its artboard. For every screen confirm: **(a)** it matches the ar
 | Narrow screen | 320dp-width emulator | Two readable columns persist |
 | Unmapped status | Force an unexpected status value | `neutral` chip with raw label — never blank |
 | Failing brand | Set brand to `#E4572E` | **Warns and falls back to default** (4.42:1 espresso-on-fill). Confirms G2 — note it does *not* fail the build |
-| Passing brand | Set brand to `#FFB020` | **Accepted and applied** (8.90:1). Proves the override path still works — the gate is not rejecting everything |
-| Font missing at build | Remove a `.ttf` before building | **Build fails** — absence is a build error |
+| Passing brand | `#FFB020` via `theme/contrast.spec` | **Accepted** (8.90:1). Proves the override path still works. **Unit assertion, not a device check** — the resolver has no production call site |
+| Font missing | Remove a `.ttf`, run `npm test` | **`theme/fonts.spec` fails.** The Gradle build itself still succeeds — `react-native-asset` silently copies nothing — so the test gate is the real guard |
 | Font unresolvable at runtime | Reference an unbundled family name | Falls back to a readable system face; layout intact |
 
 ---
@@ -153,7 +153,7 @@ Do this against the previous build, same account, same data:
 - [ ] `npm run typecheck` passes
 - [ ] `npm test` passes — **all nine theme gates**
 - [ ] All **27 screen files** reviewed against the table above, plus the three drawer variants
-- [ ] All **8 edge cases** exercised
+- [ ] All **10 edge-case rows** exercised (covering the spec's 8 cases)
 - [ ] All 6 regression paths identical to the previous build
 - [ ] WU9 structural assertions pass (fields, labels, validation, actions unchanged)
 

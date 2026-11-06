@@ -28,7 +28,7 @@ A designer or developer opens the app and sees the new brand language applied co
 
 **Why this priority**: Nothing else in this feature can land without it. Every subsequent story is an application of these foundations; shipping them first means every later screen is a small, low-risk change rather than a bespoke one. It is also independently valuable: on its own it already shifts the whole app's colour and type, because every screen reads from the shared definitions.
 
-**Independent Test**: Launch the app and move through any existing screen. The ground is cream, body text is espresso rather than grey, and the display typeface renders on headings. Searching the codebase finds no screen defining a colour or radius that the shared foundations already define.
+**Independent Test**: Launch the app and move through any existing screen. The ground is cream, body text is espresso rather than grey, and the display typeface renders on headings. The foundations define a named value for every colour, text style and radius the design uses. *(Whole-tree discipline — that no screen still defines its own value — is only achievable once every screen has been restyled, so it is asserted at the end of P4, not here.)*
 
 **Acceptance Scenarios**:
 
@@ -96,7 +96,7 @@ A user who forgets their password, changes it, edits their profile, launches the
 - **A dish has no photo.** The menu grid must show a designed placeholder, not an empty box or a broken-image icon.
 - **A dish name is long.** In a two-column grid each card is roughly half the previous width. Names must truncate cleanly on one line and descriptions to a fixed height, so cards in a row stay the same height.
 - **A canteen has one dish, or none.** The grid must not leave a visually broken half-row, and the empty state must be designed.
-- **A bundled typeface is missing or fails to resolve.** A font file absent at build time must fail the build. A face that fails to resolve at runtime must fall back to a readable system face rather than rendering invisibly or collapsing layout. These are different failures with different handling, and the distinction must be explicit.
+- **A bundled typeface is missing or fails to resolve.** A font file absent at build time must fail the `theme/fonts.spec` gate, so `npm test` goes red before release. A face that fails to resolve at runtime must fall back to a readable system face rather than rendering invisibly or collapsing layout. These are different failures with different handling, and the distinction must be explicit.
 - **The device is set to a large system font size.** Pickup-code digits, status chips and buttons must remain legible and un-clipped.
 - **A very small screen.** The two-column grid must still render two readable columns at the narrowest supported width.
 - **A status value outside the four designed ones.** Any order status without a designed chip must still render a readable, non-blank label.
@@ -120,7 +120,7 @@ A user who forgets their password, changes it, edits their profile, launches the
 - **FR-007a**: Because the platform selects a bundled face by file name rather than by numeric weight, each weight MUST ship as its own font family, and **no numeric font weight may be set anywhere** — not in a text style, not as a styling class name, and not in navigation header options. Weight is carried by the family alone. A style that sets both a bundled family and a numeric weight of 700 or above silently renders in the system font, with no error at compile or build time.
 - **FR-008**: The corner-radius scale MUST provide twelve steps: 3 (dietary glyph), 8, 10, 12, 14, 16, 18, 20, 22, 24, 28 and fully-rounded.
 - **FR-009**: Tangerine MUST remain the only value a canteen can override for its own branded build. Every other foundation value MUST be fixed across all canteens.
-- **FR-010**: A canteen brand colour that fails the required contrast ratio MUST be rejected at resolution time — the system warns and falls back to the default brand rather than applying an unreadable colour. The check MUST be additive: it evaluates the brand both as a fill behind text and as a foreground on each ground, and a colour failing either role is rejected.
+- **FR-010**: A canteen brand colour MUST be evaluated against **exactly one pairing** — espresso text on the brand fill, ≥4.5:1. A failing colour warns and falls back to the default; it does not fail the build. The former brand-as-foreground leg is **removed**: requiring both legs is mathematically unsatisfiable (it demands a brand both light enough to carry espresso text and dark enough to read on cream), and the redesign never uses the brand colour as text.
 
 **Shared components**
 
@@ -185,6 +185,7 @@ A user who forgets their password, changes it, edits their profile, launches the
 - **Updated brand artwork is out of scope for this feature.** The new icon, logo and white mark are committed to the repository but are not applied here; replacing the launcher icon is a platform-resource change no artboard covers, and is deferred.
 - **No automated visual-regression tooling exists**, so artboard fidelity is verified by structured human review against each artboard rather than by snapshot tests.
 - **Dark mode is not in scope.** The redesign defines a single light appearance.
+- **The brand-override resolver is dormant.** It has no production call site — only its own test imports it, and no tenant brand configuration exists in the repository. This feature corrects the resolver's contrast logic; it does **not** wire it into the running app, which would be new non-visual behaviour. Acceptance scenarios about a tenant colour being applied are therefore verified as unit assertions, not on a device.
 - **The Register artboard omits the required gender field.** The shipped app requires it; the artboard does not show it. Per the standing rule that the shipped app governs behaviour, the field is retained and styled to match the artboard's own segmented-chip pattern.
 - **Reverting this feature after release requires a new application build**, because bundled font files are platform assets rather than part of the reloadable bundle. There is no partial rollback: the change ships, and is withdrawn, as one unit.
 - **The application's styling is applied through utility class names, not only through the token module.** Changing or removing a class name that screens already use is therefore a breaking change even when nothing fails to compile.

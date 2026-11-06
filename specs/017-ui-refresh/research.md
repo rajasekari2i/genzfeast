@@ -301,7 +301,7 @@ Consequently `numColumns` is not currently reachable: nesting a `FlatList` insid
 
 ---
 
-## R13 — Colour reconciliation: all 61 source values accounted for
+## R13 — Colour reconciliation: the rule, not an exact tally
 
 **Finding**: R4 collapsed 61 measured hex values into a structure but never stated what happened to each. Reconciliation:
 
@@ -311,7 +311,9 @@ Consequently `numColumns` is not currently reachable: nesting a `FlatList` insid
 - **`#6EE7B7`** (toast success glyph) was used in a component contract with **no token name** — a value O1 would forbid a developer from writing. **Now named** `accents.mint.glyph`.
 - **5** are *old* values appearing only in the "Changed from" column (`#0E9F6E`, `#1F2937`, `#6B7280`, `#E5E7EB`, `#FFF7ED`) — not new tokens.
 
-**Decision**: add the reconciliation rule above to the token contract, and name `#6EE7B7`. An implementer meeting an artboard colour outside the set must add it to the owning family, not inline it.
+**Honest accounting**: the categories above are approximate and do **not** sum cleanly to 61 — the swatch options are counted as occurrences, two groups are "~" figures, and 5 of the 61 are old values that never appeared in an artboard. Revision 2 claimed "all 61 accounted for"; that claim was not demonstrated and is withdrawn.
+
+**What actually matters is the rule, which is exact**: an implementer meeting an artboard colour outside the token set adds it to the owning family as a named step — never inline. Combined with O1's palette allow-list, that makes an unaccounted colour impossible to ship regardless of whether the census is complete. The token set is closed by enforcement, not by an inventory.
 
 ---
 
