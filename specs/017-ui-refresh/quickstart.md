@@ -21,13 +21,15 @@ npm run fonts:link            # pinned react-native-asset; copies assets/fonts i
 npm run android               # full rebuild
 ```
 
-## Automated gates
+## Automated gates *(all run in P8, the final phase)*
 
 ```bash
 cd mobile
-npm run typecheck             # must pass — 13 files import the token module
-npm test                      # includes the new token-discipline and contrast tests
+npm run typecheck             # must pass after P1 — 13 files import the token module
+npm test                      # P8 only: the eleven gates below
 ```
+
+> **Tests run in the final phase, by instruction.** During P1–P7 the substitutes are the per-face device check at the end of P1 and the manual artboard review at the end of each screen phase. Both must actually be performed — the class-name and font gates detect failures that leave `typecheck` and the build green, so nothing automated will catch them before P8.
 
 | Gate | Asserts | Spec |
 |---|---|---|

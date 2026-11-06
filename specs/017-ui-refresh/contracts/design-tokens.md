@@ -1,6 +1,6 @@
 # Contract: Design Token Module
 
-**Feature**: 017-ui-refresh | **Revision**: 4 (post review round 4 — PASSED) | **Consumers**: every screen and component in `mobile/src`
+**Feature**: 017-ui-refresh | **Revision**: 5 (re-planned: all gates in the final phase) | **Consumers**: every screen and component in `mobile/src`
 
 Supersedes `specs/013-blue-theme-visual-design/contracts/design-tokens.md`. The mechanism 013 established (one token module, one tenant-overridable colour, a contrast gate) is retained; values and structure grow.
 
@@ -51,35 +51,41 @@ Dark mode; runtime theming; per-tenant typography, spacing or radius; iOS font r
 
 ## 5. Verification
 
-Each gate has an **authored-in** unit (when the test is written) and an **enforced-from** unit (the first unit in which it can legitimately pass). For whole-tree gates that is **the last of WU4–WU8 to land**, not WU8 specifically — those four are parallel siblings, and **WU7a** owns the G3/O2 violation sites (`navigationHeader.ts:12,27`, `RootNavigator.tsx:18`). Revision 2 conflated these and pinned O1/O2 to units where the code they check had not been written yet.
+**All checks are authored and run in P8, the final phase** — per user instruction, and consistent with `CLAUDE.md`'s implementation-before-tests rule. They are **mocked only**: no device, no network, no real native module.
 
-| # | Check | Authored in | Enforced from | Why the gap |
-|---|---|---|---|---|
-| G1 | `theme/brand.spec` — only `primary` differs across resolved themes | WU2 | WU2 | — |
-| G2 | `theme/contrast.spec` — espresso-on-brand per swatch; a failing colour warns + falls back; **a passing colour is accepted** | WU2 | WU2 | — |
-| G3 | `theme/fonts.spec` — every token's family is bundled; **no `fontWeight` anywhere in `src/`** | WU2 | **last of WU4–WU8** | 19 `font-*` classes live in components (WU3) and screens (WU4/6/8) |
-| G4 | `theme/contrast.spec` — all 7 accent pairs | WU2 | WU2 | — |
-| G5 | `theme/tokens.spec` — `tokens.ts` deep-equals `tokens.raw.js` | WU2 | WU2 | — |
-| G6 | `theme/statusColors.spec` — unknown status → `neutral` + raw label | WU2 | WU2 | — |
-| **G7** | **`theme/classnames.spec`** — see enumeration method below | WU2 | **last of WU4–WU8** | off-palette classes span components and screens |
-| O1 | `theme/token-discipline.spec` — no raw literal; palette allow-list | WU2 | **last of WU4–WU8** | one hex literal is in `FeedbackScreen.tsx:167`, a WU4 file |
-| O2 | `theme/surface.spec` — every screen declares a surface | WU3 | **last of WU4–WU8** | screens declare surfaces across WU4/6/8 |
-| O3 | `theme/statusColors.spec` — no screen imports `accents` directly | WU2 | WU6 | — |
-| O4 | `theme/touch-targets.spec` — AST scan of `h-`/`min-h-`/`height` on pressables | WU3 | WU3 | asserts over code, not over a markdown table |
+| # | Check | Asserts |
+|---|---|---|
+| G1 | `theme/brand.spec` | only `primary` differs across resolved themes |
+| G2 | `theme/contrast.spec` | espresso-on-brand per swatch; a failing colour warns and falls back; **a passing colour is accepted** |
+| G3 | `theme/fonts.spec` | every token's family is bundled, and **no numeric font weight appears anywhere in `src/`** — style prop, `font-{thin…black}` class, or `headerTitleStyle` |
+| G4 | `theme/contrast.spec` | all 7 accent pairs ≥4.5:1 |
+| G5 | `theme/tokens.spec` | `tokens.ts` deep-equals `tokens.raw.js` |
+| G6 | `theme/statusColors.spec` | unknown status → `neutral` + raw label |
+| G7 | `theme/classnames.spec` | see enumeration method below |
+| O1 | `theme/token-discipline.spec` | no raw literal; palette allow-list |
+| O2 | `theme/surface.spec` | every screen declares a ground; none hardcodes one |
+| O3 | `theme/statusColors.spec` | no screen imports `accents` directly |
+| O4 | `theme/touch-targets.spec` | AST scan — every pressable's height ≥44 |
 
-**Nine spec files** (G2/G4 share `contrast.spec`; G6/O3 share `statusColors.spec`).
+**Eleven gates across nine spec files** (G2/G4 share `contrast.spec`; G6/O3 share `statusColors.spec`).
 
-**Between authored-in and enforced-from, a gate is expected to report failures.** Each is wired as a reported-but-non-blocking check until its enforced-from unit, then becomes blocking. Without this, WU2 and WU3 would have to commit a red suite — which orchestrated execution forbids.
+### Consequence of running last — stated, not hidden
 
-### G7 enumeration method (previously unspecified)
+**G7 and G3 detect the two failure modes that are otherwise invisible**: a class that silently stops applying, and a bundled family that silently falls back to the system font. Both leave `tsc` and the build green. Running them in P8 means they **report** damage rather than **prevent** it — a class broken in P1 may go unnoticed until P8.
 
-`resolveConfig(...).theme` reflects **`theme` only, not `plugins`** — so it would report the seven plugin-emitted text utilities as missing and fail on 154 call sites. The check must therefore:
+The substitutes during P1–P7 are manual and must actually be performed:
+- **P1 ends with a per-face device check** — render one sample per bundled face; Inter-Bold and BricolageGrotesque-ExtraBold are the meaningful ones, since the ≥700 faces are what fail silently.
+- **Each screen phase ends with a manual artboard review** against the table in `quickstart.md`.
+
+### G7 enumeration method
+
+`resolveConfig(...).theme` reflects **`theme` only, not `plugins`** — it would report the seven plugin-emitted text utilities as missing and fail on 154 call sites. The check must therefore:
 
 1. **Enumerate** by having the text-style plugin export its utility key list for the test to `require`, unioned with `resolveConfig(...).theme` for colours, radii and spacing.
-2. **Extract** class names handling all three forms present in the code: static `className="…"`; ternaries and template literals (`RowActionButton.tsx:39,45`, `CategoryChip.tsx:21`, `Dropdown.tsx:41,61`); and a class held in a variable (`PrimaryButton.tsx:32`). A regex over `className="…"` alone is insufficient — use an AST walk over JSX string literals.
-3. **Normalise** opacity modifiers before lookup (`ProductCard.tsx:38` `bg-text-primary/70`, plus `bg-surface/20`, `bg-black/40`).
+2. **Extract** class names by AST walk over JSX string literals — not a regex over `className="…"`, which misses ternaries (`RowActionButton.tsx:39,45`), template literals and a class held in a variable (`PrimaryButton.tsx:32`), and would false-positive on the commented class at `PrimaryButton.tsx:26`.
+3. **Normalise** opacity modifiers before lookup (`bg-text-primary/70`, `bg-surface/20`).
 4. **Allow-list**, not existence-check: a class resolving to Tailwind's default palette (`text-red-600`) must FAIL, even though it resolves fine.
-5. **Exempt non-themed core utilities under the scanned prefixes**, or the gate fails on correct code: `text-center` (25 sites), `text-left`/`text-right`, `border-t` (4), `border-b` (11) and bare `border` carry no theme key and are legitimate. Match only the **value segment** against theme keys, never the whole class name.
+5. **Exempt non-themed core utilities** under the scanned prefixes, or the gate fails on correct code: `text-center` (25 sites), `text-left`/`text-right`, `border-t` (4), `border-b` (11) and bare `border` carry no theme key. Match only the **value segment** against theme keys.
 
 ## 6. Known defect in the upstream design
 

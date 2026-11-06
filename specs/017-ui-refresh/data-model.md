@@ -1,6 +1,6 @@
 # Phase 1 Data Model: Design Token Architecture
 
-**Feature**: 017-ui-refresh | **Date**: 2026-11-06 | **Revision**: 4 (post review round 4 — PASSED)
+**Feature**: 017-ui-refresh | **Date**: 2026-11-06 | **Revision**: 5 (re-planned: + OTP entry and switch row)
 
 This feature introduces no database entities and no API types. Its "data model" is the **design token set**. Values are measured from the 27 artboards (see [research.md](./research.md)).
 
@@ -192,7 +192,9 @@ Unchanged: `xs 4`, `sm 8`, `md 16`, `lg 24`, `xl 32`. Add intermediate steps onl
 | Icon tile | 44 | `md`/`lg` | `accent.soft` | `accent.strong` | |
 | Input | 48 | `lg` | `surface` | `espresso`, `bodyLg` | 1.5 solid `espresso` |
 | Read-only input | 48 | `lg` | `disabledFill` | `textSecondary` | 1.5 **dashed** |
-| Pickup-code cell | 44 | `sm` | `primary` | `espresso`, **`hero`** (36) | Six cells |
+| Pickup-code cell (display) | 44 | `sm` | `primary` | `espresso`, **`hero`** (36) | Six cells. **Read-only** — never shown to staff |
+| Pickup-code entry (**new**, FR-018) | 44 | `sm` | `surface` | `espresso`, `hero` | Six segmented boxes. **Clears on an incorrect code** so the operator can retry; the order is unchanged on mismatch |
+| Switch row (**new**, FR-019) | 44 | — | `surface` | `espresso`, `labelLg` | Labelled row with a switch; the sold-out control. State is conveyed by the switch position **and** its label, not colour alone |
 | Product card | — | `5xl` | `surface` | — | 1px `border`; image `2xl` |
 | Sold-out stamp | — | `xs` | `surface` | `espresso`, `label` | 2px border, rotated −8° |
 
