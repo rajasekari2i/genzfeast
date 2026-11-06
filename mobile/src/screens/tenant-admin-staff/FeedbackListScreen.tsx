@@ -78,7 +78,7 @@ export function FeedbackListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Feedback Review" scroll={false}>
+    <Screen surface="admin" title="Feedback Review" scroll={false}>
       <View className="flex-row mb-3">
         {FILTERS.map((filter) => (
           <CategoryChip
@@ -90,7 +90,7 @@ export function FeedbackListScreen({ navigation }: Props) {
         ))}
       </View>
 
-      {errorMessage ? <Text className="text-body text-red-600 mb-3">{errorMessage}</Text> : null}
+      {errorMessage ? <Text className="text-body text-red-strong mb-3">{errorMessage}</Text> : null}
 
       {loading ? (
         <ActivityIndicator />
@@ -111,12 +111,12 @@ export function FeedbackListScreen({ navigation }: Props) {
                 <Text className="text-body-bold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
                 <View
                   className={`rounded-pill px-3 py-1 border ${
-                    item.status === 'resolved' ? 'border-green-600 bg-green-50' : 'border-amber-500 bg-amber-50'
+                    item.status === 'resolved' ? 'border-mint-strong bg-mint-soft' : 'border-sun-dot bg-sun-soft'
                   }`}
                 >
                   <Text
-                    className={`text-caption font-semibold ${
-                      item.status === 'resolved' ? 'text-green-700' : 'text-amber-700'
+                    className={`text-caption ${
+                      item.status === 'resolved' ? 'text-mint-strong' : 'text-sun-strong'
                     }`}
                   >
                     {item.status === 'resolved' ? 'Resolved' : 'New'}
@@ -129,7 +129,7 @@ export function FeedbackListScreen({ navigation }: Props) {
               <View className="flex-row items-center gap-3 mt-1">
                 {item.rating ? <Text className="text-caption text-text-secondary">{'★'.repeat(item.rating)}</Text> : null}
                 <Text className="text-caption text-text-secondary">{item.submitted_by.name}</Text>
-                {item.contact_requested ? <Text className="text-caption text-primary">Wants contact</Text> : null}
+                {item.contact_requested ? <Text className="text-label text-link">Wants contact</Text> : null}
               </View>
             </Pressable>
           )}

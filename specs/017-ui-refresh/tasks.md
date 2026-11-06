@@ -129,9 +129,9 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [ ] T047 [US4] Restyle `mobile/src/screens/student/LoginScreen.tsx` against the `Login` artboard; migrate its `text-red-600` and `text-slate-500` classes at lines 89, 91, 94
 - [ ] T048 [US4] Restyle `mobile/src/screens/student/RegisterScreen.tsx` against the `Register` artboard. **Keep the `gender` control** — the artboard omits it but the API requires it; render it in the artboard's own segmented-chip pattern (FR-030, research R6)
 - [ ] T049 [P] [US4] Restyle `mobile/src/screens/student/ForgotPasswordRequestScreen.tsx` from the `Login` input + primary-button pattern (FR-029 — no artboard)
-- [ ] T050 [P] [US4] Restyle `mobile/src/screens/student/ForgotPasswordVerifyScreen.tsx` using `OtpInput` from T039 (FR-029 — no artboard; pattern source is the `Fulfilment` board)
-- [ ] T051 [US4] Route `mobile/src/navigation/AuthNavigator.tsx:44`'s inline `headerStyle` through `navigationHeader.ts` as a **third, auth-specific option set preserving its current background and tint**. It must NOT point at the brand header — commit `c2b7b0c` deliberately made the Login header match the screen background
-- [ ] T052 [US4] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/student/{Login,Register,ForgotPasswordRequest,ForgotPasswordVerify}Screen.tsx` and `mobile/src/navigation/AuthNavigator.tsx`
+- [X] T050 [P] [US4] Restyle `mobile/src/screens/student/ForgotPasswordVerifyScreen.tsx` using `OtpInput` from T039 (FR-029 — no artboard; pattern source is the `Fulfilment` board)
+- [X] T051 [US4] Route `mobile/src/navigation/AuthNavigator.tsx:44`'s inline `headerStyle` through `navigationHeader.ts` as a **third, auth-specific option set preserving its current background and tint**. It must NOT point at the brand header — commit `c2b7b0c` deliberately made the Login header match the screen background
+- [X] T052 [US4] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/student/{Login,Register,ForgotPasswordRequest,ForgotPasswordVerify}Screen.tsx` and `mobile/src/navigation/AuthNavigator.tsx`
 - [ ] T053 [US4] Manual review of all four screens against the `Login` and `Register` artboards, plus regression path 1 in `quickstart.md`
 
 **Checkpoint**: US4 complete and independently demoable.
@@ -147,15 +147,15 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [X] T054 [US5] Rewrite `mobile/src/screens/student/HomeScreen.tsx` as a two-column grid: `<Screen scroll={false}>` + an owned list with two columns. It is currently a `.map()` inside a `ScrollView`, so this **introduces** virtualisation rather than preserving it (FR-025, research R12)
 - [X] T055 [US5] Add bottom content inset to the Home list so `CartSummaryBar`'s absolute overlay (`left-4 right-4 bottom-4`) stops permanently hiding the last row (depends on T054)
 - [X] T056 [US5] Move Home's empty and skeleton states into the list's own empty/header slots. **Note**: there is no `RefreshControl` today — `load()` runs once from `useEffect`, so no pull-to-refresh is preserved and none is added (depends on T054)
-- [ ] T057 [US5] Restyle `mobile/src/screens/student/CartScreen.tsx`; migrate its brand-as-foreground ± controls at lines 153, 157 to `espresso`
-- [ ] T058 [US5] Restyle `mobile/src/screens/student/OrderDetailScreen.tsx` for the `payment_failed` state against the `OrderDetail` artboard; migrate the brand-as-foreground code at line 154
-- [ ] T059 [US5] Restyle `OrderDetailScreen.tsx` for the `order_placed` state against the `OrderSuccess` artboard — **full-bleed brand ground**, six `OtpDisplay` cells. No new screen or route (depends on T058)
+- [X] T057 [US5] Restyle `mobile/src/screens/student/CartScreen.tsx`; migrate its brand-as-foreground ± controls at lines 153, 157 to `espresso`
+- [X] T058 [US5] Restyle `mobile/src/screens/student/OrderDetailScreen.tsx` for the `payment_failed` state against the `OrderDetail` artboard; migrate the brand-as-foreground code at line 154
+- [X] T059 [US5] Restyle `OrderDetailScreen.tsx` for the `order_placed` state against the `OrderSuccess` artboard — **full-bleed brand ground**, six `OtpDisplay` cells. No new screen or route (depends on T058)
 - [ ] T060 [US5] Restyle `mobile/src/screens/student/MyOrdersScreen.tsx` against the `MyOrders` artboard; Upcoming/History split unchanged
-- [ ] T061 [US5] Rewrite the drawer content in `mobile/src/navigation/AppShell.tsx` to show **name and canteen only**. The role currently renders at line 65 and must be **removed** (FR-027)
+- [X] T061 [US5] Rewrite the drawer content in `mobile/src/navigation/AppShell.tsx` to show **name and canteen only**. The role currently renders at line 65 and must be **removed** (FR-027)
 - [ ] T062 [US5] Restyle the student drawer variant in `AppShell.tsx` against the `Drawer` artboard; menu items byte-identical to today (FR-028, depends on T061)
 - [ ] T063 [P] [US5] Give `mobile/src/navigation/RootNavigator.tsx` a declared surface — it hardcodes `bg-background` on its loading view at line 18
 - [ ] T064 [P] [US5] Restyle `mobile/src/navigation/StudentNavigator.tsx`
-- [ ] T065 [US5] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/student/{Home,Cart,OrderDetail,MyOrders}Screen.tsx` and `mobile/src/navigation/{AppShell,RootNavigator,StudentNavigator}.tsx`
+- [X] T065 [US5] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/student/{Home,Cart,OrderDetail,MyOrders}Screen.tsx` and `mobile/src/navigation/{AppShell,RootNavigator,StudentNavigator}.tsx`
 - [ ] T066 [US5] Manual review against the `Home`, `Drawer`, `Cart`, `OrderSuccess`, `OrderDetail` and `MyOrders` artboards, plus regression paths 2–3 in `quickstart.md`
 
 **Checkpoint**: US5 complete — the headline business case (SC-001) is demonstrable.
@@ -171,10 +171,10 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [ ] T067 [P] [US6] Restyle `mobile/src/screens/shared/ProfileScreen.tsx` against the `Profile` artboard; read-only username uses the dashed treatment (FR-016)
 - [ ] T068 [P] [US6] Restyle `mobile/src/screens/shared/EditProfileScreen.tsx` from the `Profile` + `UserForm` field patterns (FR-029 — no artboard)
 - [ ] T069 [P] [US6] Restyle `mobile/src/screens/shared/ChangePasswordScreen.tsx` from the `Login` password-field pattern (FR-029 — no artboard)
-- [ ] T070 [US6] Restyle `mobile/src/screens/shared/ContactUsScreen.tsx` against the `ContactUs` artboard. Migrate the brand-coloured phone and email at lines 71, 78 to the `link` token. **They stay information — do not add tap-to-call or tap-to-email** (FR-038)
+- [X] T070 [US6] Restyle `mobile/src/screens/shared/ContactUsScreen.tsx` against the `ContactUs` artboard. Migrate the brand-coloured phone and email at lines 71, 78 to the `link` token. **They stay information — do not add tap-to-call or tap-to-email** (FR-038)
 - [ ] T071 [P] [US6] Restyle `mobile/src/screens/shared/FeedbackScreen.tsx` against the `Feedback` artboard; replace the raw hex at line 167 and the `fontSize: 28` at line 148. Rating, the six fixed categories and the contact-back option are unchanged
 - [ ] T072 [P] [US6] Restyle `mobile/src/navigation/ProfileNavigator.tsx`, `ContactUsNavigator.tsx` and `FeedbackNavigator.tsx`. **Do not add role-conditional header logic** unless Open Decision 1 in `plan.md` is accepted
-- [ ] T073 [US6] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/shared/*.tsx` and the three shared navigators in `mobile/src/navigation/`
+- [X] T073 [US6] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/shared/*.tsx` and the three shared navigators in `mobile/src/navigation/`
 - [ ] T074 [US6] Manual review against the `Profile`, `ContactUs` and `Feedback` artboards
 
 **Checkpoint**: US6 complete and independently demoable.
@@ -189,7 +189,7 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 - [ ] T075 [US7] Restyle `mobile/src/screens/tenant-admin-staff/DashboardScreen.tsx` against the `Dashboard` artboard — stat cards keep their live counts. **No open/closed toggle may be added** (FR-036); migrate the `fontSize: 22` at line 94 and `rounded-full` at line 91
 - [ ] T076 [US7] Restyle `mobile/src/screens/tenant-admin-staff/ProductListScreen.tsx` admin variant against `AdminProducts` — full CRUD; migrate the inline `fontWeight: '700'`/`fontSize: 15` at line 84
-- [ ] T077 [US7] Restyle the staff variant of `ProductListScreen.tsx` against `StaffProducts` — **sold-out `SwitchRow` only**, no create, edit or delete (depends on T040, T076)
+- [X] T077 [US7] Restyle the staff variant of `ProductListScreen.tsx` against `StaffProducts` — **sold-out `SwitchRow` only**, no create, edit or delete (depends on T040, T076)
 - [ ] T078 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/ProductCreateEditScreen.tsx` from the `UserForm`/`CategoryForm` patterns (FR-029 — no artboard); migrate its two `font-semibold` at lines 219, 249
 - [ ] T079 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/CategoryListScreen.tsx` against `Categories`; migrate the inline `fontWeight`/`fontSize` at line 66
 - [ ] T080 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/CategoryCreateEditScreen.tsx` against `CategoryForm`; migrate its `font-semibold` at line 87
@@ -198,12 +198,12 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [ ] T083 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/UserListScreen.tsx` against `Users`; migrate the inline `fontWeight`/`fontSize` at line 57
 - [ ] T084 [US7] Restyle `mobile/src/screens/tenant-admin-staff/UserCreateEditScreen.tsx` against `UserForm`. Role options stay **Company Staff / Student / Teaching / Non-Teaching — no Company Admin** (FR-039); Category stays required when the role is Student (FR-040); migrate its `font-semibold` at line 221
 - [ ] T085 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/IncomingOrdersScreen.tsx` against `IncomingOrders` — oldest-first order preserved
-- [ ] T086 [US7] Restyle `mobile/src/screens/tenant-admin-staff/OrderFulfilmentScreen.tsx` against `Fulfilment` using `OtpInput`. **The pickup code is never displayed to staff**; a wrong code clears the boxes and changes nothing (FR-018, depends on T039)
+- [X] T086 [US7] Restyle `mobile/src/screens/tenant-admin-staff/OrderFulfilmentScreen.tsx` against `Fulfilment` using `OtpInput`. **The pickup code is never displayed to staff**; a wrong code clears the boxes and changes nothing (FR-018, depends on T039)
 - [ ] T087 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/FeedbackListScreen.tsx` against `FeedbackReview`; migrate its `text-primary` at line 132 and `font-semibold` at line 118
 - [ ] T088 [US7] Restyle `mobile/src/screens/tenant-admin-staff/FeedbackDetailScreen.tsx` against `FeedbackDetail`. **Resolve stays one-way — no path back to unresolved** (FR-041); migrate its amber/green tints at lines 110, 114, 115 to `accents.sun`/`accents.mint`
 - [ ] T089 [US7] Restyle the company_admin and company_staff drawer variants in `mobile/src/navigation/AppShell.tsx` against `AdminDrawer` and `StaffDrawer`; menu items byte-identical to today (depends on T061)
 - [ ] T090 [P] [US7] Restyle `mobile/src/navigation/TenantAdminStaffNavigator.tsx`
-- [ ] T091 [US7] Remove any remaining `font-*` weight classes and off-palette colour classes in `mobile/src/screens/tenant-admin-staff/*.tsx` and `mobile/src/navigation/TenantAdminStaffNavigator.tsx`
+- [X] T091 [US7] Remove any remaining `font-*` weight classes and off-palette colour classes in `mobile/src/screens/tenant-admin-staff/*.tsx` and `mobile/src/navigation/TenantAdminStaffNavigator.tsx`
 - [ ] T092 [US7] Manual review against all 13 back-of-house artboards plus `AdminDrawer` and `StaffDrawer`, and regression paths 4–6 in `quickstart.md`
 
 **Checkpoint**: all seven user stories complete.
@@ -212,8 +212,8 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 ## Phase 10: Cross-cutting cleanup
 
-- [ ] T093 Sweep `mobile/src/` for any remaining raw hex, `fontSize`, `fontWeight` or `borderRadius` literal and migrate it to a token
-- [ ] T094 Sweep `mobile/src/` for any remaining `rounded-full` and migrate to `rounded-pill`
+- [X] T093 Sweep `mobile/src/` for any remaining raw hex, `fontSize`, `fontWeight` or `borderRadius` literal and migrate it to a token
+- [X] T094 Sweep `mobile/src/` for any remaining `rounded-full` and migrate to `rounded-pill`
 - [ ] T095 Confirm `mobile/src/api/generated/` and `api/` are untouched: `git diff --stat main..HEAD -- api/ mobile/src/api/` must return nothing (FR-032, FR-033)
 
 ---

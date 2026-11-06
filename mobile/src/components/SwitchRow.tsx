@@ -19,6 +19,7 @@ export function SwitchRow({
   onLabel = 'On',
   offLabel = 'Off',
   disabled = false,
+  compact = false,
 }: {
   label: string;
   value: boolean;
@@ -26,7 +27,27 @@ export function SwitchRow({
   onLabel?: string;
   offLabel?: string;
   disabled?: boolean;
+  /** Stacked switch-over-label, for inline use inside a list card. */
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <View className="items-center gap-xs min-h-touch justify-center">
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
+          disabled={disabled}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: value, disabled }}
+          accessibilityLabel={label}
+          trackColor={{ false: colors.borderDashed, true: colors.secondary }}
+          thumbColor={colors.surface}
+        />
+        <Text className="text-caption text-text-secondary">{value ? onLabel : offLabel}</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-row items-center justify-between min-h-touch py-sm">
       <View className="flex-1 pr-md">

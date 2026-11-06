@@ -319,7 +319,7 @@ export function RegisterScreen() {
           onChangeText={setUsername}
         />
         {notificationsEnabled === false && otpStatus !== 'verified' ? (
-          <Text className="text-body text-red-600">
+          <Text className="text-body text-red-strong">
             Notifications are turned off for GenzFeast. Please enable them in your phone's Settings so you can
             receive your registration OTP.
           </Text>
@@ -394,9 +394,9 @@ export function RegisterScreen() {
           <Text className="text-body text-text-secondary">Mobile number verified.</Text>
         ) : null}
         {otpMessage ? <Text className="text-body text-text-secondary">{otpMessage}</Text> : null}
-        {otpError ? <Text className="text-body text-red-600">{otpError}</Text> : null}
+        {otpError ? <Text className="text-body text-red-strong">{otpError}</Text> : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
         <PrimaryButton
           label={primaryButton.label}
           onPress={primaryButton.onPress}

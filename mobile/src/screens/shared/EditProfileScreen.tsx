@@ -127,7 +127,7 @@ export function EditProfileScreen({ navigation }: Props) {
           </>
         ) : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
         <PrimaryButton label="Save" onPress={handleSave} loading={saving} disabled={saving} />
       </View>
     </Screen>

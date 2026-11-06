@@ -3,6 +3,7 @@ import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { colors } from '../../theme/tokens';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { Dropdown, DropdownOption } from '../../components/Dropdown';
 import { createTypedClient, getCurrentUser } from '../../api/client';
@@ -164,7 +165,7 @@ export function FeedbackScreen({ navigation }: Props) {
           <TextInput
             className="border border-border rounded-lg px-3 py-2 text-text-primary min-h-24"
             placeholder={`Tell us more — what happened, or what would make ${tenantName} better?`}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
             multiline
             textAlignVertical="top"
             maxLength={1000}
@@ -183,7 +184,7 @@ export function FeedbackScreen({ navigation }: Props) {
           </Text>
         ) : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         <PrimaryButton label="Submit" onPress={handleSubmit} loading={submitting} disabled={submitting} />
       </View>

@@ -21,12 +21,23 @@ export function OtpInput({
   onComplete,
   error = false,
   editable = true,
+  mode = 'numeric',
   accessibilityLabel = 'Enter the 6-digit code',
 }: {
   onComplete: (code: string) => void;
   /** Flip true when the submitted code was rejected — the boxes clear. */
   error?: boolean;
   editable?: boolean;
+  /**
+   * The app has TWO six-character codes with different alphabets, and they
+   * must not be conflated:
+   *   'numeric'      — the order pickup code (6 digits).
+   *   'alphanumeric' — the forgot-password reset code (6 chars, uppercase,
+   *                    ambiguous characters already excluded server-side).
+   * Filtering to digits in the alphanumeric case would silently reject a
+   * valid reset code, so this is a correctness switch, not styling.
+   */
+  mode?: 'numeric' | 'alphanumeric';
   accessibilityLabel?: string;
 }) {
   const [value, setValue] = useState('');
@@ -44,9 +55,13 @@ export function OtpInput({
   }, [error]);
 
   const handleChange = (next: string) => {
-    const digits = next.replace(/\D/g, '').slice(0, LENGTH);
-    setValue(digits);
-    if (digits.length === LENGTH) onComplete(digits);
+    const cleaned =
+      mode === 'numeric'
+        ? next.replace(/\D/g, '')
+        : next.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const code = cleaned.slice(0, LENGTH);
+    setValue(code);
+    if (code.length === LENGTH) onComplete(code);
   };
 
   const cells = Array.from({ length: LENGTH }, (_, i) => value[i] ?? '');
@@ -60,7 +75,9 @@ export function OtpInput({
         ref={inputRef}
         value={value}
         onChangeText={handleChange}
-        keyboardType="number-pad"
+        keyboardType={mode === 'numeric' ? 'number-pad' : 'default'}
+        autoCapitalize="characters"
+        autoCorrect={false}
         maxLength={LENGTH}
         editable={editable}
         accessibilityLabel={accessibilityLabel}

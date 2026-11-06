@@ -71,7 +71,7 @@ export function ChangePasswordScreen({ navigation }: Props) {
         <PasswordInput placeholder="Current Password" value={currentPassword} onChangeText={setCurrentPassword} />
         <PasswordInput placeholder="New Password" value={newPassword} onChangeText={setNewPassword} />
         <PasswordInput placeholder="Retype New Password" value={retypePassword} onChangeText={setRetypePassword} />
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
         <PrimaryButton label="Update Password" onPress={handleSubmit} loading={saving} disabled={saving} />
       </View>
     </Screen>

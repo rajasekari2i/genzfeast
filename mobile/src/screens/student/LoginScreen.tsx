@@ -86,12 +86,12 @@ export function LoginScreen({ navigation }: Props) {
           onChangeText={setUsername}
         />
         <PasswordInput placeholder="Password" value={password} onChangeText={setPassword} />
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
         <PrimaryButton label="Login" onPress={handleSubmit} loading={loading} disabled={loading} />
-        <Text className="text-center text-slate-500" onPress={() => navigation.navigate('ForgotPasswordRequest')}>
+        <Text className="text-center text-text-secondary" onPress={() => navigation.navigate('ForgotPasswordRequest')}>
           Forgot password?
         </Text>
-        <Text className="text-center text-slate-500 mt-4" onPress={() => navigation.navigate('Register')}>
+        <Text className="text-center text-text-secondary mt-4" onPress={() => navigation.navigate('Register')}>
           New here? Register
         </Text>
       </View>

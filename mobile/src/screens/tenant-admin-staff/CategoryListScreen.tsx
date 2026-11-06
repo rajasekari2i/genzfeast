@@ -63,7 +63,7 @@ export function CategoryListScreen({ navigation }: Props) {
     navigation.setOptions({
       headerRight: () => (
         <Pressable onPress={() => navigation.navigate('CategoryCreateEdit', {})} hitSlop={8}>
-          <Text style={{ color: colors.surface, fontWeight: '700', fontSize: 15 }}>+ Add</Text>
+          <Text style={{ color: colors.surface }} className="text-button">+ Add</Text>
         </Pressable>
       ),
     });
@@ -110,7 +110,7 @@ export function CategoryListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Categories" specRef="UI Design §5.4" scroll={false}>
+    <Screen surface="admin" title="Categories" specRef="UI Design §5.4" scroll={false}>
       <View className="gap-3 mb-3">
         <TextInput
           className="border border-border rounded-lg px-3 py-2 text-text-primary"
@@ -120,7 +120,7 @@ export function CategoryListScreen({ navigation }: Props) {
           onChangeText={setSearchQuery}
         />
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
       </View>
 
       {loading ? (

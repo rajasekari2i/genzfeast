@@ -70,7 +70,7 @@ export function DashboardScreen({ navigation }: Props) {
   }, []);
 
   return (
-    <Screen title="Dashboard" subtitle="Company Admin" specRef="UI Design §5.1">
+    <Screen surface="admin" title="Dashboard" subtitle="Company Admin" specRef="UI Design §5.1">
       <Text className="text-h1 text-text-primary mb-1">
         {adminName ? `Welcome back, ${adminName.split(' ')[0]}` : 'Dashboard'}
       </Text>
@@ -88,7 +88,7 @@ export function DashboardScreen({ navigation }: Props) {
               style={{ width: '48%' }}
             >
               <View
-                className="w-12 h-12 rounded-full items-center justify-center mb-3"
+                className="w-12 h-12 rounded-pill items-center justify-center mb-3"
                 style={{ backgroundColor: `${card.color}1F` }}
               >
                 <Text style={{ fontSize: 22 }}>{card.icon}</Text>

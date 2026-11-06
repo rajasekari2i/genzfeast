@@ -156,7 +156,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
   }
 
   if (loadingUser) {
-    return <Screen title="Edit User" specRef="UI Design §5.4" />;
+    return <Screen surface="admin" title="Edit User" specRef="UI Design §5.4" />;
   }
 
   return (
@@ -210,7 +210,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
           </>
         ) : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         <View className="flex-row gap-3">
           <Pressable
@@ -218,7 +218,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
             onPress={() => navigation.goBack()}
             disabled={saving}
           >
-            <Text className="font-semibold text-center text-button text-text-secondary">Cancel</Text>
+            <Text className="text-center text-button text-text-secondary">Cancel</Text>
           </Pressable>
           <View className="flex-1">
             <PrimaryButton label={isEdit ? 'Update' : 'Save'} onPress={handleSave} loading={saving} disabled={saving} />

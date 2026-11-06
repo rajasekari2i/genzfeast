@@ -55,7 +55,7 @@ export function ContactUsScreen() {
   if (errorMessage || !contactUs) {
     return (
       <Screen title="Contact Us">
-        <Text className="text-body text-red-600">{errorMessage ?? 'Contact Us details are unavailable.'}</Text>
+        <Text className="text-body text-red-strong">{errorMessage ?? 'Contact Us details are unavailable.'}</Text>
       </Screen>
     );
   }
@@ -68,14 +68,14 @@ export function ContactUsScreen() {
         <View className="border-b border-border pb-2">
           <Text className="text-caption text-text-secondary">Phone Number</Text>
           <Pressable onPress={() => void Linking.openURL(`tel:${contactUs.phone_number}`)} hitSlop={8}>
-            <Text className="text-body text-primary underline">{contactUs.phone_number}</Text>
+            <Text className="text-body text-link">{contactUs.phone_number}</Text>
           </Pressable>
         </View>
 
         <View className="border-b border-border pb-2">
           <Text className="text-caption text-text-secondary">Email</Text>
           <Pressable onPress={() => void Linking.openURL(`mailto:${contactUs.email}`)} hitSlop={8}>
-            <Text className="text-body text-primary underline">{contactUs.email}</Text>
+            <Text className="text-body text-link">{contactUs.email}</Text>
           </Pressable>
         </View>
 

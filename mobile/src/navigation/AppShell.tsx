@@ -13,6 +13,7 @@ import { ProfileNavigator } from './ProfileNavigator';
 import { ContactUsNavigator } from './ContactUsNavigator';
 import { FeedbackNavigator } from './FeedbackNavigator';
 import { useAuth } from '../auth/AuthContext';
+import { getTenantDisplayName } from '../config/tenant';
 import { colors } from '../theme/tokens';
 
 const Drawer = createDrawerNavigator();
@@ -57,15 +58,32 @@ function CompanyAdminFeedbackEntry() {
 }
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const { user, signOut } = useAuth();
+  const canteen = getTenantDisplayName();
+  const initial = (user?.name ?? 'G').trim().charAt(0).toUpperCase();
 
   return (
     <DrawerContentScrollView {...props}>
-      <View className="px-4 pb-4 mb-2 border-b border-border">
-        <Text className="text-h2 text-text-primary">{user?.name ?? 'GenzFeast'}</Text>
-        <Text className="text-caption text-text-secondary">{user?.role}</Text>
+      {/* FR-027: the user's NAME and their CANTEEN — never their role. The
+          previous revision rendered `user.role` here, which told the user
+          something about the permission system rather than about
+          themselves, and read as debug output in a product surface. */}
+      <View className="px-md pb-md mb-sm border-b border-border flex-row items-center gap-sm">
+        <View className="w-touch h-touch rounded-pill bg-espresso items-center justify-center">
+          <Text className="text-subtitle text-surface">{initial}</Text>
+        </View>
+        <View className="flex-1">
+          <Text className="text-bodyBold text-text-primary" numberOfLines={1}>
+            {user?.name ?? 'GenzFeast'}
+          </Text>
+          {canteen ? (
+            <Text className="text-caption text-text-secondary" numberOfLines={1}>
+              {canteen}
+            </Text>
+          ) : null}
+        </View>
       </View>
       <DrawerItemList {...props} />
-      <DrawerItem label="Logout" onPress={() => void signOut()} labelStyle={{ color: colors.primary }} />
+      <DrawerItem label="Logout" onPress={() => void signOut()} labelStyle={{ color: colors.link }} />
     </DrawerContentScrollView>
   );
 }

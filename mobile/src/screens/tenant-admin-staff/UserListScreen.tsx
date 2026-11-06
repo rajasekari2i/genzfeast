@@ -54,7 +54,7 @@ export function UserListScreen({ navigation }: Props) {
     navigation.setOptions({
       headerRight: () => (
         <Pressable onPress={() => navigation.navigate('UserCreateEdit', {})} hitSlop={8}>
-          <Text style={{ color: colors.surface, fontWeight: '700', fontSize: 15 }}>+ Add</Text>
+          <Text style={{ color: colors.surface }} className="text-button">+ Add</Text>
         </Pressable>
       ),
     });
@@ -96,7 +96,7 @@ export function UserListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Users" specRef="UI Design §5.4">
+    <Screen surface="admin" title="Users" specRef="UI Design §5.4">
       <View className="gap-3">
         <TextInput
           className="border border-border rounded-lg px-3 py-2 text-text-primary"
@@ -106,7 +106,7 @@ export function UserListScreen({ navigation }: Props) {
           onChangeText={setSearchQuery}
         />
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         {loading ? (
           <ActivityIndicator />

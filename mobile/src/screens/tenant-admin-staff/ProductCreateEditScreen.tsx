@@ -184,7 +184,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
   }
 
   if (loading) {
-    return <Screen title="Edit Product" specRef="UI Design §5.3" />;
+    return <Screen surface="admin" title="Edit Product" specRef="UI Design §5.3" />;
   }
 
   const previewUri = pickedImage?.uri ?? existingImageUrl ?? undefined;
@@ -216,7 +216,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
             className="rounded-pill items-center justify-center px-6 py-3 border border-border"
             onPress={handlePickImage}
           >
-            <Text className="font-semibold text-center text-button text-text-secondary">
+            <Text className="text-center text-button text-text-secondary">
               {previewUri ? 'Change Image' : 'Pick Image (JPEG/PNG, max 2MB)'}
             </Text>
           </Pressable>
@@ -238,7 +238,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
           <Switch value={isSoldout} onValueChange={setIsSoldout} />
         </View>
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         <View className="flex-row gap-3">
           <Pressable
@@ -246,7 +246,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
             onPress={() => navigation.goBack()}
             disabled={saving}
           >
-            <Text className="font-semibold text-center text-button text-text-secondary">Cancel</Text>
+            <Text className="text-center text-button text-text-secondary">Cancel</Text>
           </Pressable>
           <View className="flex-1">
             <PrimaryButton label={isEdit ? 'Update' : 'Save'} onPress={handleSave} loading={saving} disabled={saving} />

@@ -48,9 +48,9 @@ export function IncomingOrdersScreen({ navigation }: Props) {
   }, [navigation, load]);
 
   return (
-    <Screen title="Incoming Orders" specRef="UI Design §5.6">
+    <Screen surface="admin" title="Incoming Orders" specRef="UI Design §5.6">
       <View className="gap-3">
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         {loading ? (
           <ActivityIndicator />

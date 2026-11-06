@@ -84,7 +84,7 @@ export function FeedbackDetailScreen({ route }: Props) {
 
   if (loading) {
     return (
-      <Screen title="Feedback">
+      <Screen surface="admin" title="Feedback">
         <ActivityIndicator />
       </Screen>
     );
@@ -93,7 +93,7 @@ export function FeedbackDetailScreen({ route }: Props) {
   if (errorMessage && !feedback) {
     return (
       <Screen title="Feedback">
-        <Text className="text-body text-red-600">{errorMessage}</Text>
+        <Text className="text-body text-red-strong">{errorMessage}</Text>
       </Screen>
     );
   }
@@ -107,12 +107,12 @@ export function FeedbackDetailScreen({ route }: Props) {
       <View className="gap-4">
         <View
           className={`self-start rounded-pill px-3 py-1 border ${
-            feedback.status === 'resolved' ? 'border-green-600 bg-green-50' : 'border-amber-500 bg-amber-50'
+            feedback.status === 'resolved' ? 'border-mint-strong bg-mint-soft' : 'border-sun-dot bg-sun-soft'
           }`}
         >
           <Text
-            className={`text-caption font-semibold ${
-              feedback.status === 'resolved' ? 'text-green-700' : 'text-amber-700'
+            className={`text-caption ${
+              feedback.status === 'resolved' ? 'text-mint-strong' : 'text-sun-strong'
             }`}
           >
             {feedback.status === 'resolved' ? 'Resolved' : 'New'}
@@ -127,7 +127,7 @@ export function FeedbackDetailScreen({ route }: Props) {
           <Field label="Wants contact back at" value={feedback.contact_email ?? '—'} />
         ) : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         {feedback.status === 'new' ? (
           <PrimaryButton label="Mark Resolved" onPress={handleResolve} loading={resolving} disabled={resolving} />
