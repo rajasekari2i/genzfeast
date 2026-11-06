@@ -153,7 +153,7 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [ ] T060 [US5] Restyle `mobile/src/screens/student/MyOrdersScreen.tsx` against the `MyOrders` artboard; Upcoming/History split unchanged
 - [X] T061 [US5] Rewrite the drawer content in `mobile/src/navigation/AppShell.tsx` to show **name and canteen only**. The role currently renders at line 65 and must be **removed** (FR-027)
 - [ ] T062 [US5] Restyle the student drawer variant in `AppShell.tsx` against the `Drawer` artboard; menu items byte-identical to today (FR-028, depends on T061)
-- [ ] T063 [P] [US5] Give `mobile/src/navigation/RootNavigator.tsx` a declared surface — it hardcodes `bg-background` on its loading view at line 18
+- [X] T063 [P] [US5] Give `mobile/src/navigation/RootNavigator.tsx` a declared surface — it hardcodes `bg-background` on its loading view at line 18
 - [ ] T064 [P] [US5] Restyle `mobile/src/navigation/StudentNavigator.tsx`
 - [X] T065 [US5] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/student/{Home,Cart,OrderDetail,MyOrders}Screen.tsx` and `mobile/src/navigation/{AppShell,RootNavigator,StudentNavigator}.tsx`
 - [ ] T066 [US5] Manual review against the `Home`, `Drawer`, `Cart`, `OrderSuccess`, `OrderDetail` and `MyOrders` artboards, plus regression paths 2–3 in `quickstart.md`
@@ -171,7 +171,7 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [ ] T067 [P] [US6] Restyle `mobile/src/screens/shared/ProfileScreen.tsx` against the `Profile` artboard; read-only username uses the dashed treatment (FR-016)
 - [ ] T068 [P] [US6] Restyle `mobile/src/screens/shared/EditProfileScreen.tsx` from the `Profile` + `UserForm` field patterns (FR-029 — no artboard)
 - [ ] T069 [P] [US6] Restyle `mobile/src/screens/shared/ChangePasswordScreen.tsx` from the `Login` password-field pattern (FR-029 — no artboard)
-- [X] T070 [US6] Restyle `mobile/src/screens/shared/ContactUsScreen.tsx` against the `ContactUs` artboard. Migrate the brand-coloured phone and email at lines 71, 78 to the `link` token. **They stay information — do not add tap-to-call or tap-to-email** (FR-038)
+- [X] T070 [US6] Restyle `mobile/src/screens/shared/ContactUsScreen.tsx` against the `ContactUs` artboard. Migrate the brand-coloured phone and email at lines 71, 78 to the `link` token. **Keep the existing dialler/mail behaviour from specs/015 — FR-038 bars ADDING the affordance, and removing it would breach FR-030**
 - [ ] T071 [P] [US6] Restyle `mobile/src/screens/shared/FeedbackScreen.tsx` against the `Feedback` artboard; replace the raw hex at line 167 and the `fontSize: 28` at line 148. Rating, the six fixed categories and the contact-back option are unchanged
 - [ ] T072 [P] [US6] Restyle `mobile/src/navigation/ProfileNavigator.tsx`, `ContactUsNavigator.tsx` and `FeedbackNavigator.tsx`. **Do not add role-conditional header logic** unless Open Decision 1 in `plan.md` is accepted
 - [X] T073 [US6] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/shared/*.tsx` and the three shared navigators in `mobile/src/navigation/`
@@ -224,17 +224,17 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 > **Known consequence**: `classnames.spec` and `fonts.spec` detect the two failure modes that leave `typecheck` and the build green. Running them here means they **report** damage rather than prevent it — a class broken in US1 surfaces only now. The per-phase manual reviews above are the substitute and must actually have been done.
 
-- [ ] T096 [P] Write `mobile/test/theme/tokens.spec.ts` — `tokens.ts` deep-equals `tokens.raw.js` (G5)
-- [ ] T097 [P] Write `mobile/test/theme/contrast.spec.ts` — all 7 accent pairs ≥4.5:1; espresso-on-brand per swatch; a failing colour warns and falls back **and a passing colour is accepted** (G2, G4, SC-005, SC-008)
-- [ ] T098 [P] Write `mobile/test/theme/fonts.spec.ts` — every token's family is bundled, and **no numeric font weight appears anywhere in `mobile/src/`**: style prop, `font-{thin…black}` class, or `headerTitleStyle` (G3, FR-007a)
-- [ ] T099 [P] Write `mobile/test/theme/classnames.spec.ts` (G7). Enumerate by having the text-style plugin export its utility key list, unioned with `resolveConfig().theme` — `resolveConfig` does **not** reflect plugins. Extract class names by AST walk over JSX string literals, not regex. Normalise opacity modifiers. Use an **allow-list**, so `text-red-600` fails. **Exempt** non-themed utilities: `text-center`, `text-left/right`, `border-t`, `border-b`, bare `border`
-- [ ] T100 [P] Write `mobile/test/theme/token-discipline.spec.ts` — no raw hex, radius or size literal in `src/screens` or `src/components` (O1, SC-004)
-- [ ] T101 [P] Write `mobile/test/theme/brand.spec.ts` — only `primary` differs across resolved themes (G1, FR-009)
-- [ ] T102 [P] Write `mobile/test/theme/statusColors.spec.ts` — unknown status → `neutral` + raw label; no screen imports `accents` directly (G6, O3)
-- [ ] T103 [P] Write `mobile/test/theme/surface.spec.ts` — every screen declares a ground; none hardcodes one. **Exempt** the three non-ground decorative fills: `ProductCard.tsx:31`, `ProductListScreen.tsx:174`, `ProductCreateEditScreen.tsx:213` (O2)
-- [ ] T104 [P] Write `mobile/test/theme/touch-targets.spec.ts` — AST scan asserting every pressable's `h-`/`min-h-`/`height` is ≥44 (O4, SC-006)
-- [ ] T105 Run `npm test` in `mobile/` — all eleven gates across nine spec files must pass
-- [ ] T106 Verify the six prohibitions by inspection (SC-010): no open/closed toggle (FR-036), no menu search or filter (FR-037), no tap-to-call or tap-to-email (FR-038), no Company-Admin-creates-Company-Admin (FR-039), Category still required for Student (FR-040), feedback resolve still one-way (FR-041)
+- [X] T096 [P] Write `mobile/test/theme/tokens.spec.ts` — `tokens.ts` deep-equals `tokens.raw.js` (G5)
+- [X] T097 [P] Write `mobile/test/theme/contrast.spec.ts` — all 7 accent pairs ≥4.5:1; espresso-on-brand per swatch; a failing colour warns and falls back **and a passing colour is accepted** (G2, G4, SC-005, SC-008)
+- [X] T098 [P] Write `mobile/test/theme/fonts.spec.ts` — every token's family is bundled, and **no numeric font weight appears anywhere in `mobile/src/`**: style prop, `font-{thin…black}` class, or `headerTitleStyle` (G3, FR-007a)
+- [X] T099 [P] Write `mobile/test/theme/classnames.spec.ts` (G7). Enumerate by having the text-style plugin export its utility key list, unioned with `resolveConfig().theme` — `resolveConfig` does **not** reflect plugins. Extract class names by AST walk over JSX string literals, not regex. Normalise opacity modifiers. Use an **allow-list**, so `text-red-600` fails. **Exempt** non-themed utilities: `text-center`, `text-left/right`, `border-t`, `border-b`, bare `border`
+- [X] T100 [P] Write `mobile/test/theme/token-discipline.spec.ts` — no raw hex, radius or size literal in `src/screens` or `src/components` (O1, SC-004)
+- [X] T101 [P] Write `mobile/test/theme/brand.spec.ts` — only `primary` differs across resolved themes (G1, FR-009)
+- [X] T102 [P] Write `mobile/test/theme/statusColors.spec.ts` — unknown status → `neutral` + raw label; no screen imports `accents` directly (G6, O3)
+- [X] T103 [P] Write `mobile/test/theme/surface.spec.ts` — every screen declares a ground; none hardcodes one. **Exempt** the three non-ground decorative fills: `ProductCard.tsx:31`, `ProductListScreen.tsx:174`, `ProductCreateEditScreen.tsx:213` (O2)
+- [X] T104 [P] Write `mobile/test/theme/touch-targets.spec.ts` — AST scan asserting every pressable's `h-`/`min-h-`/`height` is ≥44 (O4, SC-006)
+- [X] T105 Run `npm test` in `mobile/` — all eleven gates across nine spec files must pass
+- [X] T106 Verify the six prohibitions by inspection (SC-010): no open/closed toggle (FR-036), no menu search or filter (FR-037), no tap-to-call or tap-to-email (FR-038), no Company-Admin-creates-Company-Admin (FR-039), Category still required for Student (FR-040), feedback resolve still one-way (FR-041)
 - [ ] T107 Run the full `quickstart.md` sign-off: fresh install, all five faces render and differ, all 27 screen files reviewed, all 10 edge-case rows exercised, all 6 regression paths identical to the previous build
 - [ ] T108 Run `/self-reflect` and commit knowledge-base updates (mandatory before PR per `CLAUDE.md`)
 - [ ] T109 Open the PR

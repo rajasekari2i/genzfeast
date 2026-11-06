@@ -3,7 +3,7 @@ import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { colors } from '../../theme/tokens';
+import { colors, typography } from '../../theme/tokens';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { Dropdown, DropdownOption } from '../../components/Dropdown';
 import { createTypedClient, getCurrentUser } from '../../api/client';
@@ -146,7 +146,7 @@ export function FeedbackScreen({ navigation }: Props) {
           <View className="flex-row gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <Pressable key={star} onPress={() => setRating(rating === star ? undefined : star)} hitSlop={6}>
-                <Text style={{ fontSize: 28 }}>{rating !== undefined && star <= rating ? '★' : '☆'}</Text>
+                <Text style={{ fontSize: typography.title.fontSize }}>{rating !== undefined && star <= rating ? '★' : '☆'}</Text>
               </Pressable>
             ))}
           </View>

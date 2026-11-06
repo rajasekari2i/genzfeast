@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, Text, View, useWindowDimensions } from 'react-native';
-import { accents, colors, spacing } from '../theme/tokens';
+import { accents, colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
  * "Brand Direction Rationale" from the GenzFeast brand board — shown as a
@@ -68,7 +68,7 @@ export function BrandRationaleSlider() {
               className="items-center justify-center rounded-pill"
               style={{ width: 56, height: 56, backgroundColor: card.badgeBg }}
             >
-              <Text style={{ fontSize: 26 }}>{card.emoji}</Text>
+              <Text style={{ fontSize: typography.titleSm.fontSize }}>{card.emoji}</Text>
             </View>
             <Text className="text-body-bold text-text-primary text-center mt-3">{card.title}</Text>
             <Text className="text-body text-text-secondary text-center mt-1">{card.description}</Text>
@@ -83,7 +83,7 @@ export function BrandRationaleSlider() {
             style={{
               width: index === activeIndex ? 18 : 6,
               height: 6,
-              borderRadius: 3,
+              borderRadius: radius.glyph,
               backgroundColor: index === activeIndex ? colors.primary : colors.border,
             }}
           />

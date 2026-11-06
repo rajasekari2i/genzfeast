@@ -172,7 +172,7 @@ export function ProductListScreen({ navigation }: Props) {
                 {product.image_url ? (
                   <Image source={{ uri: product.image_url }} className="w-14 h-14 rounded-md" resizeMode="cover" />
                 ) : (
-                  <View className="w-14 h-14 rounded-md bg-background items-center justify-center">
+                  <View className="w-14 h-14 rounded-md bg-neutral-soft items-center justify-center">
                     <Text>🍽️</Text>
                   </View>
                 )}

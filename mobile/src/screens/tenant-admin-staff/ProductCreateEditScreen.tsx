@@ -210,7 +210,7 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
 
         <View className="gap-2">
           {previewUri ? (
-            <Image source={{ uri: previewUri }} className="w-full h-40 rounded-lg bg-background" resizeMode="cover" />
+            <Image source={{ uri: previewUri }} className="w-full h-40 rounded-lg bg-neutral-soft" resizeMode="cover" />
           ) : null}
           <Pressable
             className="rounded-pill items-center justify-center px-6 py-3 border border-border"

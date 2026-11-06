@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { createTypedClient, getCurrentUser } from '../../api/client';
-import { colors } from '../../theme/tokens';
+import { colors, typography } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths as ProductPaths } from '../../api/generated/004-company-admin-product-crud';
 import type { paths as CorePaths } from '../../api/generated/001-company-role-user-setup';
@@ -91,7 +91,7 @@ export function DashboardScreen({ navigation }: Props) {
                 className="w-12 h-12 rounded-pill items-center justify-center mb-3"
                 style={{ backgroundColor: `${card.color}1F` }}
               >
-                <Text style={{ fontSize: 22 }}>{card.icon}</Text>
+                <Text style={{ fontSize: typography.subtitle.fontSize }}>{card.icon}</Text>
               </View>
               <Text className="text-body-bold text-text-primary">{card.label}</Text>
               {loadingCounts ? (

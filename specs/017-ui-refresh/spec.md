@@ -113,7 +113,7 @@ Profile, edit profile, change password, Contact Us and Feedback in the new desig
 
 **Acceptance Scenarios**:
 1. **Given** the profile screen, **When** a read-only field renders, **Then** it is distinguishable from an editable one by border style as well as colour.
-2. **Given** Contact Us, **When** phone and email render, **Then** they are presented as **information, not actions** — no dialler or mail client is launched.
+2. **Given** Contact Us, **When** phone and email render, **Then** they keep exactly the behaviour they have today — the dialler and mail client still open — and only their appearance changes, from brand-coloured underlined text to the link token.
 3. **Given** the feedback form, **When** it renders, **Then** the rating, the six fixed categories and the contact-back option are unchanged.
 
 ---
@@ -209,7 +209,7 @@ These exist because the restyle creates an opportunity to add them. Each is a **
 
 - **FR-036**: A canteen open/closed toggle MUST NOT be added.
 - **FR-037**: Search or filtering of the menu MUST NOT be added.
-- **FR-038**: Tap-to-call or tap-to-email MUST NOT be added; contact details remain information.
+- **FR-038**: Tap-to-call and tap-to-email MUST NOT be **added**. Note the shipped app already opens the dialler and mail client from Contact Us (added by `specs/015-contact-us-page` FR-010). That existing behaviour is **preserved** — removing it would itself be a behavioural change, which FR-030 forbids. This requirement bars introducing the affordance anywhere it does not already exist.
 - **FR-039**: A Company Admin MUST NOT gain the ability to create or edit another Company Admin.
 - **FR-040**: Category MUST remain required when creating or registering a Student.
 - **FR-041**: Feedback resolution MUST remain one-way; no path back to unresolved may be added.
