@@ -235,8 +235,8 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [X] T104 [P] Write `mobile/test/theme/touch-targets.spec.ts` — AST scan asserting every pressable's `h-`/`min-h-`/`height` is ≥44 (O4, SC-006)
 - [X] T105 Run `npm test` in `mobile/` — all eleven gates across nine spec files must pass
 - [X] T106 Verify the six prohibitions by inspection (SC-010): no open/closed toggle (FR-036), no menu search or filter (FR-037), no tap-to-call or tap-to-email (FR-038), no Company-Admin-creates-Company-Admin (FR-039), Category still required for Student (FR-040), feedback resolve still one-way (FR-041)
-- [ ] T107 Run the full `quickstart.md` sign-off: fresh install, all five faces render and differ, all 27 screen files reviewed, all 10 edge-case rows exercised, all 6 regression paths identical to the previous build
-- [ ] T108 Run `/self-reflect` and commit knowledge-base updates (mandatory before PR per `CLAUDE.md`)
+- [ ] T107 **BLOCKED** (needs a device + the five font binaries) Run the full `quickstart.md` sign-off: fresh install, all five faces render and differ, all 27 screen files reviewed, all 10 edge-case rows exercised, all 6 regression paths identical to the previous build
+- [X] T108 Run `/self-reflect` and commit knowledge-base updates (mandatory before PR per `CLAUDE.md`) — 9 learnings captured in `.beads/knowledge/`
 - [ ] T109 Open the PR
 
 ---
