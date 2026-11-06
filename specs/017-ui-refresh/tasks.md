@@ -111,10 +111,10 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 > Independent of US2; may run in parallel with Phase 4.
 
-- [ ] T043 [P] [US3] Generate adaptive launcher icon layers from `mobile/assets/brand/gf-icon-v2.png` into `mobile/android/app/src/main/res/mipmap-*/` (FR-022)
-- [ ] T044 [P] [US3] Set the adaptive-icon background in `mobile/android/app/src/main/res/values/ic_launcher_background.xml`
-- [ ] T045 [US3] Restyle `mobile/src/screens/student/SplashScreen.tsx` with `gf-logo-v2.png` on a brand ground (FR-023, FR-029 — no artboard, follow established patterns)
-- [ ] T046 [US3] Install the build and verify the launcher icon from `mobile/android/app/src/main/res/mipmap-*/` renders correctly under **round, squircle and square** masking
+- [X] T043 [P] [US3] Generate adaptive launcher icon layers from `mobile/assets/brand/gf-icon-v2.png` into `mobile/android/app/src/main/res/mipmap-*/` (FR-022)
+- [X] T044 [P] [US3] Set the adaptive-icon background in `mobile/android/app/src/main/res/values/ic_launcher_background.xml`
+- [X] T045 [US3] Restyle `mobile/src/screens/student/SplashScreen.tsx` with `gf-logo-v2.png` on a brand ground (FR-023, FR-029 — no artboard, follow established patterns)
+- [!] T046 ⛔ BLOCKED (needs a device/emulator to verify masking) — [US3] Install the build and verify the launcher icon from `mobile/android/app/src/main/res/mipmap-*/` renders correctly under **round, squircle and square** masking
 
 **Checkpoint**: US3 complete and independently shippable.
 
