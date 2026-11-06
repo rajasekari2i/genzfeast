@@ -214,7 +214,7 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 - [X] T093 Sweep `mobile/src/` for any remaining raw hex, `fontSize`, `fontWeight` or `borderRadius` literal and migrate it to a token
 - [X] T094 Sweep `mobile/src/` for any remaining `rounded-full` and migrate to `rounded-pill`
-- [ ] T095 Confirm `mobile/src/api/generated/` and `api/` are untouched: `git diff --stat main..HEAD -- api/ mobile/src/api/` must return nothing (FR-032, FR-033)
+- [X] T095 Confirm `mobile/src/api/generated/` and `api/` are untouched: `git diff --stat main..HEAD -- api/ mobile/src/api/` must return nothing (FR-032, FR-033)
 
 ---
 
