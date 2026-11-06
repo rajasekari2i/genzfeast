@@ -33,7 +33,7 @@ npm test                      # includes the new token-discipline and contrast t
 |---|---|---|
 | `theme/tokens.spec` | `tokens.ts` deep-equals `tokens.raw.js` | G5 |
 | `theme/contrast.spec` | 7 accent pairs ≥4.5:1; **espresso-on-brand only** per swatch; a failing colour warns + falls back **and a passing colour is accepted** | G2, G4, SC-005 |
-| `theme/fonts.spec` | every typography token's family is bundled **and no token sets a numeric weight** | G3, FR-007a |
+| `theme/fonts.spec` | every typography token's family is bundled **and no numeric font weight appears anywhere in `src/`** — style prop, `font-*` class, or `headerTitleStyle` | G3, FR-007a |
 | **`theme/classnames.spec`** | **no `text-*`/`bg-*`/`border-*`/`rounded-*` in `src/**` is missing from the generated theme** | **G7, SC-004** |
 | `theme/token-discipline.spec` | no raw hex / radius / size literal in screens or components | O1, SC-004 |
 | `theme/brand.spec` | only `primary` differs across resolved themes | G1 |
@@ -151,7 +151,7 @@ Do this against the previous build, same account, same data:
 
 - [ ] Fresh install; **all five faces render and visibly differ**
 - [ ] `npm run typecheck` passes
-- [ ] `npm test` passes — **all nine theme gates**
+- [ ] `npm test` passes — **all eleven gates across nine spec files**
 - [ ] All **27 screen files** reviewed against the table above, plus the three drawer variants
 - [ ] All **10 edge-case rows** exercised (covering the spec's 8 cases)
 - [ ] All 6 regression paths identical to the previous build

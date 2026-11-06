@@ -1,6 +1,6 @@
 # Contract: Design Token Module
 
-**Feature**: 017-ui-refresh | **Revision**: 3 (post review round 3) | **Consumers**: every screen and component in `mobile/src`
+**Feature**: 017-ui-refresh | **Revision**: 4 (post review round 4 — PASSED) | **Consumers**: every screen and component in `mobile/src`
 
 Supersedes `specs/013-blue-theme-visual-design/contracts/design-tokens.md`. The mechanism 013 established (one token module, one tenant-overridable colour, a contrast gate) is retained; values and structure grow.
 
@@ -51,7 +51,7 @@ Dark mode; runtime theming; per-tenant typography, spacing or radius; iOS font r
 
 ## 5. Verification
 
-Each gate has an **authored-in** unit (when the test is written) and an **enforced-from** unit (the first unit in which it can legitimately pass). For whole-tree gates that is **the last of WU4–WU8 to land**, not WU8 specifically — those four are parallel siblings, and WU7 owns G3/O2 violations (`navigationHeader.ts:12,27`, `RootNavigator.tsx:18`). Revision 2 conflated these and pinned O1/O2 to units where the code they check had not been written yet.
+Each gate has an **authored-in** unit (when the test is written) and an **enforced-from** unit (the first unit in which it can legitimately pass). For whole-tree gates that is **the last of WU4–WU8 to land**, not WU8 specifically — those four are parallel siblings, and **WU7a** owns the G3/O2 violation sites (`navigationHeader.ts:12,27`, `RootNavigator.tsx:18`). Revision 2 conflated these and pinned O1/O2 to units where the code they check had not been written yet.
 
 | # | Check | Authored in | Enforced from | Why the gap |
 |---|---|---|---|---|

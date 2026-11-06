@@ -16,7 +16,7 @@
 | Ground | Boards | Screens |
 |---|---|---|
 | Cream `#FFF8F1` | 10 | Login, Register, Home, Drawer, Cart, OrderDetail, MyOrders, Profile, Feedback, ContactUs |
-| Warm grey `#F5F3EF` | 14 | Dashboard, AdminProducts, StaffProducts, Categories, CategoryForm, Departments, DepartmentForm, Users, UserForm, IncomingOrders, Fulfilment, FeedbackReview, FeedbackDetail, AdminDrawer, StaffDrawer |
+| Warm grey `#F5F3EF` | 15 | Dashboard, AdminProducts, StaffProducts, Categories, CategoryForm, Departments, DepartmentForm, Users, UserForm, IncomingOrders, Fulfilment, FeedbackReview, FeedbackDetail, AdminDrawer, StaffDrawer |
 | Brand (full bleed) | 1 | OrderSuccess (see R5) |
 
 Navy `#183153` appears on **only** the 14 back-of-house boards, confirming the split is deliberate: students get warm cream, staff and admins get a cooler, flatter working surface.
@@ -61,7 +61,7 @@ Inter — weights 500 (21), 600 (76), 700 (63), 800 (52); **weight 400 appears 3
 
 FR-008 lists 10, 14, 16, 18, 22, 24, 28, pill. It **omits `12`** (12 uses), **`20`** (5 uses) and **`3`** (8 uses — the veg/non-veg dietary glyph, a load-bearing detail).
 
-**Decision**: Scale of eleven — `glyph 3`, `xs 8`, `sm 10`, `md 12`, `lg 14`, `xl 16`, `2xl 18`, `3xl 20`, `4xl 22`, `5xl 24`, `6xl 28`, `pill 999`. The five remaining one-offs (9, 26, 30, 32) snap to their nearest step; none is load-bearing and the largest deviation is 2px.
+**Decision**: Scale of twelve — `glyph 3`, `xs 8`, `sm 10`, `md 12`, `lg 14`, `xl 16`, `2xl 18`, `3xl 20`, `4xl 22`, `5xl 24`, `6xl 28`, `pill 999`. The five remaining one-offs (9, 26, 30, 32) snap to their nearest step; none is load-bearing and the largest deviation is 2px.
 
 **Spec correction**: FR-008 must list the full scale.
 

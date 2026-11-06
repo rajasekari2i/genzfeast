@@ -1,6 +1,6 @@
 # Phase 1 Data Model: Design Token Architecture
 
-**Feature**: 017-ui-refresh | **Date**: 2026-11-06 | **Revision**: 3 (post review round 3)
+**Feature**: 017-ui-refresh | **Date**: 2026-11-06 | **Revision**: 4 (post review round 4 — PASSED)
 
 This feature introduces no database entities and no API types. Its "data model" is the **design token set**. Values are measured from the 27 artboards (see [research.md](./research.md)).
 
@@ -15,7 +15,7 @@ Two distinct surfaces consume tokens, and **the class layer is the larger one** 
 | Surface | Consumers | Risk if changed carelessly |
 |---|---|---|
 | TS module `src/theme/tokens` | **13** files (none import `typography` or `radius`) | Compile error — loud, safe |
-| Utility class names | **~355** usages (172 typography, 126 colour, 57 radius) | **Silent** — NativeWind drops unknown classes |
+| Utility class names | **~358** usages (154 typography, 126 foundation colour + 47 off-palette, 57 radius, 19 font-weight) | **Silent** — NativeWind drops unknown classes |
 
 ```
 mobile/src/theme/
@@ -56,9 +56,9 @@ Also `src/theme/navigationHeader.ts:12,27` set `headerTitleStyle: { fontWeight: 
 | Site | Literal | Migration |
 |---|---|---|
 | `CategoryListScreen.tsx:66`, `DepartmentListScreen.tsx:64`, `ProductListScreen.tsx:84`, `UserListScreen.tsx:57` | `{ color, fontWeight: '700', fontSize: 15 }` — the `headerRight` "+ Add" buttons | Replace with the `labelLg` style; **WU6** |
-| `DashboardScreen.tsx:94` (`fontSize: 22`), `FeedbackScreen.tsx:148` (`28`), `BrandRationaleSlider.tsx:71` (`26`) | raw `fontSize` | Snap to the nearest scale step — 22→`subtitle` 20, 28→`title` 28, 26→`titleSm` 24 — the same rule §4 applies to radius |
-| `BrandRationaleSlider.tsx:86` | `borderRadius: 3` | `glyph` (3) — exact match, no change in value |
-| `CartSummaryBar.tsx:30` | `shadowColor: '#000'` | the new `shadow` token |
+| `DashboardScreen.tsx:94` (`fontSize: 22`, **WU6**), `FeedbackScreen.tsx:148` (`28`, **WU4**), `BrandRationaleSlider.tsx:71` (`26`, **WU3**) | raw `fontSize` | Snap to the nearest scale step — 22→`subtitle` 20, 28→`title` 28, 26→`titleSm` 24 — the same rule §4 applies to radius |
+| `BrandRationaleSlider.tsx:86` (**WU3**) | `borderRadius: 3` | `glyph` (3) — exact match, no change in value |
+| `CartSummaryBar.tsx:30` (**WU3**) | `shadowColor: '#000'` | the new `shadow` token |
 
 New styles are added under new names alongside these. **No existing class name may be deleted** without migrating every call site in the same work unit.
 
@@ -106,7 +106,7 @@ One family, three consumers — status chips, icon tiles, product tints. Each `{
 |---|---|---|---|---|---|
 | `tangerine` | `#FFE6DA` | `#B23C0E` | `#FF6B35` | 4.96:1 | `order_placed` · tile · tint |
 | `sun` | `#FFF1D6` | `#8A5300` | `#F59E0B` | 5.67:1 | `payment_pending` · tile · tint |
-| `mint` | `#DDF4EA` | `#0B6B4B` | `#16A34A` | 5.65:1 | `delivered` · tile · tint · `glyph #6EE7B7` |
+| `mint` | `#DDF4EA` | `#0B6B4B` | `#16A34A` | 5.65:1 | `delivered` · tile · tint. `glyph #6EE7B7` defined but **unconsumed** (its only user was the dropped Toast contract) |
 | `red` | `#FDE2E1` | `#B42318` | `#DC2626` | 5.37:1 | `payment_failed` |
 | `violet` | `#EDE7FB` | `#4C2E91` | — | 8.27:1 | tile · tint |
 | `blue` | `#E4ECF7` | `#183153` | — | 11.00:1 | tile · back-of-house accent |
@@ -146,7 +146,7 @@ One family, three consumers — status chips, icon tiles, product tints. Each `{
 | `caption` | Inter-Medium | 12 | 16 | 0 | Meta · **`text-caption`** |
 | `captionSm` | Inter-SemiBold | 11 | 14 | 0.8 | Dense meta |
 
-**Emission**: Tailwind's `fontSize` tuple cannot carry `fontFamily`. Each style is emitted as a **single utility** carrying family + size + line-height + tracking, via a `tailwind.config.js` plugin. **This must be proven in WU2**; if the plugin does not survive NativeWind 4 compilation, the fallback is a paired-class convention (`text-body font-body`) and WU4–WU8 expand to add a family class to ~172 text nodes.
+**Emission**: Tailwind's `fontSize` tuple cannot carry `fontFamily`. Each style is emitted as a **single utility** carrying family + size + line-height + tracking, via a `tailwind.config.js` plugin. **This must be proven in WU2**; if the plugin does not survive NativeWind 4 compilation, the fallback is a paired-class convention (`text-body font-body`) and WU4–WU8 expand to add a family class to ~154 text nodes.
 
 ---
 
@@ -192,7 +192,6 @@ Unchanged: `xs 4`, `sm 8`, `md 16`, `lg 24`, `xl 32`. Add intermediate steps onl
 | Icon tile | 44 | `md`/`lg` | `accent.soft` | `accent.strong` | |
 | Input | 48 | `lg` | `surface` | `espresso`, `bodyLg` | 1.5 solid `espresso` |
 | Read-only input | 48 | `lg` | `disabledFill` | `textSecondary` | 1.5 **dashed** |
-
 | Pickup-code cell | 44 | `sm` | `primary` | `espresso`, **`hero`** (36) | Six cells |
 | Product card | — | `5xl` | `surface` | — | 1px `border`; image `2xl` |
 | Sold-out stamp | — | `xs` | `surface` | `espresso`, `label` | 2px border, rotated −8° |
@@ -216,7 +215,7 @@ Unchanged: `xs 4`, `sm 8`, `md 16`, `lg 24`, `xl 32`. Add intermediate steps onl
 
 **Prerequisite**: the 8 existing brand-as-foreground sites — `ContactUsScreen:71,78`, `CartScreen:153,157`, `OrderDetailScreen:154`, `FeedbackListScreen:132`, `PasswordInput:37`, `RowActionButton:45` — migrate to `link`/`espresso` during WU3–WU8. All 8 are sub-AA today (2.69:1 for the default brand); this feature fixes a pre-existing defect rather than introducing one.
 
-**Test fixture**: `resolveBrandTheme.spec.ts:19` uses `#004D40`, which scores **1.66** against espresso and would now be rejected. Re-derive it to a passing colour, and add an assertion that a non-default override is **accepted** — otherwise no test proves the override path works at all.
+**Test fixture**: **Both fixtures invert and must swap roles**: `:19` `#004D40` is the *passing* case but scores **1.66**; `:45` `#FFF9C4` is the *rejection* case but scores **15.19**. Re-derive as `#FFB020` (8.90, passes) and `#E4572E` (4.42, fails). The "accepted" assertion already exists at `:14` — only its fixture is wrong — otherwise no test proves the override path works at all.
 
 **Dormancy**: `resolveBrandTheme` has no production call site; only its own test imports it. This feature corrects the gate's logic. It does not wire it up — that would be new non-visual behaviour.
 

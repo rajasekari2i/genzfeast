@@ -1,6 +1,6 @@
 # Implementation Plan: Mobile App UI Refresh
 
-**Branch**: `017-ui-refresh` | **Date**: 2026-11-06 | **Revision**: 3 (post review round 3) | **Spec**: [spec.md](./spec.md)
+**Branch**: `017-ui-refresh` | **Date**: 2026-11-06 | **Revision**: 4 (post review round 4 — PASSED 3/3) | **Spec**: [spec.md](./spec.md)
 
 ---
 
@@ -22,7 +22,7 @@ All eight `spec.md` corrections are **already applied**, so `/speckit-tasks` wil
 
 **Language/Version**: TypeScript 5.9, React 19.2
 **Primary Dependencies**: React Native 0.86.3 (bare CLI — not Expo), NativeWind 4.2 / Tailwind 3.4, React Navigation 7
-**New dependency**: `react-native-asset` (pinned devDependency, invoked via an `npm run fonts:link` script — never `npx` — it is not currently installed and `@react-native-community/cli@20` no longer provides `link`)
+**New devDependencies** (3): `react-native-asset` — **accepted** (decision 6), invoked via `npm run fonts:link`, never `npx`; `@testing-library/react-native@^14` + `test-renderer@^1` — **pending confirmation**, required by decision 6's structural regression checks (WU0/WU9 — it is not currently installed and `@react-native-community/cli@20` no longer provides `link`)
 **Storage**: N/A
 **Testing**: Jest 29 + ts-jest (`mobile/test/theme/`, which already exists with 3 specs)
 **Target Platform**: Android only — no `mobile/ios/`
@@ -47,7 +47,7 @@ All eight `spec.md` corrections are **already applied**, so `/speckit-tasks` wil
 | Typography class usages | **154** (5+12+66+18+7+36+10). The 172 figure in revision 2 double-counted the 18 `text-body-bold` inside `text-body`'s 84 matches |
 | Colour class usages | **126** foundation + **47** off-palette across 23 files (`text-red-600` ×29; plus `Dropdown.tsx:48` `bg-black/40`) |
 | Radius class usages | **57** |
-| Raw literals | **6** hex (5 components, 1 in `FeedbackScreen.tsx:167`) **+ 4 inline `fontWeight` + 7 inline `fontSize` + 1 `borderRadius`** — the full O1 census, not hex alone |
+| Raw literals | **7** hex (6 components incl. `CartSummaryBar:30` `#000`, 1 in `FeedbackScreen.tsx:167`) **+ 4 inline `fontWeight` + 7 inline `fontSize` + 1 `borderRadius`** — the full O1 census, not hex alone |
 | Artboards | 27 |
 
 ---
@@ -89,8 +89,8 @@ mobile/
 ├── src/components/                 all 14 restyled
 ├── src/screens/                    all 27 restyled
 ├── src/navigation/                 all 7 navigators
-└── test/theme/                     EXTENDED — 11 gates in 9 spec files (3 already exist)
-test/screens/                        NEW — WU0 baseline fixtures + RN jest project
+├── test/theme/                     EXTENDED — 11 gates in 9 spec files (3 already exist)
+└── test/screens/                    NEW — WU0 baseline fixtures + RN jest project
 
 api/                                UNTOUCHED
 ```
@@ -110,6 +110,7 @@ Capture, for every form-bearing screen, its field set, labels, validation messag
 - **Scope**: the 13 screens with forms (Login, Register, ForgotPasswordRequest/Verify, ChangePassword, EditProfile, CategoryForm, DepartmentForm, UserForm, ProductCreateEdit, Feedback, Fulfilment, Cart).
 - **DoD**: the RN jest project runs green; a committed fixture per form screen capturing **field set, labels and actions** (validation messages only where a failed submit is driven); a trivially-passing equality test proving the harness works before anything changes.
 - **Blocks**: WU9 only — WU1/WU2 may proceed in parallel.
+- **If the renderer is not confirmed**: WU0 and WU9 are both dropped, and FR-024…FR-028 fall back to `quickstart.md`'s 6 manual regression paths plus per-unit review. Nothing else depends on them — a clean removal, not a redesign.
 
 ### WU1 — Fonts *(native; verify on device before any screen work)*
 
@@ -123,7 +124,7 @@ Pin `react-native-asset`; add `react-native.config.js`; add five `.ttf` faces pl
 
 Create `tokens.raw.js` (JSDoc-annotated to survive literal widening); rewrite `tokens.ts`; add `accents.ts`; rewrite `statusColors.ts`; rewrite `tailwind.config.js` with the class-compatibility map (§1.1 of data-model) and the single-utility text-style plugin; **reduce the contrast gate to its single fill leg** (espresso-on-brand) and delete the brand-as-foreground leg.
 
-- **Spike, resolved inside this unit**: prove the Tailwind plugin emits family + size + line-height as one utility under NativeWind 4. If it does not, fall back to the paired-class convention and **re-scope WU4–WU8 to add a family class to ~172 text nodes** before proceeding.
+- **Spike, resolved inside this unit**: prove the Tailwind plugin emits family + size + line-height as one utility under NativeWind 4. If it does not, fall back to the paired-class convention and **re-scope WU4–WU8 to add a family class to ~154 text nodes** before proceeding.
 - **Tests authored here** (exception to implementation-before-tests, justified below): **G7 class-name resolution**, G3 font/no-weight, G2 contrast, G5 deep-equal, G1, G4, G6, O1.
 - **Brand fixtures must swap roles**: `resolveBrandTheme.spec.ts:19` uses `#004D40` as the *passing* case (1.66 espresso-on-fill — now fails) and `:45` uses `#FFF9C4` as the *failing* case (15.19 — now passes). Under the single-leg gate both assertions invert. Re-derive: `#FFB020` (8.90) passes, `#E4572E` (4.42) fails.
 - **DoD**: `npm run typecheck` passes; **`theme/classnames.spec` passes**, proving no screen references a class the theme no longer defines; the app builds and every screen already shifts to the new palette with no per-screen edits.
@@ -165,17 +166,19 @@ Dashboard, AdminProducts, StaffProducts, Categories, CategoryForm, Departments, 
 
 ### WU7 — Navigation chrome *(8 navigator files + `navigationHeader.ts`)*
 
-`AppShell` (3 role drawer variants), `navigationHeader.ts`, plus `AuthNavigator`, `StudentNavigator`, `TenantAdminStaffNavigator`, `ProfileNavigator`, `ContactUsNavigator`, `FeedbackNavigator`, **and `RootNavigator`** (omitted in revision 2; it hardcodes `bg-background` on its loading view — an O2 violation site with no owner).
+Split in two: **7a is required and must precede WU4–WU8**; **7b is optional and blocks nothing.**
 
-- **`navigationHeader.ts:12,27` set `headerTitleStyle: { fontWeight: '700' }`** on every stack header. The weight MUST be removed when a bundled family is added, or every header title in the app renders in the system face (R7).
-**Split into two, because one half is required and the other is pending.**
+**WU7a — required.** Covers `navigationHeader.ts`, `AppShell`, `RootNavigator` and `AuthNavigator`:
 
-**WU7a — required, uncontroversial.** Remove `fontWeight: '700'` from `navigationHeader.ts:12,27` as the bundled family is added (without this, every stack header title in the app renders in the system face — R7). Restyle `AppShell`'s three drawer variants, `RootNavigator`'s loading view (`bg-background` → a declared surface), and route `AuthNavigator.tsx:44`'s inline `headerStyle` through `navigationHeader.ts`.
+- **Remove `fontWeight: '700'` from `navigationHeader.ts:12,27`** as the bundled family is added. Without this, every stack header title in the app renders in the system face (R7) — this is why 7a precedes the screen units.
+- Restyle `AppShell`'s three role drawer variants.
+- `RootNavigator`'s loading view hardcodes `bg-background` (an O2 violation site that had no owner before revision 4) — give it a declared surface.
+- `AuthNavigator.tsx:44` sets `headerStyle` inline, bypassing `navigationHeader.ts`. Route it through as a **third, auth-specific option set that preserves its current background and tint**. It is deliberate — commit `c2b7b0c`, *"match Login header to screen background, not brand orange"* — and must **not** be pointed at `primaryHeaderOptions`, which would regress that fix.
+- `StudentNavigator` and `TenantAdminStaffNavigator` need no per-file work: they only pass the shared option sets, so fixing `navigationHeader.ts` covers them.
 
-**WU7b — ⚠️ pending acceptance.** Making `ProfileNavigator`, `ContactUsNavigator` and `FeedbackNavigator` choose header options by role introduces **new role-conditional logic into navigation files**; all three currently pass `primaryHeaderOptions` unconditionally and read no role. The outcome is visual, but the brief said "no navigation changes". **If not accepted**, shared screens keep brand-orange chrome for every role — visually inconsistent for an admin, but behaviourally untouched.
+**WU7b — ⚠️ pending acceptance.** Making `ProfileNavigator`, `ContactUsNavigator` and `FeedbackNavigator` choose header options by role introduces **new role-conditional logic into navigation files**; all three currently pass `primaryHeaderOptions` unconditionally and read no role. The outcome is visual, but the brief said "no navigation changes". *(Rationale: without it a Company Admin sees a brand-orange header on Profile, Contact Us and Feedback inside an otherwise navy app.)* **If declined**, those screens keep brand-orange chrome for every role — visually inconsistent for an admin, behaviourally untouched, and no gate is stranded: none of the three files contains a class name, literal or `fontWeight`.
 
-- **Resolves an open question**: `Profile`/`ContactUs`/`Feedback` currently use `primaryHeaderOptions` for *every* role, so a Company Admin sees a brand-orange header inside an otherwise navy app. These three navigators must choose header options by role. `AuthNavigator` sets `headerStyle` inline, bypassing `navigationHeader.ts` — route it through.
-- **WU7a DoD**: each role's menu items are byte-identical to before; no `fontWeight` remains in `src/theme/`; `RootNavigator` declares a surface; only presentation differs.
+- **WU7a DoD**: each role's menu items are byte-identical to before; no `fontWeight` remains anywhere in `src/theme/`; `RootNavigator` declares a surface; the Login header still matches its screen background; only presentation differs.
 - **WU7b DoD** *(only if accepted)*: a shared screen opened by a Company Admin shows back-of-house chrome.
 
 ### WU8 — The six undesigned screens *(US4)*
@@ -184,7 +187,7 @@ Splash, ForgotPasswordRequest, ForgotPasswordVerify, ChangePassword, EditProfile
 
 - `PasswordInput:37` and `RowActionButton:45` brand-as-foreground migrated here if not already.
 - **Also in this unit**: WU8's own `font-*` and off-palette classes (`ProductCreateEditScreen:219,249` and the four palette classes in its six files).
-- **DoD**: no new layout pattern; no screen retains the old treatment; O1/G7/G3/O2 green **for this unit's six files**. The whole-tree assertion moves to WU10, since WU4/6/7/8 are parallel and any of them may land last.
+- **DoD**: no new layout pattern; no screen retains the old treatment; O1/G7/G3/O2 green **for this unit's six files**. The whole-tree assertion moves to WU10 (close-out) — the "last of WU4–WU8" owner named in contracts §5.
 
 ### WU9 — Structural regression checks
 
@@ -203,14 +206,14 @@ Re-render each form screen and assert its field set, labels, validation messages
 
 ```
 WU0 (baseline) ──────────────────────────────────┐
-WU1 (fonts) ─→ WU2 (tokens+classes) ─→ WU3 ─┬→ WU4 ─→ WU5
-                                             ├→ WU6
-                                             ├→ WU7
-                                             └→ WU8
+WU1 (fonts) ─→ WU2 (tokens+classes) ─→ WU3 ─→ WU7a ─┬→ WU4 ─→ WU5
+                                                      ├→ WU6
+                                                      ├→ WU8
+                                                      └→ WU7b (optional)
                                                    ↓
                                             WU9 ─→ WU10
 ```
-WU0 and WU1 are independent and may run in parallel.
+WU0 and WU1 are independent and may run in parallel. **WU7a precedes WU4–WU8**: it removes the `fontWeight` governing every screen's header title and restyles the drawer, so no story can satisfy its own "matches its artboard" test without it. WU7b is optional and blocks nothing.
 
 **Story independence**: gates **report** per-unit on that unit's files from the moment they are authored, and become **blocking** at their enforced-from unit (contracts §5), so WU4 (US2) can be declared done and demoed without waiting for WU6 or WU8. Brand artwork is **out of scope** (user decision), removing revision 1's unlinked WU9.
 
@@ -257,4 +260,4 @@ No new violations. The design strengthens the single-source-of-truth constraint,
 | `Screen` surface prop | Derived from FR-003's two grounds |
 | Role-conditional headers in 3 navigators | ⚠️ **Not yet accepted** — adds role branching to navigation files |
 | `react-native-asset` | **Accepted** 2026-11-06 (decision 6) |
-| RN renderer for regression checks | ⚠️ **Confirm** — implied by decision 6; the requested checks cannot exist without it |
+| RN renderer for regression checks | ⚠️ **Confirm** — implied by decision 6. **If declined**: drop WU0 + WU9, fall back to the 6 manual regression paths |
