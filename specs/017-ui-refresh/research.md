@@ -168,39 +168,44 @@ It also invalidated this feature's original verification step ("a deliberate wro
 
 **Tooling**: `react-native-asset` is **not** currently a dependency (`mobile/package.json`), and `@react-native-community/cli@20` no longer provides `link`. It must be pinned in `devDependencies` with an npm script rather than invoked through an unpinned `npx` fetch in the build path. This contradicts the earlier claim that the feature "introduces no new dependency beyond font files" — it introduces one, deliberately.
 
-## R8 — The contrast gate must be ADDITIVE, and brand-as-foreground fails today
+## R8 — The contrast gate must check ONE pairing. Checking two rejects every colour that exists.
 
-**Finding 1 — the design's own swatch fails as a fill.** Espresso `#2B1D16` on each sanctioned swatch:
+**Finding 1 — a sanctioned swatch fails as a fill.** Espresso `#2B1D16` on each swatch: `#FFB020` **8.90**, `#F97316` **5.81**, `#FF6B35` **5.74**, `#E4572E` **4.42** — the last fails 4.5:1.
 
-| Swatch | As fill (espresso on brand) | Verdict |
-|---|---|---|
-| `#FFB020` | **8.90:1** | passes |
-| `#F97316` | **5.81:1** | passes |
-| `#FF6B35` (default) | **5.74:1** | passes |
-| `#E4572E` | **4.42:1** | **fails 4.5:1** |
+**Finding 2 — the shipped gate ANDs two legs** (`resolveBrandTheme.ts:76-81`):
 
-**Finding 2 — and no swatch passes in the *other* role.** The shipped gate (`resolveBrandTheme.ts:76-81`) has two legs: brand as a **foreground** on ground/surface, and white on the brand **fill**. Measured:
+```ts
+const legibleAsForeground = meetsAAContrast(config.accentColor, [background, surface]);
+const legibleAsButtonFill = meetsAAContrast('#FFFFFF', [config.accentColor]);
+const accentPasses = legibleAsForeground && legibleAsButtonFill;
+```
 
-| Swatch | Foreground on cream | on warm grey | White-on-fill |
-|---|---|---|---|
-| `#FF6B35` | **2.69** | 2.56 | 2.84 |
-| `#F97316` | **2.66** | 2.53 | 2.80 |
-| `#FFB020` | **1.74** | 1.65 | 1.83 |
-| `#E4572E` | **3.50** | 3.32 | 3.68 |
+Revision 2 kept leg 1 and swapped leg 2's white for espresso. **That combination is unsatisfiable.** Solving both constraints with the project's own formula (`contrastCheck.ts:28-40`):
 
-**Not one swatch reaches 4.5:1 as a foreground**, and only `#E4572E` clears even the 3:1 large-text bar. The shipped default `#FF6B35` fails *both* of today's legs — it escapes only because `resolveBrandTheme.ts:51-53` short-circuits when no override is configured, so the default is never tested.
+| Constraint | Requirement on the brand's relative luminance |
+|---|---|
+| espresso-on-brand ≥ 4.5 | `L ≥ 0.2403` |
+| brand-on-cream `#FFF8F1` ≥ 4.5 | `L ≤ 0.1717` |
+| brand-on-warm-grey `#F5F3EF` ≥ 4.5 | `L ≤ 0.1605` |
+| brand-on-white ≥ 4.5 | `L ≤ 0.1833` |
 
-**Finding 3 — the app uses brand as a foreground in 8 places today**, all of which therefore fail: `ContactUsScreen.tsx:71,78` (phone and email links), `CartScreen.tsx:153,157` (± controls), `OrderDetailScreen.tsx:154` (the pickup code), `FeedbackListScreen.tsx:132`, `PasswordInput.tsx:37`, `RowActionButton.tsx:45`.
+**`L ≥ 0.2403` AND `L ≤ 0.1717` — the feasible set is empty.** Not "no sanctioned swatch passes": *no colour in the sRGB gamut passes*. A brand must be light enough to carry espresso text and dark enough to read on cream; those are opposite requirements. The existing test fixture `#004D40` scores 1.66 against espresso and would also be rejected.
 
-**The design already fixes this.** Its artboards use `link #B23C0E` for links and espresso for controls — never brand-as-text. Measured: `#B23C0E` scores **5.63** on cream, **5.34** on warm grey, **5.92** on white. All pass.
+Worse, the failure is invisible to the gate's own test: `contrast.spec` asserts that failures warn and fall back, which they would — for every colour. FR-009 ("tangerine is the only value a canteen can override") would be unimplementable while every check passed.
 
-**Decision**:
-1. Keep the gate's semantics as they ship — **warn and fall back to the default**, not a build failure. Making it build-failing would be new non-visual behaviour, outside this feature's scope.
-2. Keep the gate **additive**: evaluate brand-as-fill (now against espresso, not white) **and** retain brand-as-foreground. Replacing rather than adding would silently drop an existing accessibility check.
-3. Migrate all 8 brand-as-foreground sites to `link` or `espresso` during WU4–WU8. After that the foreground leg guards against regression rather than describing current usage.
-4. Report `#E4572E` to the designer as a defect. It is **not** a gate on this feature's completion.
+**Finding 3 — brand-as-foreground fails today anyway.** No swatch reaches 4.5:1 as a foreground (best `#E4572E` at 3.50; the default `#FF6B35` at 2.69). The app has 8 such sites: `ContactUsScreen:71,78`, `CartScreen:153,157`, `OrderDetailScreen:154`, `FeedbackListScreen:132`, `PasswordInput:37`, `RowActionButton:45`.
 
-**Alternatives rejected**: White text on brand (contradicts every artboard; `#FFB020` would be 1.83:1); lowering the threshold to 3:1 (ships sub-AA body text); dropping the foreground leg (deletes a real check while 8 sites still rely on it).
+**Decision — check the fill pairing only.** *(User decision, 2026-11-06.)*
+
+1. The gate evaluates **espresso on brand ≥ 4.5:1**, and nothing else. It warns and falls back; it does not fail the build.
+2. **The brand-as-foreground leg is deleted**, because the redesign never uses brand as text — links use `link #B23C0E` (**5.63** on cream, **5.34** on warm grey, **5.92** on white) and controls use espresso. The 8 existing sites migrate during WU4–WU8, after which the leg would guard a usage that no longer exists.
+3. The migration of those 8 sites is therefore a **prerequisite for deleting the leg honestly**, not an optional tidy-up. Until they are migrated the app has 8 sub-AA text sites — a pre-existing defect this feature fixes rather than introduces.
+4. `#E4572E` is reported to the designer. **Not a gate on this feature.**
+5. `resolveBrandTheme.spec.ts:19`'s `#004D40` fixture must be re-derived to a colour that passes, and a test added asserting a non-default override is **accepted** — otherwise nothing proves the override path still works.
+
+**Alternatives rejected**: keeping both legs (provably empty); foreground leg warn-only (a warning nobody acts on, while the code still carries a check the design contradicts); foreground leg at 3:1 (feasible set `L` 0.2403–0.3659, but it would reject the shipped default `#FF6B35`).
+
+**Note — the resolver is dormant.** `resolveBrandTheme` has **no production call site**; only its own test imports it. So US1 Acceptance Scenario 2 is not demonstrable in the running app today, and wiring it up would be new non-visual behaviour outside this feature. This feature corrects the gate's logic; it does not activate it.
 
 ## R9 — One token source, not two *(technical debt this feature should not double)*
 
@@ -235,7 +240,7 @@ Measured utility-class usage in `mobile/src` — the surface screens actually st
 
 | Class | Uses | Fate under the new scale |
 |---|---|---|
-| `text-body` | **84** | survives by name; 14/400 → 15/500 |
+| `text-body` | **66** (84 matches include the 18 `text-body-bold`) | survives by name; 14/400 → 15/500 |
 | `text-text-primary` | **68** | survives; `#1F2937` → `#2B1D16` |
 | `text-text-secondary` | **58** | survives; `#6B7280` → `#5B5866` |
 | `border-border` | **54** | survives; `#E5E7EB` → `#F1E6DA` |
@@ -255,6 +260,17 @@ Measured utility-class usage in `mobile/src` — the surface screens actually st
 | `rounded-full` | 2 | **not in the token scale at all** |
 
 Roughly **172 typography**, **57 radius** and **126 colour** class usages — against 13 TS importers.
+
+**Two class families revision 2 missed entirely**, both invisible to the gates as first specified:
+
+| Family | Count | Files | Why it matters | Why no gate caught it |
+|---|---|---|---|---|
+| `font-bold` ×4, `font-semibold` ×15 | **19** | 14 | NativeWind compiles these to `fontWeight: 700/600`. At 700 this re-enters R7's silent system-font fallback — the feature's headline bug, through the class layer | `G3` inspects *typography tokens*; `G7`'s prefixes were `text-/bg-/border-/rounded-` only — `font-*` excluded |
+| `text-red-600` ×29, `text-green-700` ×4, `text-slate-500`, `text-amber-700`, `border-green-600`, `border-amber-500`, `bg-green-50`, `bg-amber-50`, `border-red-600` | **46** | 22 | Stock Tailwind palette, not foundation colours. Nearly every validation message in the app is `text-red-600` `#DC2626` — which is `accents.red.dot`, not `accents.red.strong` `#B42318` | `O1` scans *hex literals*; `G7` passes anything present in Tailwind's default theme |
+
+Also `src/theme/navigationHeader.ts:12,27` set `headerTitleStyle: { fontWeight: '700' }` — applied to **every stack header in the app**. If WU7 adds a bundled family beside it, every header title silently renders in the system face.
+
+**Decision**: add both families to the migration map (§1.1), assign their call sites to the owning work units, widen `G3` to "no `fontWeight` anywhere in `src/`, as a style property or a `font-{weight}` class", and make `O1` a **palette allow-list** rather than a hex-literal scan.
 
 **Why this is dangerous**: NativeWind **silently drops an unknown class**. Deleting `h1`/`h2`/`button` would leave 27 text nodes unstyled with no compile error, no build error, and no runtime warning. The original WU2 gate — *"typecheck passes and the app builds"* — cannot detect any of it, because `tsc` does not read `className` strings.
 
@@ -305,17 +321,17 @@ Consequently `numColumns` is not currently reachable: nesting a `FlatList` insid
 
 ---
 
-## Summary of `spec.md` amendments — ALL APPLIED
+## Summary of `spec.md` amendments
 
 | # | Requirement | Correction | Status |
 |---|---|---|---|
-| 1 | **FR-003 / FR-003a** | Two grounds (cream student, warm grey back-of-house); seven accent families named | ✅ applied |
-| 2 | **FR-007 / FR-007a** | Measured 15-style scale; **no style may set a numeric weight** (R7) | ✅ applied |
-| 3 | **FR-008** | Full twelve-step radius scale incl. 3, 12 and 20 | ✅ applied |
-| 4 | **Edge cases** | Build-time absence vs runtime resolution failure separated (5th defect) | ✅ applied |
-| 5 | **FR-010 / SC-008** | Gate is warn-and-fallback, not build-failing; and **additive**, not re-pointed (R8) | ✅ applied |
-| 6 | **SC-002** | 27 screen files + the navigation shell, not "32 screens" | ✅ applied |
-| 7 | **SC-004** | Extended to class names that silently stop applying (R11) | ✅ applied |
-| 8 | **Assumptions** | Register `gender`; no partial rollback; class-name coupling; brand artwork out of scope | ✅ applied |
+| 1 | FR-003 / FR-003a | Two grounds; seven accent families | ✅ applied |
+| 2 | FR-007 / FR-007a | Measured 15-style scale; **no numeric weight anywhere** — extended in rev 3 to class names and header options | ✅ applied |
+| 3 | FR-008 | Twelve-step radius scale | ✅ applied |
+| 4 | Edge cases | Build-time absence vs runtime resolution failure separated | ✅ applied |
+| 5 | FR-010 / SC-008 | Warn-and-fallback, **single fill pairing** (R8) | ⚠️ **rev 2 applied this to FR-010/SC-008 only.** Three contradicting statements survived at `spec.md:37`, `:95`, `:182` and were recorded as applied. **Fixed in rev 3.** |
+| 6 | SC-002 | 27 screen files + navigation shell | ✅ applied |
+| 7 | SC-004 / FR-002 | Extended to class names that silently stop applying, **and to off-palette class names** | ✅ applied |
+| 8 | Assumptions | Register `gender`; no partial rollback; class-name coupling; brand artwork out of scope | ✅ applied |
 
-These were applied **before** `/speckit-tasks`, so generated tasks derive from corrected requirements.
+**Process note**: amendment 5 was marked complete in revision 2 while three statements still said the opposite. The lesson applied in revision 3 — verify an amendment by grepping for the *old* wording, not by confirming the new wording exists.

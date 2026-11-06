@@ -40,7 +40,16 @@ The seven existing class names are a **stable interface**. They keep their names
 | `text-caption` | 36 | `caption` — Inter-Medium 12 |
 | `text-button` | 10 | `labelLg` — Inter-SemiBold 14 |
 | `rounded-sm` / `md` / `lg` / `pill` | 2 / 6 / 31 / 16 | 10 / 12 / 14 / 999 — **`sm` and `lg` change meaning silently; recorded in SC-004** |
-| `rounded-full` | 2 | **not in the scale** — migrate to `rounded-pill` |
+| `rounded-full` | 2 | resolves from Tailwind's defaults; migrate to `rounded-pill` for consistency |
+
+**Two families that must be REMOVED, not remapped:**
+
+| Family | Count / files | Migration |
+|---|---|---|
+| `font-bold` (4), `font-semibold` (15) | **19 / 14 files** | **Delete every one.** Weight is carried by the family (FR-007a). `font-bold` compiles to `fontWeight: 700`, which sends a bundled family to `<family>_bold.ttf` → absent → system font. Replace with the text style whose family already encodes the weight (`text-body-bold`, `text-price`, …). |
+| `text-red-600` (29), `text-green-700` (4), `text-amber-700` (2), `text-slate-500` (2), `border-green-600` (2), `border-amber-500` (2), `bg-green-50` (2), `bg-amber-50` (2), `border-red-600` (1) | **46 / 22 files** | **Map to foundation tokens**: error text → `accents.red.strong` `#B42318` (not `#DC2626`, which is `red.dot`); success → `accents.mint.strong`; warning → `accents.sun.strong`; muted → `textSecondary`; tinted backgrounds → the matching `accents.*.soft`. |
+
+Also `src/theme/navigationHeader.ts:12,27` set `headerTitleStyle: { fontWeight: '700' }`, applied to **every stack header**. WU7 must remove the weight when it adds a family, or every header title renders in the system face.
 
 New styles are added under new names alongside these. **No existing class name may be deleted** without migrating every call site in the same work unit.
 
@@ -179,26 +188,26 @@ Unchanged: `xs 4`, `sm 8`, `md 16`, `lg 24`, `xl 32`. Add intermediate steps onl
 
 ---
 
-## 7. Tenant override — the gate is ADDITIVE (R8)
+## 7. Tenant override — ONE pairing (R8)
 
-Mechanism unchanged: `primary` is the only overridable token (`resolveBrandTheme.ts`), and a failing colour **warns and falls back to the default** — it does not fail the build.
+`primary` is the only overridable token (`resolveBrandTheme.ts`). A failing colour **warns and falls back to the default**; it does not fail the build.
 
-The gate keeps **both** legs:
-1. **Brand as fill** — espresso text on brand ≥4.5:1 *(replaces the current white-on-brand leg)*
-2. **Brand as foreground** — brand on each ground ≥4.5:1 *(retained; dropping it would delete a real check)*
+**The gate checks exactly one thing**: espresso `#2B1D16` on the resolved brand ≥ 4.5:1.
 
-Measured:
+| Swatch | Espresso-on-brand | Verdict |
+|---|---|---|
+| `#FFB020` | 8.90 | accepted |
+| `#F97316` | 5.81 | accepted |
+| `#FF6B35` (default) | 5.74 | accepted |
+| `#E4572E` | **4.42** | rejected → falls back |
 
-| Swatch | As fill (espresso) | As foreground (cream) | Verdict |
-|---|---|---|---|
-| `#FFB020` | 8.90 | **1.74** | fails foreground |
-| `#F97316` | 5.81 | **2.66** | fails foreground |
-| `#FF6B35` (default) | 5.74 | **2.69** | fails foreground |
-| `#E4572E` | **4.42** | 3.50 | fails both |
+**The brand-as-foreground leg is deleted.** Keeping it alongside the fill leg is provably unsatisfiable — it requires `L(brand) ≥ 0.2403` and `L(brand) ≤ 0.1717` simultaneously, so *no colour in sRGB* would pass (research R8). It is safe to delete because the redesign never uses brand as text: links use `link #B23C0E` (5.63 on cream) and controls use `espresso`.
 
-**No swatch passes as a foreground.** The design resolves this by never using brand as text — links use `link #B23C0E` (5.63 on cream), controls use `espresso`. The **8 existing brand-as-foreground sites** (`ContactUsScreen:71,78`, `CartScreen:153,157`, `OrderDetailScreen:154`, `FeedbackListScreen:132`, `PasswordInput:37`, `RowActionButton:45`) migrate to `link`/`espresso` during WU4–WU8. Until they do, the foreground leg is advisory; afterwards it guards against regression.
+**Prerequisite**: the 8 existing brand-as-foreground sites — `ContactUsScreen:71,78`, `CartScreen:153,157`, `OrderDetailScreen:154`, `FeedbackListScreen:132`, `PasswordInput:37`, `RowActionButton:45` — migrate to `link`/`espresso` during WU3–WU8. All 8 are sub-AA today (2.69:1 for the default brand); this feature fixes a pre-existing defect rather than introducing one.
 
-`#E4572E` is reported to the designer as a defect in the canvas. It is **not** a gate on this feature.
+**Test fixture**: `resolveBrandTheme.spec.ts:19` uses `#004D40`, which scores **1.66** against espresso and would now be rejected. Re-derive it to a passing colour, and add an assertion that a non-default override is **accepted** — otherwise no test proves the override path works at all.
+
+**Dormancy**: `resolveBrandTheme` has no production call site; only its own test imports it. This feature corrects the gate's logic. It does not wire it up — that would be new non-visual behaviour.
 
 ---
 

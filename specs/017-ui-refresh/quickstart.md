@@ -17,7 +17,7 @@ How to run the refreshed app and prove it satisfies the spec. Token values live 
 ```bash
 cd mobile
 npm install
-npx react-native-asset        # copies assets/fonts into android/app/src/main/assets/fonts
+npm run fonts:link            # pinned react-native-asset; copies assets/fonts into android/
 npm run android               # full rebuild
 ```
 
@@ -125,7 +125,8 @@ Each row names its artboard. For every screen confirm: **(a)** it matches the ar
 | Large system font | Android → Display size → Largest | Pickup digits, chips and buttons legible and unclipped |
 | Narrow screen | 320dp-width emulator | Two readable columns persist |
 | Unmapped status | Force an unexpected status value | `neutral` chip with raw label — never blank |
-| Failing brand | Set brand to `#E4572E` | **Warns and falls back to default** (4.42:1 as fill, 3.50:1 as foreground). Confirms G2 and the R8 defect — note it does *not* fail the build |
+| Failing brand | Set brand to `#E4572E` | **Warns and falls back to default** (4.42:1 espresso-on-fill). Confirms G2 — note it does *not* fail the build |
+| Passing brand | Set brand to `#FFB020` | **Accepted and applied** (8.90:1). Proves the override path still works — the gate is not rejecting everything |
 | Font missing at build | Remove a `.ttf` before building | **Build fails** — absence is a build error |
 | Font unresolvable at runtime | Reference an unbundled family name | Falls back to a readable system face; layout intact |
 

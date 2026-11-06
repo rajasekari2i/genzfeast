@@ -34,7 +34,7 @@ A designer or developer opens the app and sees the new brand language applied co
 
 1. **Given** the foundations are in place, **When** any existing screen is opened, **Then** it renders on the cream ground with espresso text and the new typefaces, with no further per-screen work.
 2. **Given** a canteen has supplied its own brand colour, **When** the app is built for that canteen, **Then** that colour replaces tangerine everywhere tangerine appears, and no other part of the palette changes.
-3. **Given** a canteen supplies a brand colour that would make text on a brand-filled button unreadable, **When** the build runs, **Then** the contrast check fails loudly rather than shipping an unreadable button.
+3. **Given** a canteen supplies a brand colour that would make text on a brand-filled button unreadable, **When** the brand is resolved, **Then** the colour is rejected with a warning and the default brand is used instead — an unreadable colour is never applied.
 4. **Given** a developer adds a new screen, **When** they need a colour, size, radius or text style, **Then** a named foundation value exists for it.
 
 ---
@@ -92,7 +92,7 @@ A user who forgets their password, changes it, edits their profile, launches the
 
 ### Edge Cases
 
-- **A canteen's brand colour is dark.** Brand-filled buttons place espresso text on the brand colour. A dark brand colour makes that unreadable. The build-time contrast check must evaluate this specific pairing and fail rather than ship it.
+- **A canteen's brand colour is dark.** Brand-filled buttons place espresso text on the brand colour. A dark brand colour makes that unreadable. The contrast check must evaluate this pairing and reject the colour — warning and falling back to the default — rather than applying it.
 - **A dish has no photo.** The menu grid must show a designed placeholder, not an empty box or a broken-image icon.
 - **A dish name is long.** In a two-column grid each card is roughly half the previous width. Names must truncate cleanly on one line and descriptions to a fixed height, so cards in a row stay the same height.
 - **A canteen has one dish, or none.** The grid must not leave a visually broken half-row, and the empty state must be designed.
@@ -110,14 +110,14 @@ A user who forgets their password, changes it, edits their profile, launches the
 **Foundations**
 
 - **FR-001**: The app MUST define a single shared set of design foundations — colours, typefaces, text styles, spacing and corner radii — that every screen and component reads from.
-- **FR-002**: No screen or component MUST define a colour, text style or corner radius that the shared foundations already define.
+- **FR-002**: No screen or component MUST define a colour, text style or corner radius that the shared foundations already define — whether as a literal value **or as a styling class name drawn from outside the foundations**. A class that resolves to an off-palette colour is as much a violation as a hardcoded one.
 - **FR-003**: The palette MUST comprise: tangerine `#FF6B35` (brand), espresso `#2B1D16` (primary text and primary action fill), **two grounds** — cream `#FFF8F1` for student-facing screens and warm grey `#F5F3EF` for back-of-house (Company Admin and Staff) screens — navy `#183153` (back-of-house chrome), sun `#FFC857` (highlights), mint `#0B7A55` (veg), plus the supporting neutrals `#4A4756`, `#5B5866`, `#F1E6DA`, `#EFE3D6`, `#CFC6BB`, `#F4EEE7`, `#6E6A78`, `#D6D4DD` and link `#B23C0E`.
 - **FR-003a**: Soft-accent pairs MUST be defined once and reused by status chips, icon tiles and product-image tints alike, in seven families: tangerine, sun, mint, red, violet, blue and neutral. No component may define its own accent colour.
 - **FR-004**: Order status MUST be presented as a labelled chip with a matching dot, in four defined pairings: payment pending `#FFF1D6`/`#8A5300`/`#F59E0B`; order placed `#FFE6DA`/`#B23C0E`/`#FF6B35`; payment failed `#FDE2E1`/`#B42318`/`#DC2626`; delivered `#DDF4EA`/`#0B6B4B`/`#16A34A`.
 - **FR-005**: Dietary marks MUST use mint `#0B7A55` for veg and `#9A3412` for non-veg, each a bordered glyph that differs in shape as well as colour.
 - **FR-006**: The app MUST render a display typeface (Bricolage Grotesque) for headings and a body typeface (Inter) for everything else, both shipped with the app so they render without network access.
 - **FR-007**: The text scale MUST provide fifteen styles across two families. The display family (Bricolage Grotesque) MUST be used at a single weight for `hero` 48, `display` 34, `title` 28, `titleSm` 24, `subtitle` 20 and `subtitleSm` 17. The body family (Inter) MUST provide `price` 16, `bodyLg` 16, `body` 15, `bodyBold` 15, `labelLg` 14, `label` 13, `eyebrow` 12 (uppercase, widened tracking), `caption` 12 and `captionSm` 11.
-- **FR-007a**: Because the platform selects a bundled face by file name rather than by numeric weight, each weight MUST ship as its own font family, and **no text style may set a numeric font weight**. Weight is carried by the family, not by a style property. A style that sets both a bundled family and a numeric weight of 700 or above silently renders in the system font.
+- **FR-007a**: Because the platform selects a bundled face by file name rather than by numeric weight, each weight MUST ship as its own font family, and **no numeric font weight may be set anywhere** — not in a text style, not as a styling class name, and not in navigation header options. Weight is carried by the family alone. A style that sets both a bundled family and a numeric weight of 700 or above silently renders in the system font, with no error at compile or build time.
 - **FR-008**: The corner-radius scale MUST provide twelve steps: 3 (dietary glyph), 8, 10, 12, 14, 16, 18, 20, 22, 24, 28 and fully-rounded.
 - **FR-009**: Tangerine MUST remain the only value a canteen can override for its own branded build. Every other foundation value MUST be fixed across all canteens.
 - **FR-010**: A canteen brand colour that fails the required contrast ratio MUST be rejected at resolution time — the system warns and falls back to the default brand rather than applying an unreadable colour. The check MUST be additive: it evaluates the brand both as a fill behind text and as a foreground on each ground, and a colour failing either role is rejected.
@@ -168,7 +168,7 @@ A user who forgets their password, changes it, edits their profile, launches the
 - **SC-005**: All body text meets a contrast ratio of **at least 4.5:1** against its background, and all large text at least **3:1**.
 - **SC-006**: Every interactive control meets the **44-unit minimum touch target**.
 - **SC-007**: A reviewer comparing each of the 26 designed screens against its artboard finds **no layout or hierarchy mismatch**.
-- **SC-008**: A canteen brand colour that would render text unreadable in **either** role — as a fill behind text, or as a foreground on a ground — is rejected and replaced by the default, with a warning. No unreadable brand colour is ever applied.
+- **SC-008**: A canteen brand colour that would render espresso text on it unreadable is rejected and replaced by the default, with a warning. At least one non-default brand colour is demonstrably **accepted**, proving the override path still works.
 - **SC-009**: The sold-out state is correctly identified by **every participant** in an informal review, without prompting.
 
 ---
@@ -179,7 +179,7 @@ A user who forgets their password, changes it, edits their profile, launches the
 - **The canvas's `OrderSuccess` artboard is a state, not a screen.** The app presents the paid-order confirmation inside the existing order detail screen; that artboard therefore specifies how that screen looks in its `order_placed` state. No new screen is created.
 - **The canvas's three side-menu artboards are role variants of the one existing side menu**, not three separate menus.
 - **Artboards are specified at a single phone size.** They are treated as proportional intent, to be realised responsively across supported devices rather than reproduced at fixed pixel sizes.
-- **The existing brand-override and contrast-check mechanism is retained**, with the contrast gate re-pointed at the new pairing (espresso text on the brand colour) rather than replaced.
+- **The existing brand-override and contrast-check mechanism is retained**, with the contrast gate **narrowed to a single pairing** — espresso text on the brand fill. Its former brand-as-foreground leg is removed, because the redesign never uses the brand colour as text: links use the dedicated link colour and controls use espresso. Keeping both legs was proven to reject every colour in the sRGB gamut.
 - **Bundling the two typefaces requires a platform build change** and therefore a fresh install rather than a reload; this is accepted and is sequenced first so that a font problem cannot block screen work.
 - **Android is the only target.** The project has no iOS build today, so iOS rendering is out of scope.
 - **Updated brand artwork is out of scope for this feature.** The new icon, logo and white mark are committed to the repository but are not applied here; replacing the launcher icon is a platform-resource change no artboard covers, and is deferred.

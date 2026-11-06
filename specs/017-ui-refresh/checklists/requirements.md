@@ -31,15 +31,18 @@
 
 ## Notes
 
-Validated on first pass; no spec revisions were required.
+**Re-validated 2026-11-06 after eight spec amendments and three adversarial review rounds.** Revision 1 of this checklist claimed "validated on first pass; no spec revisions were required" — eight were subsequently required. That claim was wrong and is retracted.
 
-**Judgement calls worth recording:**
+**Amendments applied since first validation** (see `research.md` summary): two grounds (FR-003/003a); the measured type scale with no numeric weights anywhere (FR-007/007a); the twelve-step radius scale (FR-008); build-time vs runtime font failure separated (Edge Cases); the contrast gate reduced to a single fill pairing and made warn-and-fallback (FR-010/SC-008); corrected screen counts (SC-002); SC-004/FR-002 extended to class names, including off-palette ones; four new assumptions.
 
-- **Hex values and typeface names are kept in the spec.** They would normally read as implementation detail, but for a visual refresh the exact palette *is* the requirement — a spec that said "a warm neutral ground" would not be testable. No framework, library, file path or language appears anywhere in the spec; those are deferred to `plan.md`.
-- **Sizes are expressed in abstract "units", not pixels**, so the spec stays device-agnostic and does not pre-commit to reproducing the artboards at a fixed pixel size (see Assumptions).
-- **SC-004 and SC-008 touch build-time concerns** ("no hardcoded design values", "rejected at build time"). Both are retained because they are objectively verifiable and because design-system discipline is a genuine requirement of this feature, not an implementation choice.
-- **Zero clarification markers.** Four points were ambiguous and were resolved as documented Assumptions rather than questions, because a reasonable default existed for each: the artboard-versus-shipped-app authority conflict, the `OrderSuccess` artboard being a state rather than a screen, the three side-menu artboards being role variants, and the contrast gate being re-pointed rather than replaced.
+**Retracted from revision 1 of this checklist:**
+- *"SC-008 … rejected at build time"* — it warns and falls back; it never fails a build.
+- *"the contrast gate re-pointed"* — it is **narrowed to one leg**. Keeping two legs was proven to reject every colour in the sRGB gamut.
+- *"Planning must establish whether any such canteen exists"* — withdrawn. `resolveBrandTheme` has no production call site and no tenant brand configuration exists in the repo, so there is nothing to audit and no build that can break.
 
-**One risk carried into planning, not a spec defect:**
+**Judgement calls that still stand:**
+- Hex values and typeface names remain in the spec: for a visual refresh the exact palette *is* the requirement. No framework, file path or language appears.
+- Sizes are abstract "units", keeping the spec device-agnostic.
+- SC-004 and SC-008 touch build-time concerns, retained because both are objectively verifiable.
 
-- FR-010 / SC-008 depend on the existing brand-override contrast check being re-pointed at a *new* pairing — espresso text on the brand fill. The current check validates a different pairing. If a canteen already ships a brand colour that passes today but fails the new pairing, that canteen's build will start failing. Planning must establish whether any such canteen exists.
+**Known imprecision, accepted:** FR-019 and SC-007 say "26 screens with a supplied artboard". 26 is the **artboard** count; the screen count is 21 (27 files − 6 undesigned), because `OrderDetailScreen` and `ProductListScreen` each carry two artboards and the drawer carries three. The artboard count is the useful number for review, and `quickstart.md`'s table enumerates the mapping explicitly.

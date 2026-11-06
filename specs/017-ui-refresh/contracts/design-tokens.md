@@ -29,18 +29,18 @@ mobile/tailwind.config.js          requires tokens.raw.js; hosts the class layer
 | # | Guarantee |
 |---|---|
 | **G1** | `primary` is the only value a tenant build may override. Every other token is identical across tenants. |
-| **G2** | A tenant `primary` failing 4.5:1 in **either** role — as a fill behind text, or as a foreground on a ground — is rejected: the system warns and falls back to the default. It does not fail the build. |
-| **G3** | Every typography token resolves to a bundled font file, and **no typography token sets a numeric font weight**. |
+| **G2** | A tenant `primary` failing 4.5:1 **as a fill behind espresso text** is rejected: the system warns and falls back to the default. It does not fail the build. The gate checks **only** this pairing — adding a brand-as-foreground leg makes the constraint set empty (research R8). At least one non-default colour must be demonstrably accepted. |
+| **G3** | Every typography token resolves to a bundled font file, and **no numeric font weight appears anywhere in `src/`** — not as a style property, not as a `font-{thin…black}` class, not in `headerTitleStyle`. |
 | **G4** | Every accent pair satisfies 4.5:1 (`strong` on `soft`). |
 | **G5** | `tokens.ts` and `tailwind.config.js` cannot disagree: both derive from `tokens.raw.js`. |
 | **G6** | An order status with no accent mapping renders with the `neutral` pair and its raw label. Never blank. |
-| **G7** | **Every utility class name used anywhere in `src/` resolves to a definition in the generated theme.** A class that silently stops applying is a breaking change. |
+| **G7** | **Every utility class name used in `src/` resolves to a foundation definition, and no class resolves to an off-foundation value.** Covers `text-*`, `bg-*`, `border-*`, `rounded-*` **and `font-*`**. A class that silently stops applying, *or that silently applies a colour the foundations do not define*, is a breaking change. |
 
 ## 3. Obligations on consumers
 
 | # | Obligation |
 |---|---|
-| **O1** | No raw colour, radius or font size/weight literal in a screen or component for anything the tokens define. |
+| **O1** | No raw colour, radius or font size/weight literal in a screen or component — **and no styling class drawn from outside the foundation palette** (an allow-list, not a "known to Tailwind" check). |
 | **O2** | Surface choice is explicit: student screens use `background`, back-of-house use `backgroundAlt`. No screen hardcodes either. |
 | **O3** | Status presentation goes through `statusColors.ts`. No screen maps a status to a colour itself. |
 | **O4** | Interactive elements present ≥44×44 touch targets, even where an artboard shows less. |
@@ -49,23 +49,36 @@ mobile/tailwind.config.js          requires tokens.raw.js; hosts the class layer
 
 Dark mode; runtime theming; per-tenant typography, spacing or radius; iOS font registration (no iOS project); interpolated font weights (Option C in research R7 — rejected for this feature).
 
-## 5. Verification — every guarantee and obligation has a named check
+## 5. Verification
 
-| # | Check | Type | Runs in |
-|---|---|---|---|
-| G1 | `theme/brand.spec` — only `primary` differs across resolved themes | automated | WU2 |
-| G2 | `theme/contrast.spec` — espresso-on-brand **and** brand-on-ground, for each swatch plus a known-failing colour; asserts warn + fallback, not throw | automated | WU2 |
-| G3 | `theme/fonts.spec` — every typography token's family is in the bundled list **and** no token carries `fontWeight` | automated | WU2 |
-| G4 | `theme/contrast.spec` — all 7 accent pairs | automated | WU2 |
-| G5 | `theme/tokens.spec` — `tokens.ts` deep-equals `tokens.raw.js` | automated | WU2 |
-| G6 | `theme/statusColors.spec` — unknown status → `neutral` + raw label | automated | WU2 |
-| **G7** | **`theme/classnames.spec` — scan `src/**` for `text-*`/`bg-*`/`border-*`/`rounded-*` absent from the generated theme** | automated | **WU2** |
-| O1 | `theme/token-discipline.spec` — no raw hex / radius / size literal in `src/screens`, `src/components` | automated | WU2 |
-| O2 | `theme/surface.spec` — no screen uses a ground literal; each screen declares its surface | automated | WU3 |
-| O3 | `theme/statusColors.spec` — no screen imports `accents` directly | automated | WU3 |
-| O4 | `theme/touch-targets.spec` — every component contract entry ≥44; plus the per-component review rows in `quickstart.md` | automated + review | WU3 |
+Each gate has an **authored-in** unit (when the test is written) and an **enforced-from** unit (the first unit in which it can legitimately pass). Revision 2 conflated these and pinned O1/O2 to units where the code they check had not been written yet.
 
-**Nine automated gates**, all authored in WU2/WU3 — not deferred to the end, because G7 and G3 are the two that catch silent failures.
+| # | Check | Authored in | Enforced from | Why the gap |
+|---|---|---|---|---|
+| G1 | `theme/brand.spec` — only `primary` differs across resolved themes | WU2 | WU2 | — |
+| G2 | `theme/contrast.spec` — espresso-on-brand per swatch; a failing colour warns + falls back; **a passing colour is accepted** | WU2 | WU2 | — |
+| G3 | `theme/fonts.spec` — every token's family is bundled; **no `fontWeight` anywhere in `src/`** | WU2 | **WU8** | 19 `font-*` classes live in components (WU3) and screens (WU4/6/8) |
+| G4 | `theme/contrast.spec` — all 7 accent pairs | WU2 | WU2 | — |
+| G5 | `theme/tokens.spec` — `tokens.ts` deep-equals `tokens.raw.js` | WU2 | WU2 | — |
+| G6 | `theme/statusColors.spec` — unknown status → `neutral` + raw label | WU2 | WU2 | — |
+| **G7** | **`theme/classnames.spec`** — see enumeration method below | WU2 | **WU8** | off-palette classes span components and screens |
+| O1 | `theme/token-discipline.spec` — no raw literal; palette allow-list | WU2 | **WU8** | one hex literal is in `FeedbackScreen.tsx:167`, a WU4 file |
+| O2 | `theme/surface.spec` — every screen declares a surface | WU3 | **WU8** | screens declare surfaces across WU4/6/8 |
+| O3 | `theme/statusColors.spec` — no screen imports `accents` directly | WU2 | WU6 | — |
+| O4 | `theme/touch-targets.spec` — AST scan of `h-`/`min-h-`/`height` on pressables | WU3 | WU3 | asserts over code, not over a markdown table |
+
+**Nine spec files** (G2/G4 share `contrast.spec`; G6/O3 share `statusColors.spec`).
+
+**Between authored-in and enforced-from, a gate is expected to report failures.** Each is wired as a reported-but-non-blocking check until its enforced-from unit, then becomes blocking. Without this, WU2 and WU3 would have to commit a red suite — which orchestrated execution forbids.
+
+### G7 enumeration method (previously unspecified)
+
+`resolveConfig(...).theme` reflects **`theme` only, not `plugins`** — so it would report the seven plugin-emitted text utilities as missing and fail on 154 call sites. The check must therefore:
+
+1. **Enumerate** by having the text-style plugin export its utility key list for the test to `require`, unioned with `resolveConfig(...).theme` for colours, radii and spacing.
+2. **Extract** class names handling all three forms present in the code: static `className="…"`; ternaries and template literals (`RowActionButton.tsx:39,45`, `CategoryChip.tsx:21`, `Dropdown.tsx:41,61`); and a class held in a variable (`PrimaryButton.tsx:32`). A regex over `className="…"` alone is insufficient — use an AST walk over JSX string literals.
+3. **Normalise** opacity modifiers before lookup (`ProductCard.tsx:38` `bg-text-primary/70`, plus `bg-surface/20`, `bg-black/40`).
+4. **Allow-list**, not existence-check: a class resolving to Tailwind's default palette (`text-red-600`) must FAIL, even though it resolves fine.
 
 ## 6. Known defect in the upstream design
 
