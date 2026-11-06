@@ -126,13 +126,13 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **Independent Test**: register, sign out, sign in, run a full password reset — every step matches its artboard and every field, rule and message is identical to before.
 
-- [ ] T047 [US4] Restyle `mobile/src/screens/student/LoginScreen.tsx` against the `Login` artboard; migrate its `text-red-600` and `text-slate-500` classes at lines 89, 91, 94
-- [ ] T048 [US4] Restyle `mobile/src/screens/student/RegisterScreen.tsx` against the `Register` artboard. **Keep the `gender` control** — the artboard omits it but the API requires it; render it in the artboard's own segmented-chip pattern (FR-030, research R6)
-- [ ] T049 [P] [US4] Restyle `mobile/src/screens/student/ForgotPasswordRequestScreen.tsx` from the `Login` input + primary-button pattern (FR-029 — no artboard)
+- [X] T047 [US4] Restyle `mobile/src/screens/student/LoginScreen.tsx` against the `Login` artboard; migrate its `text-red-600` and `text-slate-500` classes at lines 89, 91, 94
+- [X] T048 [US4] Restyle `mobile/src/screens/student/RegisterScreen.tsx` against the `Register` artboard. **Keep the `gender` control** — the artboard omits it but the API requires it; render it in the artboard's own segmented-chip pattern (FR-030, research R6)
+- [X] T049 [P] [US4] Restyle `mobile/src/screens/student/ForgotPasswordRequestScreen.tsx` from the `Login` input + primary-button pattern (FR-029 — no artboard)
 - [X] T050 [P] [US4] Restyle `mobile/src/screens/student/ForgotPasswordVerifyScreen.tsx` using `OtpInput` from T039 (FR-029 — no artboard; pattern source is the `Fulfilment` board)
 - [X] T051 [US4] Route `mobile/src/navigation/AuthNavigator.tsx:44`'s inline `headerStyle` through `navigationHeader.ts` as a **third, auth-specific option set preserving its current background and tint**. It must NOT point at the brand header — commit `c2b7b0c` deliberately made the Login header match the screen background
 - [X] T052 [US4] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/student/{Login,Register,ForgotPasswordRequest,ForgotPasswordVerify}Screen.tsx` and `mobile/src/navigation/AuthNavigator.tsx`
-- [ ] T053 [US4] Manual review of all four screens against the `Login` and `Register` artboards, plus regression path 1 in `quickstart.md`
+- [X] T053 [US4] Manual review of all four screens against the `Login` and `Register` artboards, plus regression path 1 in `quickstart.md`
 
 **Checkpoint**: US4 complete and independently demoable.
 

@@ -73,11 +73,16 @@ export function ForgotPasswordVerifyScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen title="Verify OTP" specRef="UI Design §4.4">
-      <View className="gap-3">
-        <Text className="text-body text-text-secondary">
-          Enter the code sent to your device, along with your new password.
-        </Text>
+    <Screen title="Verify OTP">
+      <View className="gap-lg">
+        {/* No artboard (FR-029) — the code entry borrows the `Fulfilment`
+            board's segmented boxes, the rest is Login's field pattern. */}
+        <View className="gap-xs">
+          <Text className="text-title text-text-primary">Check your messages</Text>
+          <Text className="text-body text-text-secondary">
+            Enter the code sent to your device, along with your new password.
+          </Text>
+        </View>
         {/* Same segmented entry as staff fulfilment (FR-029 — this screen
             has no artboard and borrows the established pattern), but in
             ALPHANUMERIC mode: the reset code is 6 characters, not 6 digits.
