@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { HeroCard } from '../../components/HeroCard';
 import { InfoCard, InfoRow } from '../../components/InfoCard';
-import { accents, colors, radius } from '../../theme/tokens';
+import { colors, radius } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
 import type { paths } from '../../api/generated/015-contact-us-page';
 
@@ -98,7 +98,7 @@ export function ContactUsScreen() {
           <InfoRow
             label="Contact person"
             value={contactUs.contact_person}
-            icon={{ glyph: '👤', soft: accents.neutral.soft, strong: accents.neutral.strong }}
+            icon={{ glyph: '👤', accent: 'neutral' }}
           />
           {/* Phone and email have opened the dialler and mail client since
               specs/015. FR-038 bars ADDING that affordance; removing it
@@ -108,20 +108,20 @@ export function ContactUsScreen() {
             <InfoRow
               label="Phone"
               value={contactUs.phone_number}
-              icon={{ glyph: '📞', soft: accents.mint.soft, strong: accents.mint.strong }}
+              icon={{ glyph: '📞', accent: 'mint' }}
             />
           </Pressable>
           <Pressable onPress={() => void Linking.openURL(`mailto:${contactUs.email}`)} hitSlop={8}>
             <InfoRow
               label="Email"
               value={contactUs.email}
-              icon={{ glyph: '✉️', soft: accents.violet.soft, strong: accents.violet.strong }}
+              icon={{ glyph: '✉️', accent: 'violet' }}
             />
           </Pressable>
           <InfoRow
             label="Address"
             value={contactUs.address}
-            icon={{ glyph: '📍', soft: accents.sun.soft, strong: accents.sun.strong }}
+            icon={{ glyph: '📍', accent: 'sun' }}
             last
           />
         </InfoCard>

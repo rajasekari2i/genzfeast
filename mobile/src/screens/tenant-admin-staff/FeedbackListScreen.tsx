@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { colors, radius } from '../../theme/tokens';
 import { CategoryChip } from '../../components/CategoryChip';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -97,6 +98,7 @@ export function FeedbackListScreen({ navigation }: Props) {
       ) : (
         <FlatList
           className="flex-1"
+          contentContainerStyle={{ gap: 10 }}
           data={feedback}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -104,18 +106,19 @@ export function FeedbackListScreen({ navigation }: Props) {
           }
           renderItem={({ item }) => (
             <Pressable
-              className="border-b border-border py-3"
+              style={{ borderRadius: radius['3xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+              className="bg-surface p-md gap-xs active:opacity-80"
               onPress={() => navigation.navigate('FeedbackDetail', { feedbackId: item.id })}
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-body-bold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-bodyBold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
                 <View
-                  className={`rounded-pill px-3 py-1 border ${
-                    item.status === 'resolved' ? 'border-mint-strong bg-mint-soft' : 'border-sun-dot bg-sun-soft'
+                  className={`rounded-pill px-sm py-xs ${
+                    item.status === 'resolved' ? 'bg-mint-soft' : 'bg-sun-soft'
                   }`}
                 >
                   <Text
-                    className={`text-caption ${
+                    className={`text-eyebrow ${
                       item.status === 'resolved' ? 'text-mint-strong' : 'text-sun-strong'
                     }`}
                   >

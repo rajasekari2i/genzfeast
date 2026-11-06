@@ -187,24 +187,24 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **Independent Test**: as staff, work the queue and verify a code; as Company Admin, create and edit a product, category, department and user, and resolve feedback. Every screen matches its artboard and behaves as today.
 
-- [ ] T075 [US7] Restyle `mobile/src/screens/tenant-admin-staff/DashboardScreen.tsx` against the `Dashboard` artboard — stat cards keep their live counts. **No open/closed toggle may be added** (FR-036); migrate the `fontSize: 22` at line 94 and `rounded-full` at line 91
-- [ ] T076 [US7] Restyle `mobile/src/screens/tenant-admin-staff/ProductListScreen.tsx` admin variant against `AdminProducts` — full CRUD; migrate the inline `fontWeight: '700'`/`fontSize: 15` at line 84
+- [X] T075 [US7] Restyle `mobile/src/screens/tenant-admin-staff/DashboardScreen.tsx` against the `Dashboard` artboard — stat cards keep their live counts. **No open/closed toggle may be added** (FR-036); migrate the `fontSize: 22` at line 94 and `rounded-full` at line 91
+- [X] T076 [US7] Restyle `mobile/src/screens/tenant-admin-staff/ProductListScreen.tsx` admin variant against `AdminProducts` — full CRUD; migrate the inline `fontWeight: '700'`/`fontSize: 15` at line 84
 - [X] T077 [US7] Restyle the staff variant of `ProductListScreen.tsx` against `StaffProducts` — **sold-out `SwitchRow` only**, no create, edit or delete (depends on T040, T076)
-- [ ] T078 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/ProductCreateEditScreen.tsx` from the `UserForm`/`CategoryForm` patterns (FR-029 — no artboard); migrate its two `font-semibold` at lines 219, 249
-- [ ] T079 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/CategoryListScreen.tsx` against `Categories`; migrate the inline `fontWeight`/`fontSize` at line 66
-- [ ] T080 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/CategoryCreateEditScreen.tsx` against `CategoryForm`; migrate its `font-semibold` at line 87
-- [ ] T081 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/DepartmentListScreen.tsx` against `Departments`; migrate the inline `fontWeight`/`fontSize` at line 64
-- [ ] T082 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/DepartmentCreateEditScreen.tsx` against `DepartmentForm`; migrate its `font-semibold` at line 87
-- [ ] T083 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/UserListScreen.tsx` against `Users`; migrate the inline `fontWeight`/`fontSize` at line 57
-- [ ] T084 [US7] Restyle `mobile/src/screens/tenant-admin-staff/UserCreateEditScreen.tsx` against `UserForm`. Role options stay **Company Staff / Student / Teaching / Non-Teaching — no Company Admin** (FR-039); Category stays required when the role is Student (FR-040); migrate its `font-semibold` at line 221
-- [ ] T085 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/IncomingOrdersScreen.tsx` against `IncomingOrders` — oldest-first order preserved
+- [X] T078 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/ProductCreateEditScreen.tsx` from the `UserForm`/`CategoryForm` patterns (FR-029 — no artboard); migrate its two `font-semibold` at lines 219, 249
+- [X] T079 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/CategoryListScreen.tsx` against `Categories`; migrate the inline `fontWeight`/`fontSize` at line 66
+- [X] T080 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/CategoryCreateEditScreen.tsx` against `CategoryForm`; migrate its `font-semibold` at line 87
+- [X] T081 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/DepartmentListScreen.tsx` against `Departments`; migrate the inline `fontWeight`/`fontSize` at line 64
+- [X] T082 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/DepartmentCreateEditScreen.tsx` against `DepartmentForm`; migrate its `font-semibold` at line 87
+- [X] T083 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/UserListScreen.tsx` against `Users`; migrate the inline `fontWeight`/`fontSize` at line 57
+- [X] T084 [US7] Restyle `mobile/src/screens/tenant-admin-staff/UserCreateEditScreen.tsx` against `UserForm`. Role options stay **Company Staff / Student / Teaching / Non-Teaching — no Company Admin** (FR-039); Category stays required when the role is Student (FR-040); migrate its `font-semibold` at line 221
+- [X] T085 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/IncomingOrdersScreen.tsx` against `IncomingOrders` — oldest-first order preserved
 - [X] T086 [US7] Restyle `mobile/src/screens/tenant-admin-staff/OrderFulfilmentScreen.tsx` against `Fulfilment` using `OtpInput`. **The pickup code is never displayed to staff**; a wrong code clears the boxes and changes nothing (FR-018, depends on T039)
-- [ ] T087 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/FeedbackListScreen.tsx` against `FeedbackReview`; migrate its `text-primary` at line 132 and `font-semibold` at line 118
-- [ ] T088 [US7] Restyle `mobile/src/screens/tenant-admin-staff/FeedbackDetailScreen.tsx` against `FeedbackDetail`. **Resolve stays one-way — no path back to unresolved** (FR-041); migrate its amber/green tints at lines 110, 114, 115 to `accents.sun`/`accents.mint`
-- [ ] T089 [US7] Restyle the company_admin and company_staff drawer variants in `mobile/src/navigation/AppShell.tsx` against `AdminDrawer` and `StaffDrawer`; menu items byte-identical to today (depends on T061)
-- [ ] T090 [P] [US7] Restyle `mobile/src/navigation/TenantAdminStaffNavigator.tsx`
+- [X] T087 [P] [US7] Restyle `mobile/src/screens/tenant-admin-staff/FeedbackListScreen.tsx` against `FeedbackReview`; migrate its `text-primary` at line 132 and `font-semibold` at line 118
+- [X] T088 [US7] Restyle `mobile/src/screens/tenant-admin-staff/FeedbackDetailScreen.tsx` against `FeedbackDetail`. **Resolve stays one-way — no path back to unresolved** (FR-041); migrate its amber/green tints at lines 110, 114, 115 to `accents.sun`/`accents.mint`
+- [X] T089 [US7] Restyle the company_admin and company_staff drawer variants in `mobile/src/navigation/AppShell.tsx` against `AdminDrawer` and `StaffDrawer`; menu items byte-identical to today (depends on T061)
+- [X] T090 [P] [US7] Restyle `mobile/src/navigation/TenantAdminStaffNavigator.tsx`
 - [X] T091 [US7] Remove any remaining `font-*` weight classes and off-palette colour classes in `mobile/src/screens/tenant-admin-staff/*.tsx` and `mobile/src/navigation/TenantAdminStaffNavigator.tsx`
-- [ ] T092 [US7] Manual review against all 13 back-of-house artboards plus `AdminDrawer` and `StaffDrawer`, and regression paths 4–6 in `quickstart.md`
+- [X] T092 [US7] Manual review against all 13 back-of-house artboards plus `AdminDrawer` and `StaffDrawer`, and regression paths 4–6 in `quickstart.md`
 
 **Checkpoint**: all seven user stories complete.
 

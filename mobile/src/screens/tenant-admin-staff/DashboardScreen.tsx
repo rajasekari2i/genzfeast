@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { SectionLabel } from '../../components/AdminList';
+import { IconTile, SectionLabel } from '../../components/AdminList';
 import { createTypedClient, getCurrentUser } from '../../api/client';
-import { accents, colors, radius, typography } from '../../theme/tokens';
+import { colors, radius, typography } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths as ProductPaths } from '../../api/generated/004-company-admin-product-crud';
 import type { paths as CorePaths } from '../../api/generated/001-company-role-user-setup';
@@ -134,12 +134,7 @@ export function DashboardScreen({ navigation }: Props) {
                   }}
                   className="bg-surface p-md gap-md active:opacity-80"
                 >
-                  <View
-                    style={{ backgroundColor: accents.neutral.soft, borderRadius: radius['2xl'] }}
-                    className="w-control h-control items-center justify-center"
-                  >
-                    <Text style={{ fontSize: typography.subtitle.fontSize }}>{card.icon}</Text>
-                  </View>
+                  <IconTile glyph={card.icon} accent="neutral" size="lg" />
                   <View>
                     <Text className="text-subtitleSm text-text-primary">{card.label}</Text>
                     {loadingCounts ? (

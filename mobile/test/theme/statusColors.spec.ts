@@ -46,10 +46,17 @@ describe('order status presentation', () => {
     expect(resolveStatus('wat').label).toBe('wat');
   });
 
-  it('no screen imports the accent families directly (O3)', () => {
-    const offenders = walk(path.join(SRC, 'screens')).filter((f) =>
-      /from\s+['"].*theme\/accents['"]/.test(fs.readFileSync(f, 'utf8')),
-    );
+  it('no screen picks an accent family itself (O3)', () => {
+    // The rule is "do not choose an accent colour ad hoc", not "never touch
+    // the module": `productTint(id)` is a deterministic helper that returns
+    // the same tint for the same product, which is precisely the kind of
+    // centralisation O3 exists to enforce. What is forbidden is importing
+    // the `accents` map and reaching into a family by hand.
+    const offenders = walk(path.join(SRC, 'screens')).filter((f) => {
+      const src = fs.readFileSync(f, 'utf8');
+      const imports = src.match(/import\s*\{([^}]*)\}\s*from\s*['"][^'"]*theme\/(accents|tokens)['"]/g) ?? [];
+      return imports.some((i) => /\baccents\b/.test(i.split('from')[0]));
+    });
     expect(offenders.map((f) => path.relative(SRC, f))).toEqual([]);
   });
 });

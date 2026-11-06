@@ -5,9 +5,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { RowActionButton } from '../../components/RowActionButton';
 import { SwitchRow } from '../../components/SwitchRow';
+import { DietaryMark } from '../../components/DietaryMark';
+import { productTint } from '../../theme/accents';
 import { createTypedClient, getCurrentUser } from '../../api/client';
 import { formatRupees } from '../../theme/money';
-import { colors } from '../../theme/tokens';
+import { colors, radius } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/004-company-admin-product-crud';
 
@@ -157,6 +159,7 @@ export function ProductListScreen({ navigation }: Props) {
       ) : (
         <FlatList
           className="flex-1"
+          contentContainerStyle={{ gap: 10 }}
           data={products}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -168,18 +171,34 @@ export function ProductListScreen({ navigation }: Props) {
           onEndReached={handleEndReached}
           ListFooterComponent={loadingMore ? <ActivityIndicator className="my-3" /> : null}
           renderItem={({ item: product }) => (
-              <View className="flex-row items-center gap-3 border-b border-border py-2">
+              <View
+                style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+                className="flex-row items-center gap-sm bg-surface p-sm"
+              >
                 {product.image_url ? (
-                  <Image source={{ uri: product.image_url }} className="w-14 h-14 rounded-md" resizeMode="cover" />
+                  <Image
+                    source={{ uri: product.image_url }}
+                    style={{ borderRadius: radius.xl }}
+                    className="w-control h-control"
+                    resizeMode="cover"
+                  />
                 ) : (
-                  <View className="w-14 h-14 rounded-md bg-neutral-soft items-center justify-center">
+                  <View
+                    style={{ backgroundColor: productTint(product.id), borderRadius: radius.xl }}
+                    className="w-control h-control items-center justify-center"
+                  >
                     <Text>🍽️</Text>
                   </View>
                 )}
-                <View className="flex-1">
-                  <Text className="text-body-bold text-text-primary" numberOfLines={1}>
-                    {product.is_veg ? '🟢' : '🔴'} {product.name}
-                  </Text>
+                <View className="flex-1 gap-xs">
+                  <View className="flex-row items-center gap-xs">
+                    {/* Shape as well as colour (FR-005) — the previous
+                        coloured circles were colour-only. */}
+                    <DietaryMark isVeg={product.is_veg} />
+                    <Text className="flex-1 text-bodyBold text-text-primary" numberOfLines={1}>
+                      {product.name}
+                    </Text>
+                  </View>
                   <Text className="text-price text-text-primary">{formatRupees(product.price)}</Text>
                 </View>
                 {/* FR-019: the sold-out control. State is conveyed by the

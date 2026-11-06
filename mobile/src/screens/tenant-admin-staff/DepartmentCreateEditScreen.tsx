@@ -3,6 +3,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { FormField } from '../../components/FormField';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/001-company-role-user-setup';
@@ -68,9 +69,9 @@ export function DepartmentCreateEditScreen({ route, navigation }: Props) {
 
   return (
     <Screen title={isEdit ? 'Edit Department' : 'Add Department'} specRef="UI Design §5.4">
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
+      <View className="gap-md">
+        <FormField
+          label="Department name"
           placeholder="Name"
           value={name}
           onChangeText={setName}

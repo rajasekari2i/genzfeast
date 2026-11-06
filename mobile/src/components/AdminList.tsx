@@ -12,6 +12,33 @@ import { accents, colors, radius, type AccentName } from '../theme/tokens';
  * that sit below it on the warm-grey ground.
  */
 
+/**
+ * A square accent tile holding a glyph. Callers pass an accent NAME, never
+ * colours — contract O3: a screen must not choose an accent family by hand,
+ * or the families drift apart again.
+ */
+export function IconTile({
+  glyph,
+  accent = 'neutral',
+  size = 'sm',
+}: {
+  glyph: string;
+  accent?: AccentName;
+  size?: 'sm' | 'lg';
+}) {
+  const pair = accents[accent];
+  return (
+    <View
+      style={{ backgroundColor: pair.soft, borderRadius: size === 'lg' ? radius['2xl'] : radius.md }}
+      className={`${size === 'lg' ? 'w-control h-control' : 'w-xl h-xl'} items-center justify-center`}
+    >
+      <Text style={{ color: pair.strong }} className={size === 'lg' ? 'text-subtitle' : 'text-labelLg'}>
+        {glyph}
+      </Text>
+    </View>
+  );
+}
+
 /** Uppercase count/section label, e.g. "4 CATEGORIES". */
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return <Text className="text-eyebrow text-text-secondary">{String(children).toUpperCase()}</Text>;

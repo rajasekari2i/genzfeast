@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { colors, radius } from '../theme/tokens';
+import { colors, radius, type AccentName } from '../theme/tokens';
+import { IconTile } from './AdminList';
 
 /**
  * The white read-only detail list the `Profile` and `ContactUs` artboards
@@ -29,8 +30,11 @@ export function InfoRow({
 }: {
   label: string;
   value: string;
-  /** Optional leading tile, as Contact Us uses for each detail type. */
-  icon?: { glyph: string; soft: string; strong: string };
+  /**
+   * Optional leading tile. The caller names a glyph and an accent FAMILY,
+   * never colours — contract O3 keeps family selection out of screens.
+   */
+  icon?: { glyph: string; accent?: AccentName };
   last?: boolean;
   /** Trailing note on the label, e.g. the lock on a read-only username. */
   note?: string;
@@ -40,16 +44,7 @@ export function InfoRow({
       style={{ borderBottomWidth: last ? 0 : 1, borderBottomColor: colors.border }}
       className="flex-row items-center gap-sm px-md py-sm min-h-touch"
     >
-      {icon ? (
-        <View
-          style={{ backgroundColor: icon.soft, borderRadius: radius.md }}
-          className="w-xl h-xl items-center justify-center"
-        >
-          <Text style={{ color: icon.strong }} className="text-labelLg">
-            {icon.glyph}
-          </Text>
-        </View>
-      ) : null}
+      {icon ? <IconTile glyph={icon.glyph} accent={icon.accent} /> : null}
       <View className="flex-1 gap-xs">
         <Text className="text-caption text-text-secondary">
           {label}

@@ -5,6 +5,7 @@ import { Screen } from '../../components/Screen';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { Dropdown } from '../../components/Dropdown';
 import { PasswordInput } from '../../components/PasswordInput';
+import { FormField } from '../../components/FormField';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/001-company-role-user-setup';
@@ -161,29 +162,32 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
 
   return (
     <Screen title={isEdit ? 'Edit User' : 'Create User'} specRef="UI Design §5.4">
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Username (mobile number)"
+      <View className="gap-md">
+        <FormField label="Name" placeholder="Arun Prakash" value={name} onChangeText={setName} />
+        <FormField
+          label="Username (mobile number)"
+          placeholder="9876543210"
           keyboardType="phone-pad"
           autoCapitalize="none"
           value={username}
           onChangeText={setUsername}
         />
-        <PasswordInput
-          placeholder={isEdit ? 'New password (leave blank to keep current)' : 'Temporary password (min 8 characters)'}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Email"
+        <View className="gap-xs">
+          <Text className="text-label text-text-body">
+            {isEdit ? 'New password' : 'Temporary password'}
+          </Text>
+          <PasswordInput
+            placeholder={isEdit ? 'Leave blank to keep current' : 'Min 8 characters'}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <Text className="text-caption text-text-secondary">
+            Min 8 characters. When editing, leave blank to keep the current one.
+          </Text>
+        </View>
+        <FormField
+          label="Email"
+          placeholder="arun@college.edu"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
