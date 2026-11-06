@@ -41,6 +41,10 @@ const colors = {
   textBody: '#4A4756',
   textSecondary: '#5B5866',
   textOnDark: '#D6D4DD',
+  // A raised panel ON the espresso ground — the drawer's identity card and
+  // the My Orders pickup-code panel both sit on this rather than on a
+  // transparency, so the elevation survives on any backdrop.
+  espressoRaised: '#3F2C22',
   link: RUST,
 
   // Two grounds (research R1): cream for student-facing screens, warm grey

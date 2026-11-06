@@ -150,13 +150,13 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [X] T057 [US5] Restyle `mobile/src/screens/student/CartScreen.tsx`; migrate its brand-as-foreground ± controls at lines 153, 157 to `espresso`
 - [X] T058 [US5] Restyle `mobile/src/screens/student/OrderDetailScreen.tsx` for the `payment_failed` state against the `OrderDetail` artboard; migrate the brand-as-foreground code at line 154
 - [X] T059 [US5] Restyle `OrderDetailScreen.tsx` for the `order_placed` state against the `OrderSuccess` artboard — **full-bleed brand ground**, six `OtpDisplay` cells. No new screen or route (depends on T058)
-- [ ] T060 [US5] Restyle `mobile/src/screens/student/MyOrdersScreen.tsx` against the `MyOrders` artboard; Upcoming/History split unchanged
+- [X] T060 [US5] Restyle `mobile/src/screens/student/MyOrdersScreen.tsx` against the `MyOrders` artboard; Upcoming/History split unchanged
 - [X] T061 [US5] Rewrite the drawer content in `mobile/src/navigation/AppShell.tsx` to show **name and canteen only**. The role currently renders at line 65 and must be **removed** (FR-027)
-- [ ] T062 [US5] Restyle the student drawer variant in `AppShell.tsx` against the `Drawer` artboard; menu items byte-identical to today (FR-028, depends on T061)
+- [X] T062 [US5] Restyle the student drawer variant in `AppShell.tsx` against the `Drawer` artboard; menu items byte-identical to today (FR-028, depends on T061)
 - [X] T063 [P] [US5] Give `mobile/src/navigation/RootNavigator.tsx` a declared surface — it hardcodes `bg-background` on its loading view at line 18
-- [ ] T064 [P] [US5] Restyle `mobile/src/navigation/StudentNavigator.tsx`
+- [X] T064 [P] [US5] Restyle `mobile/src/navigation/StudentNavigator.tsx`
 - [X] T065 [US5] Remove the `font-*` weight classes and migrate the off-palette colour classes in `mobile/src/screens/student/{Home,Cart,OrderDetail,MyOrders}Screen.tsx` and `mobile/src/navigation/{AppShell,RootNavigator,StudentNavigator}.tsx`
-- [ ] T066 [US5] Manual review against the `Home`, `Drawer`, `Cart`, `OrderSuccess`, `OrderDetail` and `MyOrders` artboards, plus regression paths 2–3 in `quickstart.md`
+- [X] T066 [US5] Manual review against the `Home`, `Drawer`, `Cart`, `OrderSuccess`, `OrderDetail` and `MyOrders` artboards, plus regression paths 2–3 in `quickstart.md`
 
 **Checkpoint**: US5 complete — the headline business case (SC-001) is demonstrable.
 

@@ -1,11 +1,9 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import {
   createDrawerNavigator,
   DrawerContentComponentProps,
   DrawerContentScrollView,
-  DrawerItem,
-  DrawerItemList,
 } from '@react-navigation/drawer';
 import { StudentNavigator } from './StudentNavigator';
 import { TenantAdminStaffNavigator } from './TenantAdminStaffNavigator';
@@ -14,7 +12,7 @@ import { ContactUsNavigator } from './ContactUsNavigator';
 import { FeedbackNavigator } from './FeedbackNavigator';
 import { useAuth } from '../auth/AuthContext';
 import { getTenantDisplayName } from '../config/tenant';
-import { colors } from '../theme/tokens';
+import { colors, radius, spacing } from '../theme/tokens';
 
 const Drawer = createDrawerNavigator();
 
@@ -60,30 +58,99 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
   const { user, signOut } = useAuth();
   const canteen = getTenantDisplayName();
   const initial = (user?.name ?? 'G').trim().charAt(0).toUpperCase();
+  const activeRoute = props.state.routeNames[props.state.index];
 
   return (
-    <DrawerContentScrollView {...props}>
-      {/* FR-027: the user's NAME and their CANTEEN — never their role. The
-          previous revision rendered `user.role` here, which told the user
-          something about the permission system rather than about
-          themselves, and read as debug output in a product surface. */}
-      <View className="px-md pb-md mb-sm border-b border-border flex-row items-center gap-sm">
-        <View className="w-touch h-touch rounded-pill bg-espresso items-center justify-center">
-          <Text className="text-subtitle text-surface">{initial}</Text>
+    <DrawerContentScrollView
+      {...props}
+      style={{ backgroundColor: colors.espresso }}
+      contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.lg }}
+    >
+      {/* Brand row — "Genz" light, "Feast" in the tenant brand colour. */}
+      <View className="flex-row items-center justify-between px-sm pb-md">
+        <View className="flex-row items-center gap-sm">
+          <View style={{ borderRadius: radius.sm }} className="w-xl h-xl overflow-hidden">
+            <Image
+              source={require('../../assets/brand/gf-icon-v2.png')}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+              accessibilityLabel=""
+            />
+          </View>
+          <Text className="text-subtitle text-surface">
+            Genz<Text style={{ color: colors.primary }}>Feast</Text>
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => props.navigation.closeDrawer()}
+          accessibilityRole="button"
+          accessibilityLabel="Close menu"
+          style={{ backgroundColor: colors.espressoRaised }}
+          className="w-touch h-touch rounded-pill items-center justify-center"
+        >
+          <Text className="text-bodyBold text-surface">✕</Text>
+        </Pressable>
+      </View>
+
+      {/* Identity card — the user's NAME and their CANTEEN. Never the role
+          (FR-027): the previous revision printed `user.role` here, which is
+          a permission-system value, not something the user recognises. */}
+      <View
+        style={{ backgroundColor: colors.espressoRaised, borderRadius: radius['4xl'] }}
+        className="flex-row items-center gap-sm p-sm mb-md"
+      >
+        <View
+          style={{ backgroundColor: colors.primary }}
+          className="w-field h-field rounded-pill items-center justify-center"
+        >
+          <Text className="text-subtitle text-espresso">{initial}</Text>
         </View>
         <View className="flex-1">
-          <Text className="text-bodyBold text-text-primary" numberOfLines={1}>
+          <Text className="text-price text-surface" numberOfLines={1}>
             {user?.name ?? 'GenzFeast'}
           </Text>
           {canteen ? (
-            <Text className="text-caption text-text-secondary" numberOfLines={1}>
+            <Text className="text-caption text-text-on-dark" numberOfLines={1}>
               {canteen}
             </Text>
           ) : null}
         </View>
       </View>
-      <DrawerItemList {...props} />
-      <DrawerItem label="Logout" onPress={() => void signOut()} labelStyle={{ color: colors.link }} />
+
+      {/* Menu items. The active item is brand-filled with espresso text; the
+          rest are plain on the espresso panel. */}
+      <View className="gap-xs">
+        {props.state.routeNames.map((name) => {
+          const active = name === activeRoute;
+          return (
+            <Pressable
+              key={name}
+              onPress={() => props.navigation.navigate(name)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              style={{
+                backgroundColor: active ? colors.primary : 'transparent',
+                borderRadius: radius.xl,
+              }}
+              className="h-control px-md flex-row items-center justify-between"
+            >
+              <Text className={active ? 'text-bodyBold text-espresso' : 'text-body text-surface'}>
+                {name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Pressable
+        onPress={() => void signOut()}
+        accessibilityRole="button"
+        className="h-control px-md mt-md flex-row items-center"
+      >
+        <Text style={{ color: colors.primary }} className="text-bodyBold">
+          Logout
+        </Text>
+      </Pressable>
     </DrawerContentScrollView>
   );
 }
@@ -101,8 +168,10 @@ export function AppShell() {
   return (
     <Drawer.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: colors.surface,
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.espresso,
+        drawerStyle: { backgroundColor: colors.espresso, width: 316 },
+        drawerType: 'front',
       }}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
     >

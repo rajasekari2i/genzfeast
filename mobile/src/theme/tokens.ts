@@ -34,6 +34,8 @@ export interface ColorTokens {
   textSecondary: string;
   /** Text on an espresso ground. */
   textOnDark: string;
+  /** A raised panel on the espresso ground. */
+  espressoRaised: string;
   /** Links and brand-coloured text. The brand itself never clears 4.5:1 as a foreground. */
   link: string;
   /** Student-facing ground. */
