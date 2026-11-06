@@ -96,7 +96,7 @@ A user who forgets their password, changes it, edits their profile, launches the
 - **A dish has no photo.** The menu grid must show a designed placeholder, not an empty box or a broken-image icon.
 - **A dish name is long.** In a two-column grid each card is roughly half the previous width. Names must truncate cleanly on one line and descriptions to a fixed height, so cards in a row stay the same height.
 - **A canteen has one dish, or none.** The grid must not leave a visually broken half-row, and the empty state must be designed.
-- **The display typeface fails to load.** Headings must fall back to a readable face rather than rendering invisibly or collapsing layout.
+- **A bundled typeface is missing or fails to resolve.** A font file absent at build time must fail the build. A face that fails to resolve at runtime must fall back to a readable system face rather than rendering invisibly or collapsing layout. These are different failures with different handling, and the distinction must be explicit.
 - **The device is set to a large system font size.** Pickup-code digits, status chips and buttons must remain legible and un-clipped.
 - **A very small screen.** The two-column grid must still render two readable columns at the narrowest supported width.
 - **A status value outside the four designed ones.** Any order status without a designed chip must still render a readable, non-blank label.
@@ -111,14 +111,16 @@ A user who forgets their password, changes it, edits their profile, launches the
 
 - **FR-001**: The app MUST define a single shared set of design foundations — colours, typefaces, text styles, spacing and corner radii — that every screen and component reads from.
 - **FR-002**: No screen or component MUST define a colour, text style or corner radius that the shared foundations already define.
-- **FR-003**: The palette MUST comprise: tangerine `#FF6B35` (brand), espresso `#2B1D16` (primary text and primary action fill), cream `#FFF8F1` (app ground), navy `#183153` (back-of-house chrome), sun `#FFC857` (highlights and pending), mint `#0B7A55` (veg and delivered), plus the supporting neutrals `#4A4756`, `#5B5866`, `#F1E6DA`, `#EFE3D6`, `#CFC6BB`, `#F4EEE7`, `#6E6A78`, `#D6D4DD` and link `#B23C0E`.
+- **FR-003**: The palette MUST comprise: tangerine `#FF6B35` (brand), espresso `#2B1D16` (primary text and primary action fill), **two grounds** — cream `#FFF8F1` for student-facing screens and warm grey `#F5F3EF` for back-of-house (Company Admin and Staff) screens — navy `#183153` (back-of-house chrome), sun `#FFC857` (highlights), mint `#0B7A55` (veg), plus the supporting neutrals `#4A4756`, `#5B5866`, `#F1E6DA`, `#EFE3D6`, `#CFC6BB`, `#F4EEE7`, `#6E6A78`, `#D6D4DD` and link `#B23C0E`.
+- **FR-003a**: Soft-accent pairs MUST be defined once and reused by status chips, icon tiles and product-image tints alike, in seven families: tangerine, sun, mint, red, violet, blue and neutral. No component may define its own accent colour.
 - **FR-004**: Order status MUST be presented as a labelled chip with a matching dot, in four defined pairings: payment pending `#FFF1D6`/`#8A5300`/`#F59E0B`; order placed `#FFE6DA`/`#B23C0E`/`#FF6B35`; payment failed `#FDE2E1`/`#B42318`/`#DC2626`; delivered `#DDF4EA`/`#0B6B4B`/`#16A34A`.
 - **FR-005**: Dietary marks MUST use mint `#0B7A55` for veg and `#9A3412` for non-veg, each a bordered glyph that differs in shape as well as colour.
 - **FR-006**: The app MUST render a display typeface (Bricolage Grotesque) for headings and a body typeface (Inter) for everything else, both shipped with the app so they render without network access.
-- **FR-007**: The text scale MUST provide: display 34/800 weight with tightened tracking; title 22/700; price and labels 16/600; body 14/400; caption 12; and an uppercase eyebrow style at 12/700 with widened tracking.
-- **FR-008**: The corner-radius scale MUST provide the eight steps 10, 14, 16, 18, 22, 24, 28 and fully-rounded.
+- **FR-007**: The text scale MUST provide fifteen styles across two families. The display family (Bricolage Grotesque) MUST be used at a single weight for `hero` 48, `display` 34, `title` 28, `titleSm` 24, `subtitle` 20 and `subtitleSm` 17. The body family (Inter) MUST provide `price` 16, `bodyLg` 16, `body` 15, `bodyBold` 15, `labelLg` 14, `label` 13, `eyebrow` 12 (uppercase, widened tracking), `caption` 12 and `captionSm` 11.
+- **FR-007a**: Because the platform selects a bundled face by file name rather than by numeric weight, each weight MUST ship as its own font family, and **no text style may set a numeric font weight**. Weight is carried by the family, not by a style property. A style that sets both a bundled family and a numeric weight of 700 or above silently renders in the system font.
+- **FR-008**: The corner-radius scale MUST provide twelve steps: 3 (dietary glyph), 8, 10, 12, 14, 16, 18, 20, 22, 24, 28 and fully-rounded.
 - **FR-009**: Tangerine MUST remain the only value a canteen can override for its own branded build. Every other foundation value MUST be fixed across all canteens.
-- **FR-010**: The build MUST reject a canteen brand colour that fails the required contrast ratio against the text placed on it.
+- **FR-010**: A canteen brand colour that fails the required contrast ratio MUST be rejected at resolution time — the system warns and falls back to the default brand rather than applying an unreadable colour. The check MUST be additive: it evaluates the brand both as a fill behind text and as a foreground on each ground, and a colour failing either role is rejected.
 
 **Shared components**
 
@@ -160,13 +162,13 @@ A user who forgets their password, changes it, edits their profile, launches the
 ### Measurable Outcomes
 
 - **SC-001**: A student sees at least **three times as many dishes** without scrolling as in the current single-column menu (six versus two on a typical screen).
-- **SC-002**: **100% of the app's screens** render in the new design language — all 32, including the six with no supplied artboard.
+- **SC-002**: **100% of the app's screens** render in the new design language — all 27 screen files plus the role-routed navigation shell, including the six screens with no supplied artboard.
 - **SC-003**: **Zero behavioural differences** are observable between the current app and the refreshed app: every field, validation message, action outcome and navigation path is identical.
-- **SC-004**: **Zero hardcoded design values** remain in screens or components for any property the foundations define.
+- **SC-004**: **Zero hardcoded design values** remain in screens or components for any property the foundations define, and **zero styling class names remain that the foundations no longer define** — a name that silently stops applying is as much a defect as a hardcoded value.
 - **SC-005**: All body text meets a contrast ratio of **at least 4.5:1** against its background, and all large text at least **3:1**.
 - **SC-006**: Every interactive control meets the **44-unit minimum touch target**.
 - **SC-007**: A reviewer comparing each of the 26 designed screens against its artboard finds **no layout or hierarchy mismatch**.
-- **SC-008**: A canteen brand colour that would render button text unreadable is **rejected at build time**, not shipped.
+- **SC-008**: A canteen brand colour that would render text unreadable in **either** role — as a fill behind text, or as a foreground on a ground — is rejected and replaced by the default, with a warning. No unreadable brand colour is ever applied.
 - **SC-009**: The sold-out state is correctly identified by **every participant** in an informal review, without prompting.
 
 ---
@@ -180,6 +182,9 @@ A user who forgets their password, changes it, edits their profile, launches the
 - **The existing brand-override and contrast-check mechanism is retained**, with the contrast gate re-pointed at the new pairing (espresso text on the brand colour) rather than replaced.
 - **Bundling the two typefaces requires a platform build change** and therefore a fresh install rather than a reload; this is accepted and is sequenced first so that a font problem cannot block screen work.
 - **Android is the only target.** The project has no iOS build today, so iOS rendering is out of scope.
-- **Updated brand artwork supplied alongside the redesign** (app icon, full logo, white mark) replaces the current artwork.
+- **Updated brand artwork is out of scope for this feature.** The new icon, logo and white mark are committed to the repository but are not applied here; replacing the launcher icon is a platform-resource change no artboard covers, and is deferred.
 - **No automated visual-regression tooling exists**, so artboard fidelity is verified by structured human review against each artboard rather than by snapshot tests.
 - **Dark mode is not in scope.** The redesign defines a single light appearance.
+- **The Register artboard omits the required gender field.** The shipped app requires it; the artboard does not show it. Per the standing rule that the shipped app governs behaviour, the field is retained and styled to match the artboard's own segmented-chip pattern.
+- **Reverting this feature after release requires a new application build**, because bundled font files are platform assets rather than part of the reloadable bundle. There is no partial rollback: the change ships, and is withdrawn, as one unit.
+- **The application's styling is applied through utility class names, not only through the token module.** Changing or removing a class name that screens already use is therefore a breaking change even when nothing fails to compile.
