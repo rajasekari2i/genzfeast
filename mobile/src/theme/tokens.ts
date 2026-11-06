@@ -97,6 +97,9 @@ export type TypographyName =
 
 export type SpacingName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
+/** Control heights. `touch` (44) is the accessibility floor — FR-015. */
+export type SizeName = 'touch' | 'field' | 'control';
+
 export type RadiusName =
   | 'glyph' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | 'pill';
@@ -110,6 +113,7 @@ export const colors = raw.colors as unknown as ColorTokens;
 export const accents = raw.accents as unknown as Record<AccentName, AccentPair>;
 export const typography = raw.typography as unknown as Record<TypographyName, TypographyStyle>;
 export const spacing = raw.spacing as unknown as Record<SpacingName, number>;
+export const size = raw.size as unknown as Record<SizeName, number>;
 export const radius = raw.radius as unknown as Record<RadiusName, number>;
 
 /** The five bundled faces. theme/fonts.spec asserts every style resolves to one. */

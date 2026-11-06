@@ -85,9 +85,14 @@ module.exports = {
         'body-semi': [t.typography.label.fontFamily],
         'body-bold': [t.typography.bodyBold.fontFamily],
       },
-      spacing: Object.fromEntries(
-        Object.entries(t.spacing).map(([k, v]) => [k, `${v}px`]),
-      ),
+      // spacing feeds padding/margin AND the h-/w- scales, so the named
+      // control heights live here too: h-touch (44, the accessibility
+      // floor), h-field (48), h-control (52). A component never writes a
+      // raw size (contract O1).
+      spacing: {
+        ...Object.fromEntries(Object.entries(t.spacing).map(([k, v]) => [k, `${v}px`])),
+        ...Object.fromEntries(Object.entries(t.size).map(([k, v]) => [k, `${v}px`])),
+      },
       borderRadius: Object.fromEntries(
         Object.entries(t.radius).map(([k, v]) => [k, `${v}px`]),
       ),

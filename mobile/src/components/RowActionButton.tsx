@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, GestureResponderEvent, Pressable, Text } from 'react-native';
-import { colors } from '../theme/tokens';
+import { accents, colors } from '../theme/tokens';
 
 /**
  * A list card's Edit/Delete action, styled as the same rounded-pill chip the
@@ -8,9 +8,11 @@ import { colors } from '../theme/tokens';
  * UserListScreen's active/inactive) — not a bare emoji glyph, which renders
  * in its own full-color OS-drawn style regardless of the app's palette and
  * reads as visually foreign next to everything else on the card.
- * 'edit' uses the brand primary color; 'delete' reuses the exact Error Red
- * (#DC2626) statusColors.ts already uses for payment_failed — Tailwind's
- * built-in `red-600` is that same hex, so no new color is introduced.
+ * specs/017-ui-refresh: 'edit' now uses colors.link rather than the brand
+ * colour — the brand never clears 4.5:1 as a foreground (research R8), and
+ * link (#B23C0E) scores 5.63:1 on cream. 'delete' uses accents.red.strong
+ * rather than Tailwind's built-in red-600, which is off-palette and
+ * invisible to the token-discipline gate (contract O1).
  */
 export function RowActionButton({
   variant,
@@ -35,14 +37,13 @@ export function RowActionButton({
       hitSlop={8}
       disabled={disabled || loading}
       onPress={onPress}
-      className={`rounded-pill px-2 py-0.5 border active:opacity-70 ${
-        isDelete ? 'border-red-600' : 'border-primary'
-      }`}
+      style={{ borderColor: isDelete ? accents.red.strong : colors.link }}
+      className="rounded-pill px-sm min-h-touch justify-center border active:opacity-70"
     >
       {loading ? (
-        <ActivityIndicator size="small" color={isDelete ? '#DC2626' : colors.primary} />
+        <ActivityIndicator size="small" color={isDelete ? accents.red.strong : colors.link} />
       ) : (
-        <Text className={`text-caption font-semibold ${isDelete ? 'text-red-600' : 'text-primary'}`}>
+        <Text style={{ color: isDelete ? accents.red.strong : colors.link }} className="text-label">
           {isDelete ? 'Delete' : 'Edit'}
         </Text>
       )}

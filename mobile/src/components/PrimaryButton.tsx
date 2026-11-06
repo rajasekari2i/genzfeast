@@ -2,34 +2,57 @@ import React from 'react';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
 import { colors } from '../theme/tokens';
 
-// Shared high-contrast CTA — specs/013-blue-theme-visual-design FR-008.
-// Every primary action across all 3 surfaces (Add to Cart, Place Order, Pay
-// Now, Confirm, Save, ...) renders through this one component so the "main
-// action" on any screen is always visually consistent.
+/**
+ * Shared CTA — specs/017-ui-refresh FR-012, FR-013, FR-015.
+ *
+ * Two enabled variants:
+ *   'primary' — espresso fill, light label. The default action.
+ *   'brand'   — brand fill, espresso label. Reserved for the moments the
+ *               design makes brand-coloured (Pay Again, ADD).
+ *
+ * The disabled treatment differs by BORDER STYLE as well as colour — a
+ * dashed outline on a muted fill (FR-013). Colour alone is not an accessible
+ * distinction, and the previous solid-grey treatment relied on it.
+ *
+ * Loading and disabled both block onPress but are deliberately NOT
+ * chrome-equivalent: loading keeps the enabled fill (this action is
+ * happening) while disabled gets the dashed muted treatment (this action is
+ * unavailable). Otherwise neither a sighted user nor accessibilityState can
+ * tell them apart.
+ */
 export function PrimaryButton({
   label,
   onPress,
   disabled = false,
   loading = false,
   size = 'md',
+  variant = 'primary',
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  /** 'sm' for compact contexts like a ProductCard's ADD control. */
+  /** 'sm' still meets the 44-unit touch floor (FR-015). */
   size?: 'sm' | 'md';
+  variant?: 'primary' | 'brand';
 }) {
-  // Loading and disabled are interaction-equivalent (both block onPress) but
-  // deliberately NOT chrome-equivalent: loading keeps the enabled bg-primary
-  // fill (this action is happening, not unavailable) with a white spinner,
-  // while a plain disabled button gets the muted bg-border/text-secondary
-  // treatment — otherwise a user (sighted or via accessibilityState) cannot
-  // tell "in progress" from "cannot be used" from the button's chrome alone.
   const isInteractionDisabled = disabled || loading;
-  const isMutedStyle = disabled && !loading;
-  const paddingClass = size === 'sm' ? 'px-4 py-2' : 'px-6 py-3';
-  const textSizeClass = size === 'sm' ? 'text-caption' : 'text-button';
+  const isMuted = disabled && !loading;
+
+  const height = size === 'sm' ? 'h-touch' : 'h-control';
+  const padding = size === 'sm' ? 'px-md' : 'px-lg';
+
+  const fill = isMuted
+    ? 'bg-disabled-fill border border-dashed border-border-dashed'
+    : variant === 'brand'
+      ? 'bg-primary'
+      : 'bg-espresso';
+
+  const labelColor = isMuted
+    ? 'text-disabled-text'
+    : variant === 'brand'
+      ? 'text-espresso'
+      : 'text-surface';
 
   return (
     <Pressable
@@ -37,20 +60,12 @@ export function PrimaryButton({
       disabled={isInteractionDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isInteractionDisabled, busy: loading }}
-      className={`rounded-pill items-center justify-center active:opacity-80 ${paddingClass} ${
-        isMutedStyle ? 'bg-border' : 'bg-primary'
-      }`}
+      className={`${height} ${padding} ${fill} rounded-pill items-center justify-center active:opacity-80`}
     >
       {loading ? (
-        <ActivityIndicator color={colors.surface} size="small" />
+        <ActivityIndicator color={variant === 'brand' ? colors.espresso : colors.surface} size="small" />
       ) : (
-        <Text
-          className={`font-semibold text-center ${textSizeClass} ${
-            isMutedStyle ? 'text-text-secondary' : 'text-surface'
-          }`}
-        >
-          {label}
-        </Text>
+        <Text className={`text-button text-center ${labelColor}`}>{label}</Text>
       )}
     </Pressable>
   );

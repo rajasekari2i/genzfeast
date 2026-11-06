@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, Text, View, useWindowDimensions } from 'react-native';
-import { colors, spacing } from '../theme/tokens';
+import { accents, colors, spacing } from '../theme/tokens';
 
 /**
  * "Brand Direction Rationale" from the GenzFeast brand board — shown as a
@@ -13,19 +13,19 @@ import { colors, spacing } from '../theme/tokens';
 const CARDS = [
   {
     emoji: '👥',
-    badgeBg: '#FFE4D6',
+    badgeBg: accents.tangerine.soft,
     title: 'Youthful Campus Energy',
     description: 'A modern, friendly identity that resonates with Gen Z students and celebrates campus life.',
   },
   {
     emoji: '🍲',
-    badgeBg: '#DCF3E8',
+    badgeBg: accents.mint.soft,
     title: 'Appetizing Food Warmth',
     description: 'Warm, vibrant colors and a food-centric mark that instantly feels delicious and inviting.',
   },
   {
     emoji: '📱',
-    badgeBg: '#E3EAF2',
+    badgeBg: accents.blue.soft,
     title: 'Clear Mobile Usability',
     description: 'A clean, simple, scalable design that works beautifully on mobile and builds instant trust.',
   },

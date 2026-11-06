@@ -143,6 +143,18 @@ const legacyTypographyAliases = {
 const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
 
 /**
+ * Control heights (FR-015, FR-016). Named rather than written inline so a
+ * component never carries a raw size literal (contract O1), and so the 44
+ * minimum is stated once instead of being re-derived per component.
+ *
+ * `touch` is the accessibility floor — every interactive element meets it,
+ * INCLUDING where an artboard draws less (the canvas shows the ADD control
+ * at 40 and stepper segments at 34x40; the floor wins).
+ * @type {Record<string, number>}
+ */
+const size = { touch: 44, field: 48, control: 52 };
+
+/**
  * Twelve steps (FR-008, research R3). `glyph` (3) is the veg/non-veg dietary
  * mark and is load-bearing — the mark differs in SHAPE as well as colour.
  * `sm` and `lg` keep their names but change value (4->10, 20->14); 33 call
@@ -181,6 +193,7 @@ module.exports = {
   typography,
   legacyTypographyAliases,
   spacing,
+  size,
   radius,
   fontFamilies,
   sanctionedBrandSwatches,

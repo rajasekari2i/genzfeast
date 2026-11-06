@@ -79,25 +79,25 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **Independent Test**: open any screen using each component and compare against the Foundations artboard; every interactive element meets the 44-unit minimum.
 
-- [ ] T024 [P] [US2] Restyle `mobile/src/components/PrimaryButton.tsx` — espresso primary, brand variant, disabled distinguished by **dashed outline as well as colour** (FR-012, FR-013)
-- [ ] T025 [P] [US2] Restyle `mobile/src/components/StatusBadge.tsx` with the four accent pairs + 7px dot; migrate `rounded-full` → `rounded-pill` at line 19 (FR-004)
-- [ ] T026 [US2] Restyle `mobile/src/components/ProductCard.tsx` — 24-radius card, tinted placeholder, rotated sold-out stamp, ADD → stepper (FR-026, depends on T024)
-- [ ] T027 [P] [US2] Restyle `mobile/src/components/CartSummaryBar.tsx`; migrate `shadowColor: '#000'` at line 30 to the `shadow` token
-- [ ] T028 [P] [US2] Restyle `mobile/src/components/PasswordInput.tsx` (FR-016); migrate its brand-as-foreground text at line 37 to `link`
-- [ ] T029 [P] [US2] Restyle `mobile/src/components/Dropdown.tsx` as the shared picker surface; migrate `bg-black/40` at line 48 to the `scrim` token (FR-020)
-- [ ] T030 [P] [US2] Restyle `mobile/src/components/CategoryChip.tsx`
-- [ ] T031 [P] [US2] Restyle `mobile/src/components/NavButton.tsx`
-- [ ] T032 [P] [US2] Restyle `mobile/src/components/RowActionButton.tsx`; migrate its `text-red-600`/`border-red-600` to `accents.red.strong` and its brand-as-foreground at line 45
-- [ ] T033 [P] [US2] Restyle `mobile/src/components/EmptyState.tsx`
-- [ ] T034 [P] [US2] Restyle `mobile/src/components/SkeletonCard.tsx`
-- [ ] T035 [US2] Add a surface prop to `mobile/src/components/Screen.tsx` so screens declare `background` or `backgroundAlt` instead of it hardcoding `bg-background` at lines 41,47 (FR-003)
-- [ ] T036 [P] [US2] Restyle `mobile/src/components/BrandRationaleSlider.tsx` — replace the three raw hexes at lines 16, 22, 28 and the `fontSize: 26` at line 71 and `borderRadius: 3` at line 86
-- [ ] T037 [P] [US2] Restyle `mobile/src/components/PlatformScopeHeader.tsx`. It is dead code — **restyle it, do not delete it**; deleting a file is outside a visual refresh
-- [ ] T038 [P] [US2] Create `mobile/src/components/OtpDisplay.tsx` — six brand-filled cells, read-only, never shown to staff (FR-017)
-- [ ] T039 [P] [US2] Create `mobile/src/components/OtpInput.tsx` — six segmented boxes that **clear on an incorrect code** so the operator can retry; the order is unchanged on mismatch (FR-018)
-- [ ] T040 [P] [US2] Create `mobile/src/components/SwitchRow.tsx` — labelled row with a switch; state conveyed by position **and** label, not colour alone (FR-019)
-- [ ] T041 [US2] Delete all **12** `font-bold`/`font-semibold` classes across the 8 component files: `CartSummaryBar:37,40`, `CategoryChip:24`, `PasswordInput:37`, `PlatformScopeHeader:14`, `PrimaryButton:48`, `ProductCard:39,59,61,68`, `RowActionButton:45`, `StatusBadge:20` (FR-007a)
-- [ ] T042 [US2] Raise every touch target in `mobile/src/components/` to **44×44**, including where an artboard shows 40 (ADD control) or 34×40 (stepper segments) (FR-015)
+- [X] T024 [P] [US2] Restyle `mobile/src/components/PrimaryButton.tsx` — espresso primary, brand variant, disabled distinguished by **dashed outline as well as colour** (FR-012, FR-013)
+- [X] T025 [P] [US2] Restyle `mobile/src/components/StatusBadge.tsx` with the four accent pairs + 7px dot; migrate `rounded-full` → `rounded-pill` at line 19 (FR-004)
+- [X] T026 [US2] Restyle `mobile/src/components/ProductCard.tsx` — 24-radius card, tinted placeholder, rotated sold-out stamp, ADD → stepper (FR-026, depends on T024)
+- [X] T027 [P] [US2] Restyle `mobile/src/components/CartSummaryBar.tsx`; migrate `shadowColor: '#000'` at line 30 to the `shadow` token
+- [X] T028 [P] [US2] Restyle `mobile/src/components/PasswordInput.tsx` (FR-016); migrate its brand-as-foreground text at line 37 to `link`
+- [X] T029 [P] [US2] Restyle `mobile/src/components/Dropdown.tsx` as the shared picker surface; migrate `bg-black/40` at line 48 to the `scrim` token (FR-020)
+- [X] T030 [P] [US2] Restyle `mobile/src/components/CategoryChip.tsx`
+- [X] T031 [P] [US2] Restyle `mobile/src/components/NavButton.tsx`
+- [X] T032 [P] [US2] Restyle `mobile/src/components/RowActionButton.tsx`; migrate its `text-red-600`/`border-red-600` to `accents.red.strong` and its brand-as-foreground at line 45
+- [X] T033 [P] [US2] Restyle `mobile/src/components/EmptyState.tsx`
+- [X] T034 [P] [US2] Restyle `mobile/src/components/SkeletonCard.tsx`
+- [X] T035 [US2] Add a surface prop to `mobile/src/components/Screen.tsx` so screens declare `background` or `backgroundAlt` instead of it hardcoding `bg-background` at lines 41,47 (FR-003)
+- [X] T036 [P] [US2] Restyle `mobile/src/components/BrandRationaleSlider.tsx` — replace the three raw hexes at lines 16, 22, 28 and the `fontSize: 26` at line 71 and `borderRadius: 3` at line 86
+- [X] T037 [P] [US2] Restyle `mobile/src/components/PlatformScopeHeader.tsx`. It is dead code — **restyle it, do not delete it**; deleting a file is outside a visual refresh
+- [X] T038 [P] [US2] Create `mobile/src/components/OtpDisplay.tsx` — six brand-filled cells, read-only, never shown to staff (FR-017)
+- [X] T039 [P] [US2] Create `mobile/src/components/OtpInput.tsx` — six segmented boxes that **clear on an incorrect code** so the operator can retry; the order is unchanged on mismatch (FR-018)
+- [X] T040 [P] [US2] Create `mobile/src/components/SwitchRow.tsx` — labelled row with a switch; state conveyed by position **and** label, not colour alone (FR-019)
+- [X] T041 [US2] Delete all **12** `font-bold`/`font-semibold` classes across the 8 component files: `CartSummaryBar:37,40`, `CategoryChip:24`, `PasswordInput:37`, `PlatformScopeHeader:14`, `PrimaryButton:48`, `ProductCard:39,59,61,68`, `RowActionButton:45`, `StatusBadge:20` (FR-007a)
+- [X] T042 [US2] Raise every touch target in `mobile/src/components/` to **44×44**, including where an artboard shows 40 (ADD control) or 34×40 (stepper segments) (FR-015)
 
 **Checkpoint**: US1 + US2 complete and independently demoable.
 
@@ -144,9 +144,9 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 **Independent Test**: place an order end to end — every screen matches its artboard and the order behaves exactly as today.
 
-- [ ] T054 [US5] Rewrite `mobile/src/screens/student/HomeScreen.tsx` as a two-column grid: `<Screen scroll={false}>` + an owned list with two columns. It is currently a `.map()` inside a `ScrollView`, so this **introduces** virtualisation rather than preserving it (FR-025, research R12)
-- [ ] T055 [US5] Add bottom content inset to the Home list so `CartSummaryBar`'s absolute overlay (`left-4 right-4 bottom-4`) stops permanently hiding the last row (depends on T054)
-- [ ] T056 [US5] Move Home's empty and skeleton states into the list's own empty/header slots. **Note**: there is no `RefreshControl` today — `load()` runs once from `useEffect`, so no pull-to-refresh is preserved and none is added (depends on T054)
+- [X] T054 [US5] Rewrite `mobile/src/screens/student/HomeScreen.tsx` as a two-column grid: `<Screen scroll={false}>` + an owned list with two columns. It is currently a `.map()` inside a `ScrollView`, so this **introduces** virtualisation rather than preserving it (FR-025, research R12)
+- [X] T055 [US5] Add bottom content inset to the Home list so `CartSummaryBar`'s absolute overlay (`left-4 right-4 bottom-4`) stops permanently hiding the last row (depends on T054)
+- [X] T056 [US5] Move Home's empty and skeleton states into the list's own empty/header slots. **Note**: there is no `RefreshControl` today — `load()` runs once from `useEffect`, so no pull-to-refresh is preserved and none is added (depends on T054)
 - [ ] T057 [US5] Restyle `mobile/src/screens/student/CartScreen.tsx`; migrate its brand-as-foreground ± controls at lines 153, 157 to `espresso`
 - [ ] T058 [US5] Restyle `mobile/src/screens/student/OrderDetailScreen.tsx` for the `payment_failed` state against the `OrderDetail` artboard; migrate the brand-as-foreground code at line 154
 - [ ] T059 [US5] Restyle `OrderDetailScreen.tsx` for the `order_placed` state against the `OrderSuccess` artboard — **full-bleed brand ground**, six `OtpDisplay` cells. No new screen or route (depends on T058)
