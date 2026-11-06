@@ -38,3 +38,8 @@ coverage/
 .beads/temp/
 .beads/context/
 .beads/plans/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
+.beads/proxieddb/

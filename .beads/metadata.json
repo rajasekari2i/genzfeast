@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "genzfeast",
+  "project_id": "ab5d7e5c-1349-46df-91b5-e366b7ef800f"
+}
