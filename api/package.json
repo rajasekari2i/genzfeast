@@ -7,6 +7,7 @@
     "postinstall": "prisma generate",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
+    "prestart:dev": "prisma migrate deploy",
     "start:dev": "ts-node src/main.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
