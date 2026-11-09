@@ -1240,7 +1240,7 @@ export interface components {
             is_open?: boolean;
             /** @description FR-002a. When true (default), specs/014's registration mobile-verification delivers via MSG91 SMS (FCM push only as a failure-fallback); when false, FCM push is used directly and MSG91 is never attempted. */
             is_sms?: boolean;
-            /** @description specs/015-contact-us-page FR-005. Free text, set only by System Admin; null when not yet set (renders as "Not specified" to tenant viewers). */
+            /** @description specs/015. Free-text canteen hours (e.g. "Mon–Sat, 9:00 AM – 8:00 PM"), shown on the tenant-facing Contact Us screen (GET /me/contact-us). Null until a System Admin sets it. */
             operating_hours?: string | null;
             /** Format: date-time */
             created_at?: string;
@@ -1265,7 +1265,7 @@ export interface components {
             is_open?: boolean;
             /** @description FR-002a. */
             is_sms?: boolean;
-            /** @description specs/015-contact-us-page FR-005. */
+            /** @description specs/015. */
             operating_hours?: string | null;
         };
         Role: {
