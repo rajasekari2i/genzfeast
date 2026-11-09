@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { AuthHeader, Highlight, InfoStrip } from '../../components/AuthChrome';
+import { Icon } from '../../components/Icon';
+import { colors, radius } from '../../theme/tokens';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { PasswordInput } from '../../components/PasswordInput';
 import { OtpInput } from '../../components/OtpInput';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { createTypedClient } from '../../api/client';
+import { getTenantDisplayName } from '../../config/tenant';
 import { getBuildCompanyId } from '../../config/tenant';
 import type { paths } from '../../api/generated/003-forgot-password-otp-reset';
 
@@ -27,6 +31,7 @@ const client = createTypedClient<paths>();
  * no longer auto-fills from a silently-stored code.
  */
 export function ForgotPasswordVerifyScreen({ route, navigation }: Props) {
+  const canteen = getTenantDisplayName();
   const { username } = route.params;
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -73,31 +78,71 @@ export function ForgotPasswordVerifyScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen title="Verify OTP">
-      <View className="gap-lg">
-        {/* No artboard (FR-029) — the code entry borrows the `Fulfilment`
-            board's segmented boxes, the rest is Login's field pattern. */}
+    <Screen title="Verify OTP" scroll={false}>
+      <View className="flex-1 gap-md">
+        {/* Section 04. The code entry moves INTO a white card with its own
+            label and helper line — the artboard does not leave the boxes
+            loose on the ground — and the headline highlights "messages" on a
+            brand plate. */}
+        <AuthHeader onBack={() => navigation.goBack()} canteen={canteen} />
+
         <View className="gap-xs">
-          <Text className="text-title text-text-primary">Check your messages</Text>
-          <Text className="text-body text-text-secondary">
-            Enter the code sent to your device, along with your new password.
+          <Text className="text-display-xs text-text-primary">
+            Check your<Highlight>messages</Highlight>
+          </Text>
+          <Text className="text-body-lg text-text-secondary">
+            Enter the 6-character code sent for{' '}
+            <Text className="text-body-lg text-text-primary">{username}</Text>, then pick a new
+            password.
           </Text>
         </View>
-        {/* Same segmented entry as staff fulfilment (FR-029 — this screen
-            has no artboard and borrows the established pattern), but in
-            ALPHANUMERIC mode: the reset code is 6 characters, not 6 digits.
-            Filtering to digits here would silently reject a valid code. */}
-        <OtpInput
-          mode="alphanumeric"
-          onComplete={setCode}
-          error={Boolean(errorMessage)}
-          editable={!loading}
-          accessibilityLabel="Enter the 6-character reset code"
-        />
-        <PasswordInput placeholder="New Password" value={newPassword} onChangeText={setNewPassword} />
-        <PasswordInput placeholder="Retype Password" value={retypePassword} onChangeText={setRetypePassword} />
-        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
-        <PrimaryButton label="Reset Password" onPress={handleSubmit} loading={loading} disabled={loading} />
+
+        <View
+          accessibilityRole="none"
+          style={{ borderRadius: radius['5xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+          className="bg-surface p-md gap-sm"
+        >
+          <View className="flex-row items-center gap-xs">
+            <Icon name="lock" size={16} color={colors.textBody} />
+            <Text className="text-label text-text-body">Reset code</Text>
+          </View>
+          {/* ALPHANUMERIC: the reset code is 6 characters, not 6 digits.
+              Filtering to digits would silently reject a valid code. */}
+          <OtpInput
+            mode="alphanumeric"
+            onComplete={setCode}
+            error={Boolean(errorMessage)}
+            editable={!loading}
+            accessibilityLabel="Enter the 6-character reset code"
+          />
+          <Text className="text-caption text-text-secondary">
+            Letters and numbers. Check your SMS or notifications.
+          </Text>
+        </View>
+
+        <View className="gap-md">
+          <PasswordInput placeholder="New password" value={newPassword} onChangeText={setNewPassword} />
+          <PasswordInput placeholder="Retype password" value={retypePassword} onChangeText={setRetypePassword} />
+          <InfoStrip icon="check" accent="mint">
+            Account locked after too many tries? Resetting your password unlocks it.
+          </InfoStrip>
+          {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+        </View>
+
+        <View className="mt-auto gap-md">
+          <PrimaryButton
+            label="Reset password"
+            onPress={handleSubmit}
+            loading={loading}
+            disabled={loading}
+          />
+          <View className="flex-row justify-center items-center gap-xs">
+            <Text className="text-body text-text-secondary">Didn't get a code?</Text>
+            <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" hitSlop={8}>
+              <Text className="text-body-bold text-link">Request a new one</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
     </Screen>
   );

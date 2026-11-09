@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { AuthHeader, Highlight } from '../../components/AuthChrome';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { PasswordInput } from '../../components/PasswordInput';
 import { CategoryChip } from '../../components/CategoryChip';
@@ -52,6 +54,9 @@ function toOptions(raw: { id?: string; name?: string }[] | undefined): Option[] 
  * as small links alongside it, not folded into the button itself.
  */
 export function RegisterScreen() {
+  // No route props on this screen — the back control reaches navigation
+  // through the hook.
+  const navigation = useNavigation();
   const { signIn } = useAuth();
   const canteen = getTenantDisplayName();
   const [name, setName] = useState('');
@@ -306,13 +311,16 @@ export function RegisterScreen() {
   return (
     <Screen title="Register">
       <View className="gap-lg">
-        {/* The artboard's own back affordance is the stack header's — not
-            duplicated here. Only the canteen context line is rendered. */}
-        {canteen ? <Text className="text-label text-text-secondary">{canteen}</Text> : null}
+        {/* The native header is gone (section 02 has none), so the back
+            control lives in the artboards' shared auth row alongside the
+            canteen name. It used to rely on the stack header for back. */}
+        <AuthHeader onBack={() => navigation.goBack()} canteen={canteen} />
 
         <View className="gap-xs">
-          <Text className="text-title text-text-primary">
-            Join the <Text className="text-title text-espresso bg-primary"> feast </Text>
+          {/* 32/36/-1 in the artboard, with "feast" on a brand plate — the
+              old `title` (28) with a bg-primary span was close but not it. */}
+          <Text className="text-display-sm text-text-primary">
+            Join the<Highlight>feast</Highlight>
           </Text>
           <Text className="text-body text-text-secondary">
             One minute. Then your canteen is in your pocket.

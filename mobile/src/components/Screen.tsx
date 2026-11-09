@@ -32,8 +32,13 @@ export function Screen({
    * onEndReached. The screen must then give its content `flex-1`.
    */
   scroll?: boolean;
-  /** Which ground this screen sits on (research R1). */
-  surface?: 'student' | 'admin';
+  /**
+   * Which ground this screen sits on (research R1). 'brand' is the
+   * CONFIRMATION ground — the 'Order placed' artboard fills the whole screen
+   * with brand rather than placing a card on cream, and the feedback
+   * acknowledgement follows it.
+   */
+  surface?: 'student' | 'admin' | 'brand';
   /**
    * Full-bleed chrome rendered ABOVE the padded content — the navy
    * AdminHeader needs to reach the screen edges and own its own padding,
@@ -43,7 +48,8 @@ export function Screen({
    */
   header?: React.ReactNode;
 }) {
-  const ground = surface === 'admin' ? 'bg-background-alt' : 'bg-background';
+  const ground =
+    surface === 'admin' ? 'bg-background-alt' : surface === 'brand' ? 'bg-primary' : 'bg-background';
 
   if (!scroll) {
     return (

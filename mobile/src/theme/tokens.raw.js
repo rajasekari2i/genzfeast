@@ -88,6 +88,9 @@ const colors = {
   sheetHandle: '#E2DBD1',
   tileNeutral: '#F4F1EC',
   borderSoft: '#EFE3D6',
+  // The UNFOCUSED field rule on the student auth artboards (Login,
+  // Register, Forgot password). The focused state is `espresso`.
+  borderField: '#E6DACD',
   borderDashed: '#CFC6BB',
   // A warmer dashed rule than `borderDashed`, used for the opt-in CTA at
   // the foot of Contact us rather than for a disabled control.
@@ -137,6 +140,10 @@ const BODY_XBOLD = 'Inter-ExtraBold';
  */
 const typography = {
   // Display family — one weight (800), six sizes.
+  // The confirmation headline, the largest type in the system —
+  // 48/46/-2 on the 'Order placed' artboard. Note the NEGATIVE leading
+  // (46 under 48): these headlines are two short words stacked tight.
+  heroLg: { fontFamily: DISPLAY, fontSize: 48, lineHeight: 46, letterSpacing: -2 },
   hero: { fontFamily: DISPLAY, fontSize: 40, lineHeight: 41, letterSpacing: -1.5 },
   display: { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, letterSpacing: -1 },
   // The admin greeting headline - 32px/34/-1 on the Company Admin -

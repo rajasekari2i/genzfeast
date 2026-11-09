@@ -45,16 +45,18 @@ export function AuthNavigator() {
         // still reserved its height, leaving a blank bar across the top.
         options={{ ...authHeaderOptions, headerShown: false }}
       />
-      <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Register' }} />
+      {/* headerShown: false — these three render the artboards' own header row
+          (back control + canteen name), so the native bar would sit above it. */}
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="ForgotPasswordRequest"
         component={ForgotPasswordRequestScreen}
-        options={{ headerShown: true, title: 'Forgot Password' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ForgotPasswordVerify"
         component={ForgotPasswordVerifyScreen}
-        options={{ headerShown: true, title: 'Verify OTP' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

@@ -127,15 +127,40 @@ export function FeedbackScreen({ navigation }: Props) {
 
   if (submitted) {
     return (
-      <Screen title="Feedback">
-        <View className="gap-4 items-center py-8">
-          <Text className="text-h2 text-text-primary text-center">
-            Thanks! Your feedback helps us improve {tenantName}.
+      /* No artboard for this acknowledgement (FR-029), so it follows the
+         "Order placed" confirmation, which is the journey's established
+         pattern for "that worked": the WHOLE screen on brand, a rotated
+         espresso tile with a sun glyph, then the largest type in the system.
+         It previously used `text-h2` — a legacy alias — centred on cream,
+         which read as an error state more than a thank-you. */
+      <Screen title="Feedback" surface="brand" scroll={false}>
+        <View className="flex-1 gap-md">
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: radius['4xl'],
+              backgroundColor: colors.espresso,
+              transform: [{ rotate: '-6deg' }],
+            }}
+            className="items-center justify-center"
+          >
+            <Icon name="check" size={32} color={colors.accent} />
+          </View>
+
+          <Text className="text-hero-lg text-espresso">Thanks!</Text>
+          <Text className="text-body-lg text-espresso">
+            {tenantName
+              ? `Your feedback goes straight to ${tenantName}.`
+              : 'Your feedback goes straight to the canteen.'}
           </Text>
-          <PrimaryButton label="Back to Home" onPress={handleBackToHome} />
-          <Text className="text-body text-text-secondary text-center" onPress={resetForm}>
-            Submit more feedback
-          </Text>
+
+          <View className="mt-auto gap-sm">
+            <PrimaryButton label="Back to Home" onPress={handleBackToHome} />
+            <Pressable onPress={resetForm} accessibilityRole="button" hitSlop={8} className="py-sm">
+              <Text className="text-body-bold text-espresso text-center">Submit more feedback</Text>
+            </Pressable>
+          </View>
         </View>
       </Screen>
     );

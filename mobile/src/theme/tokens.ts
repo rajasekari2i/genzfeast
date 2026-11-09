@@ -69,6 +69,8 @@ export interface ColorTokens {
   /** Neutral tile behind a list row's edit control. */
   tileNeutral: string;
   borderSoft: string;
+  /** Unfocused field rule on the student auth screens. */
+  borderField: string;
   /** Disabled/read-only outline — a dashed border, so the state differs in SHAPE not just colour. */
   borderDashed: string;
   /** Warm dashed rule for an opt-in CTA (not a disabled control). */
@@ -115,7 +117,7 @@ export interface TypographyStyle {
 }
 
 export type TypographyName =
-  | 'hero' | 'display' | 'displaySm' | 'displayXs' | 'wordmark' | 'wordmarkSm'
+  | 'heroLg' | 'hero' | 'display' | 'displaySm' | 'displayXs' | 'wordmark' | 'wordmarkSm'
   | 'title' | 'titleSm'
   | 'titleMd' | 'subtitle' | 'subtitleSm'
   | 'price' | 'bodyLg' | 'body' | 'bodyBold'
