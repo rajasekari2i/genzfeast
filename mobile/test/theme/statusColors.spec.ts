@@ -36,14 +36,21 @@ describe('order status presentation', () => {
     const resolved = resolveStatus('cancelled');
     expect(resolved.soft).toBe(accents.neutral.soft);
     expect(resolved.strong).toBe(accents.neutral.strong);
-    expect(resolved.label).toBe('cancelled');
+    // Title-cased, not echoed raw: every badge in the artboards is
+    // uppercase, and a raw API value read as debug output beside the
+    // mapped ones. The COLOURS still fall back to neutral.
+    expect(resolved.label).toBe('Cancelled');
+  });
+
+  it('title-cases a snake_case status', () => {
+    expect(resolveStatus('company_staff').label).toBe('Company Staff');
   });
 
   it('never returns an empty label, whatever it is given', () => {
     for (const input of ['', 'wat', 'REFUNDED']) {
       expect(typeof resolveStatus(input).label).toBe('string');
     }
-    expect(resolveStatus('wat').label).toBe('wat');
+    expect(resolveStatus('wat').label).toBe('Wat');
   });
 
   it('no screen picks an accent family itself (O3)', () => {

@@ -1,11 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { InfoCard, InfoRow } from '../../components/InfoCard';
-import { colors, radius } from '../../theme/tokens';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { AdminPageHeader } from '../../components/AdminPageHeader';
+import { Icon } from '../../components/Icon';
+import { StatusBadge } from '../../components/StatusBadge';
+import { avatarTint, tile } from '../../theme/accents';
+import { colors, radius, size } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/016-feedback-management';
@@ -43,7 +45,24 @@ const CATEGORY_LABELS: Record<string, string> = {
  * one-way (new -> resolved) and hidden once already resolved (research.md
  * §5) — this screen never offers to reopen one.
  */
-export function FeedbackDetailScreen({ route }: Props) {
+/**
+ * The artboard's header reads "Today, 1:12 PM" — a relative day plus the
+ * time, not a full date. Kept local to this screen: it is the only place
+ * that renders a feedback timestamp.
+ */
+function formatSubmittedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const yesterday = new Date(today.getTime() - 86_400_000).toDateString() === d.toDateString();
+  if (sameDay) return `Today, ${time}`;
+  if (yesterday) return `Yesterday, ${time}`;
+  return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}, ${time}`;
+}
+
+export function FeedbackDetailScreen({ route, navigation }: Props) {
   const { feedbackId } = route.params;
   const [feedback, setFeedback] = useState<FeedbackDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,76 +123,133 @@ export function FeedbackDetailScreen({ route }: Props) {
     return null;
   }
 
-  return (
-    <Screen surface="admin" title="Feedback">
-      <View className="gap-md">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-title text-text-primary">Feedback</Text>
-          <View
-            className={`rounded-pill px-sm py-xs ${
-              feedback.status === 'resolved' ? 'bg-mint-soft' : 'bg-sun-soft'
-            }`}
-          >
-            <Text
-              className={`text-eyebrow ${
-                feedback.status === 'resolved' ? 'text-mint-strong' : 'text-sun-strong'
-              }`}
-            >
-              {feedback.status === 'resolved' ? 'Resolved' : 'New'}
-            </Text>
-          </View>
-        </View>
+  const submitter = avatarTint(feedback.id);
+  // The artboard draws the contact strip in the blue family.
+  const contactTile = tile('blue');
 
-        <InfoCard>
-          <InfoRow
-            label="Category"
-            value={CATEGORY_LABELS[feedback.category] ?? feedback.category}
-            icon={{ glyph: '🏷️', accent: 'violet' }}
-          />
-          {feedback.rating ? (
-            <InfoRow
-              label="Rating"
-              value={'★'.repeat(feedback.rating)}
-              icon={{ glyph: '★', accent: 'sun' }}
-            />
-          ) : null}
-          <InfoRow
-            label="Submitted by"
-            value={feedback.submitted_by.name}
-            icon={{ glyph: '👤', accent: 'neutral' }}
-            last={!feedback.contact_requested}
-          />
-          {feedback.contact_requested ? (
-            <InfoRow
-              label="Wants contact back at"
-              value={feedback.contact_email ?? '—'}
-              icon={{ glyph: '✉️', accent: 'mint' }}
-              last
-            />
-          ) : null}
-        </InfoCard>
+  return (
+    <Screen
+      surface="admin"
+      title="Feedback"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title={CATEGORY_LABELS[feedback.category] ?? feedback.category}
+          meta={formatSubmittedAt(feedback.created_at)}
+          badge={<StatusBadge status={feedback.status === 'resolved' ? 'resolved' : 'new'} />}
+          onBack={() => navigation.goBack()}
+        />
+      }
+    >
+      {/* Section 13's own order: Rating, then Message, then Submitted by —
+          each its own white card at radius 22, rather than the single
+          InfoCard list this screen used to render. The category is the
+          HEADLINE here, not a row in a list. */}
+      <ScrollView className="flex-1" contentContainerStyle={{ gap: 14, paddingBottom: 8 }}>
+        {feedback.rating ? (
+          <View
+            style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.borderCard }}
+            className="bg-surface px-md py-sm flex-row items-center justify-between"
+          >
+            <Text className="text-label text-text-secondary">Rating</Text>
+            <View
+              className="flex-row gap-xs"
+              accessibilityRole="image"
+              accessibilityLabel={`${feedback.rating} out of 5 stars`}
+            >
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Icon
+                  key={n}
+                  name="star"
+                  size={20}
+                  color={colors.espresso}
+                  fill={n <= (feedback.rating ?? 0) ? colors.accent : colors.surface}
+                />
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <View
-          style={{ borderRadius: radius['5xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+          style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.borderCard }}
           className="bg-surface p-md gap-xs"
         >
-          <Text className="text-label text-text-body">Message</Text>
-          <Text className="text-body text-text-primary">{feedback.message}</Text>
+          <Text className="text-label text-text-secondary">Message</Text>
+          <Text className="text-body-lg text-text-primary">{feedback.message}</Text>
+        </View>
+
+        <View
+          style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.borderCard }}
+          className="bg-surface px-md py-sm gap-md"
+        >
+          <View className="flex-row items-center gap-sm">
+            <View
+              style={{
+                width: size.touch,
+                height: size.touch,
+                borderRadius: size.touch / 2,
+                backgroundColor: submitter.backgroundColor,
+              }}
+              className="items-center justify-center"
+            >
+              <Text style={{ color: submitter.color }} className="text-subtitle-sm">
+                {feedback.submitted_by.name.trim().charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View className="gap-glyph">
+              <Text className="text-caption text-text-secondary">Submitted by</Text>
+              <Text className="text-body-bold text-text-primary">{feedback.submitted_by.name}</Text>
+            </View>
+          </View>
+
+          {feedback.contact_requested ? (
+            <View
+              style={{ borderRadius: radius.xl, backgroundColor: contactTile.backgroundColor }}
+              className="flex-row items-center gap-sm px-md py-sm"
+            >
+              <Icon name="email" size={20} color={contactTile.color} />
+              <View className="flex-1 gap-glyph">
+                <Text style={{ color: contactTile.color }} className="text-caption">
+                  Wants contact back at
+                </Text>
+                <Text style={{ color: contactTile.color }} className="text-body-bold" numberOfLines={1}>
+                  {feedback.contact_email ?? '—'}
+                </Text>
+              </View>
+            </View>
+          ) : null}
         </View>
 
         {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+      </ScrollView>
 
-        {feedback.status === 'new' ? (
-          <View className="gap-xs">
-            <PrimaryButton label="Mark resolved" onPress={handleResolve} loading={resolving} disabled={resolving} />
-            {/* One-way by design (FR-041) — there is no un-resolve path, and
-                the screen says so before the action rather than after. */}
-            <Text className="text-caption text-text-secondary text-center">
-              Resolved feedback can't be reopened.
-            </Text>
-          </View>
-        ) : null}
-      </View>
+      {feedback.status === 'new' ? (
+        <View className="gap-xs pt-sm">
+          <Pressable
+            onPress={handleResolve}
+            disabled={resolving}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: resolving }}
+            style={{
+              height: 56,
+              borderRadius: radius.pill,
+              backgroundColor: colors.primaryVariant,
+              opacity: resolving ? 0.6 : 1,
+            }}
+            className="flex-row items-center justify-center gap-xs"
+          >
+            {resolving ? <ActivityIndicator size="small" color={colors.surface} /> : (
+              <Icon name="check" size={18} color={colors.surface} />
+            )}
+            <Text className="text-price text-surface">Mark resolved</Text>
+          </Pressable>
+          {/* One-way by design (FR-041) — there is no un-resolve path, and
+              the screen says so before the action rather than after. */}
+          <Text className="text-caption text-text-secondary text-center">
+            Resolved feedback can't be reopened.
+          </Text>
+        </View>
+      ) : null}
     </Screen>
   );
 }

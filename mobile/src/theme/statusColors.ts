@@ -68,7 +68,15 @@ export const statusColors: Record<OrderStatus, StatusColorEntry> = {
 export function resolveStatus(status: string): StatusColorEntry {
   const known = statusColors[status as OrderStatus];
   if (known) return known;
-  return entry(accents.neutral, status);
+  // An unmapped status falls back to the neutral family, and its label is
+  // title-cased rather than echoed raw: the artboards render every badge in
+  // uppercase, and a raw API value ("new", "company_staff") read as debug
+  // output next to the mapped ones.
+  return entry(accents.neutral, humanise(status));
+}
+
+function humanise(status: string): string {
+  return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default statusColors;
