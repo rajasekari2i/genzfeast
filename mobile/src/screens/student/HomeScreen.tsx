@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { DrawerActions } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { Icon } from '../../components/Icon';
+import { Highlight } from '../../components/AuthChrome';
 import { ProductCard } from '../../components/ProductCard';
 import { CartSummaryBar } from '../../components/CartSummaryBar';
 import { SkeletonCard } from '../../components/SkeletonCard';
 import { EmptyState } from '../../components/EmptyState';
-import { createTypedClient } from '../../api/client';
+import { createTypedClient, getCurrentUser } from '../../api/client';
 import { useCart } from '../../cart/CartContext';
-import { spacing, size } from '../../theme/tokens';
+import { getTenantDisplayName } from '../../config/tenant';
+import { colors, spacing, size } from '../../theme/tokens';
 import type { StudentStackParamList } from '../../navigation/StudentNavigator';
 import type { paths } from '../../api/generated/006-student-browse-cart-checkout';
 
@@ -45,6 +49,11 @@ type Product = {
  * in V1, and FR-037 explicitly forbids adding search during this restyle.
  */
 export function HomeScreen({ navigation }: Props) {
+  const canteen = getTenantDisplayName();
+  const [firstName, setFirstName] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    void getCurrentUser().then((u) => setFirstName(u?.name?.trim().split(' ')[0]));
+  }, []);
   const { quantities, setQuantity, itemCount } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,9 +93,57 @@ export function HomeScreen({ navigation }: Props) {
           contentContainerStyle={{ gap: spacing.sm, paddingBottom: bottomInset }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            errorMessage ? (
-              <EmptyState icon="⚠️" title="Something went wrong" subtitle={errorMessage} />
-            ) : null
+            <View className="gap-md pb-sm">
+              {/* Section 05 header: menu, a "Pickup from <canteen>" block, then
+                  the My Orders and Profile circles. These scroll with the grid
+                  — the artboard does not pin them. */}
+              <View className="flex-row items-center gap-xs">
+                <Pressable
+                  onPress={() => navigation.getParent()?.dispatch(DrawerActions.openDrawer())}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open menu"
+                  style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+                  className="w-touch h-touch rounded-pill bg-surface items-center justify-center active:opacity-70"
+                >
+                  <Icon name="menu" size={20} color={colors.espresso} />
+                </Pressable>
+                <View className="flex-1 pl-xs">
+                  <Text className="text-eyebrow text-text-secondary">PICKUP FROM</Text>
+                  <Text className="text-body-bold text-text-primary" numberOfLines={1}>
+                    {canteen ?? 'Your canteen'}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => navigation.navigate('My Orders' as never)}
+                  accessibilityRole="button"
+                  accessibilityLabel="My orders"
+                  style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+                  className="w-touch h-touch rounded-pill bg-surface items-center justify-center active:opacity-70"
+                >
+                  <Icon name="incomingOrders" size={20} color={colors.espresso} />
+                </Pressable>
+                <Pressable
+                  onPress={() => navigation.navigate('Profile' as never)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profile"
+                  style={{ backgroundColor: colors.espresso }}
+                  className="w-touch h-touch rounded-pill items-center justify-center active:opacity-80"
+                >
+                  <Text className="text-body-bold text-surface">
+                    {(firstName ?? 'G').charAt(0).toUpperCase()}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <Text className="text-display text-text-primary">
+                {firstName ? `Hey ${firstName},` : 'Hey there,'}
+                {'\n'}what's the<Highlight>craving?</Highlight>
+              </Text>
+
+              {errorMessage ? (
+                <EmptyState icon="⚠️" title="Something went wrong" subtitle={errorMessage} />
+              ) : null}
+            </View>
           }
           ListEmptyComponent={
             loading ? (

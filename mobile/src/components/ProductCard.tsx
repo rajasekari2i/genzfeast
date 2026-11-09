@@ -3,6 +3,8 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { DietaryMark } from './DietaryMark';
 import { formatRupees } from '../theme/money';
 import { productTint } from '../theme/accents';
+import { Icon } from './Icon';
+import { colors } from '../theme/tokens';
 
 /**
  * Menu card — specs/017-ui-refresh FR-021, FR-026.
@@ -47,11 +49,10 @@ export function ProductCard({
         style={{ backgroundColor: productTint(productId), height: 104 }}
         className="rounded-2xl overflow-hidden items-center justify-center"
       >
+        <Icon name="cloche" size={30} color={colors.textBody} />
         {imageUrl ? (
-          <Image source={{ uri: imageUrl }} className="w-full h-full" resizeMode="cover" />
-        ) : (
-          <Text className="text-title">🍽️</Text>
-        )}
+          <Image source={{ uri: imageUrl }} className="w-full h-full absolute" resizeMode="cover" />
+        ) : null}
         {soldOut ? (
           <View
             style={{ transform: [{ rotate: '-8deg' }], borderWidth: 2 }}
@@ -78,7 +79,14 @@ export function ProductCard({
         <View className="flex-row items-center justify-between pt-xs">
           <Text className="text-price text-text-primary">{formatRupees(priceInPaise)}</Text>
 
-          {soldOut ? null : quantityInCart > 0 ? (
+          {soldOut ? (
+            <View
+              style={{ height: 40, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.borderDashed }}
+              className="px-sm bg-disabled-fill rounded-pill items-center justify-center"
+            >
+              <Text className="text-caption text-disabled-text">Sold out</Text>
+            </View>
+          ) : quantityInCart > 0 ? (
             <View className="flex-row items-center bg-espresso rounded-pill">
               <Pressable
                 onPress={onDecrement}
@@ -103,9 +111,11 @@ export function ProductCard({
               onPress={onAdd}
               accessibilityRole="button"
               accessibilityLabel={`Add ${name}`}
-              className="h-touch px-md bg-primary rounded-pill flex-row items-center justify-center active:opacity-80"
+              style={{ height: 40 }}
+              className="px-md bg-primary rounded-pill flex-row items-center justify-center gap-glyph active:opacity-80"
             >
-              <Text className="text-eyebrow text-espresso">ADD +</Text>
+              <Text className="text-micro text-espresso">ADD</Text>
+              <Icon name="plus" size={14} color={colors.espresso} />
             </Pressable>
           )}
         </View>

@@ -263,7 +263,14 @@ export function AppShell() {
     >
       {role === 'student' && (
         <>
-          <Drawer.Screen name="Home" component={StudentHomeEntry} options={{ title: 'GenzFeast' }} />
+          {/* headerShown: false — Home renders the section-05 header itself (menu,
+              "Pickup from", orders + profile). The drawer header stacked a
+              cream "GenzFeast" bar above it. */}
+          <Drawer.Screen
+            name="Home"
+            component={StudentHomeEntry}
+            options={{ headerShown: false }}
+          />
           <Drawer.Screen name="Cart" component={StudentCartEntry} />
           <Drawer.Screen name="My Orders" component={StudentMyOrdersEntry} />
         </>

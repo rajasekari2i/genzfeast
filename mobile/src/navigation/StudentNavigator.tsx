@@ -33,7 +33,8 @@ export function StudentNavigator({
   return (
     <Stack.Navigator initialRouteName={initialRouteName} screenOptions={primaryHeaderOptions}>
       {/* No header title text on any screen here — the Drawer's own header (AppShell.tsx) already labels the current side-menu section next to the hamburger icon; this stack's header keeps its color/back-button but shows no duplicate text. */}
-      <Stack.Screen name="Home" component={HomeScreen} options={{ title: '' }} />
+      {/* headerShown: false — HomeScreen renders its own section-05 header. */}
+      <Stack.Screen name="Home" component={HomeScreen} options={{ title: '', headerShown: false }} />
       <Stack.Screen name="Cart" component={CartScreen} options={{ title: '' }} />
       <Stack.Screen name="MyOrders" component={MyOrdersScreen} options={{ title: '' }} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: '' }} />
