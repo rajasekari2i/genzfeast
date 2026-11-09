@@ -1,6 +1,8 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { colors, radius, type AccentName } from '../theme/tokens';
+import { Icon } from './Icon';
+import type { IconName } from './Icon';
 import { IconTile } from './AdminList';
 
 /**
@@ -27,6 +29,7 @@ export function InfoRow({
   icon,
   last = false,
   note,
+  noteIcon,
 }: {
   label: string;
   value: string;
@@ -38,6 +41,8 @@ export function InfoRow({
   last?: boolean;
   /** Trailing note on the label, e.g. the lock on a read-only username. */
   note?: string;
+  /** Trailing glyph on the label. The artboard uses a drawn lock here, not an emoji. */
+  noteIcon?: IconName;
 }) {
   return (
     <View
@@ -46,11 +51,14 @@ export function InfoRow({
     >
       {icon ? <IconTile glyph={icon.glyph} accent={icon.accent} /> : null}
       <View className="flex-1 gap-xs">
-        <Text className="text-caption text-text-secondary">
-          {label}
-          {note ? ` ${note}` : ''}
-        </Text>
-        <Text className="text-bodyBold text-text-primary">{value}</Text>
+        <View className="flex-row items-center gap-glyph">
+          <Text className="text-caption text-text-secondary">
+            {label}
+            {note ? ` ${note}` : ''}
+          </Text>
+          {noteIcon ? <Icon name={noteIcon} size={12} color={colors.textSecondary} /> : null}
+        </View>
+        <Text className="text-body-semi text-text-primary">{value}</Text>
       </View>
     </View>
   );

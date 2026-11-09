@@ -34,6 +34,17 @@ const colors = {
   // Brand — the only per-tenant override (resolveBrandTheme.ts).
   primary: TANGERINE,
   primaryVariant: NAVY,
+  // Two tints of the navy chrome, measured off the Company Admin ·
+  // Dashboard artboard in docs/ui-screen/GenzFeast-Admin-and-Staff.html:
+  // the circular drawer/action buttons sit on navyTint, and the role tag
+  // beside the wordmark ('ADMIN'/'STAFF') is navyMuted. Neither is a
+  // transparency — both are solid, so they survive over any backdrop.
+  navyTint: '#23426B',
+  navyMuted: '#BCCBE0',
+  // Hairline between the drawer's two nav groups, and the drawer footer
+  // line - both measured off the Company Admin - Side menu artboard.
+  navyDivider: '#2E4F7A',
+  navyFooter: '#9FB3CF',
 
   // Text and primary action fill.
   espresso: ESPRESSO,
@@ -46,6 +57,10 @@ const colors = {
   // transparency, so the elevation survives on any backdrop.
   espressoRaised: '#3F2C22',
   link: RUST,
+  // Destructive outline/label - the red accent family's strong tone,
+  // surfaced as a SEMANTIC token so a screen never has to reach into the
+  // accents map to express 'this action is destructive' (gate O3).
+  danger: '#B42318',
 
   // Two grounds (research R1): cream for student-facing screens, warm grey
   // for back-of-house. Navy chrome appears only on the latter.
@@ -61,6 +76,8 @@ const colors = {
   // Borders and disabled. A disabled control differs by BORDER STYLE as well
   // as colour (FR-013) — colour alone is not an accessible distinction.
   border: '#F1E6DA',
+  // The 1px hairline on the Dashboard's white quick-link cards.
+  borderCard: '#E8E3DC',
   borderSoft: '#EFE3D6',
   borderDashed: '#CFC6BB',
   disabledFill: '#F4EEE7',
@@ -107,20 +124,40 @@ const BODY_BOLD = 'Inter-Bold';
  */
 const typography = {
   // Display family — one weight (800), six sizes.
-  hero: { fontFamily: DISPLAY, fontSize: 36, lineHeight: 40, letterSpacing: -1.2 },
-  display: { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, letterSpacing: -1.2 },
-  title: { fontFamily: DISPLAY, fontSize: 28, lineHeight: 32, letterSpacing: -0.8 },
+  hero: { fontFamily: DISPLAY, fontSize: 40, lineHeight: 41, letterSpacing: -1.5 },
+  display: { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, letterSpacing: -1 },
+  // The admin greeting headline - 32px/34/-1 on the Company Admin -
+  // Dashboard artboard, between `display` (34) and `title` (28).
+  displaySm: { fontFamily: DISPLAY, fontSize: 32, lineHeight: 34, letterSpacing: -1 },
+  title: { fontFamily: DISPLAY, fontSize: 28, lineHeight: 30, letterSpacing: -0.8 },
+  // The 'GenzFeast' lockup — 26px/-0.8 is the most frequent display size
+  // in the redesign canvas (8 uses); it previously had no token and was
+  // being approximated by titleSm (24) or title (28).
+  wordmark: { fontFamily: DISPLAY, fontSize: 26, lineHeight: 30, letterSpacing: -0.8 },
+  // The header lockup is a smaller cut of the wordmark: 20px/-0.5 on the
+  // Company Admin - Dashboard artboard, distinct from `subtitle` (20px/0).
+  wordmarkSm: { fontFamily: DISPLAY, fontSize: 20, lineHeight: 24, letterSpacing: -0.5 },
+  // Hero-row title ('Products') - Bricolage 800 at 22px.
+  titleMd: { fontFamily: DISPLAY, fontSize: 22, lineHeight: 26, letterSpacing: -0.5 },
   titleSm: { fontFamily: DISPLAY, fontSize: 24, lineHeight: 28, letterSpacing: -0.5 },
-  subtitle: { fontFamily: DISPLAY, fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
-  subtitleSm: { fontFamily: DISPLAY, fontSize: 17, lineHeight: 22, letterSpacing: 0 },
+  subtitle: { fontFamily: DISPLAY, fontSize: 20, lineHeight: 24, letterSpacing: 0 },
+  subtitleSm: { fontFamily: DISPLAY, fontSize: 18, lineHeight: 22, letterSpacing: 0 },
 
   // Body family — four weights, each its own family.
   price: { fontFamily: BODY_BOLD, fontSize: 16, lineHeight: 22, letterSpacing: 0 },
   bodyLg: { fontFamily: BODY, fontSize: 16, lineHeight: 22, letterSpacing: 0 },
   body: { fontFamily: BODY, fontSize: 15, lineHeight: 21, letterSpacing: 0 },
   bodyBold: { fontFamily: BODY_BOLD, fontSize: 15, lineHeight: 21, letterSpacing: 0 },
+  // Read-only field values on Profile - Inter 600 at 15px, a notch
+  // lighter than `bodyBold` (700).
+  bodySemi: { fontFamily: BODY_SEMI, fontSize: 15, lineHeight: 21, letterSpacing: 0 },
+  // The pill button label on Profile - Inter 700 at 14px.
+  labelBold: { fontFamily: BODY_BOLD, fontSize: 14, lineHeight: 20, letterSpacing: 0 },
   labelLg: { fontFamily: BODY_SEMI, fontSize: 14, lineHeight: 20, letterSpacing: 0 },
   label: { fontFamily: BODY_SEMI, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
+  // Role tag beside the header wordmark ('ADMIN'/'STAFF') - Inter 600 at
+  // 12px with no tracking, unlike `eyebrow` which is bold and tracked.
+  tag: { fontFamily: BODY_SEMI, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
   eyebrow: { fontFamily: BODY_BOLD, fontSize: 12, lineHeight: 16, letterSpacing: 1.5 },
   caption: { fontFamily: BODY, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
   captionSm: { fontFamily: BODY_SEMI, fontSize: 11, lineHeight: 14, letterSpacing: 0.8 },
@@ -167,6 +204,7 @@ const size = { touch: 44, field: 48, control: 52 };
  */
 const radius = {
   glyph: 3,
+  xxs: 6,
   xs: 8,
   sm: 10,
   md: 12,
@@ -177,6 +215,11 @@ const radius = {
   '4xl': 22,
   '5xl': 24,
   '6xl': 28,
+  // Semantic, not a scale step: the primary action row on the Company
+  // Admin - Dashboard artboard is 26px, which falls between 5xl (24)
+  // and 6xl (28). Named by role so the scale stays evenly spaced.
+  card: 26,
+  '7xl': 32,
   pill: 999,
 };
 

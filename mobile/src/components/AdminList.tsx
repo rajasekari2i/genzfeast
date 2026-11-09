@@ -1,6 +1,8 @@
 import React from 'react';
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
 import { accents, colors, radius, type AccentName } from '../theme/tokens';
+import { Icon } from './Icon';
+import type { IconName } from './Icon';
 
 /**
  * Back-of-house list furniture — the treatment the `Categories`,
@@ -19,22 +21,39 @@ import { accents, colors, radius, type AccentName } from '../theme/tokens';
  */
 export function IconTile({
   glyph,
+  icon,
   accent = 'neutral',
   size = 'sm',
 }: {
-  glyph: string;
+  /** An emoji/text glyph. Prefer `icon` — the artboards use line icons. */
+  glyph?: string;
+  /** A line icon transcribed from the artboards. Takes precedence over `glyph`. */
+  icon?: IconName;
   accent?: AccentName;
-  size?: 'sm' | 'lg';
+  /** 'md' is the artboard's 44px quick-link tile (radius 14). */
+  size?: 'sm' | 'md' | 'lg';
 }) {
+  // This component owns the accents lookup on purpose: gate O3 forbids a
+  // SCREEN importing the `accents` map and picking a family by hand, so the
+  // screen names a family and this resolves the soft/strong pair.
   const pair = accents[accent];
+  const box =
+    size === 'lg' ? 'w-control h-control' : size === 'md' ? 'w-touch h-touch' : 'w-xl h-xl';
+  const corner =
+    size === 'lg' ? radius['2xl'] : size === 'md' ? radius.lg : radius.md;
+
   return (
     <View
-      style={{ backgroundColor: pair.soft, borderRadius: size === 'lg' ? radius['2xl'] : radius.md }}
-      className={`${size === 'lg' ? 'w-control h-control' : 'w-xl h-xl'} items-center justify-center`}
+      style={{ backgroundColor: pair.soft, borderRadius: corner }}
+      className={`${box} items-center justify-center`}
     >
-      <Text style={{ color: pair.strong }} className={size === 'lg' ? 'text-subtitle' : 'text-labelLg'}>
-        {glyph}
-      </Text>
+      {icon ? (
+        <Icon name={icon} size={size === 'lg' ? 26 : 22} color={pair.strong} />
+      ) : (
+        <Text style={{ color: pair.strong }} className={size === 'lg' ? 'text-subtitle' : 'text-label-lg'}>
+          {glyph}
+        </Text>
+      )}
     </View>
   );
 }
@@ -55,7 +74,7 @@ export function AdminSearchField(props: TextInputProps) {
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         style={{ borderRadius: radius.xl }}
-        className="h-field bg-surface pl-xl pr-md text-bodyLg text-text-primary"
+        className="h-field bg-surface pl-xl pr-md text-body-lg text-text-primary"
         {...props}
       />
     </View>
@@ -93,12 +112,12 @@ export function AdminListRow({
         style={{ backgroundColor: pair.soft, borderRadius: radius.md }}
         className="w-xl h-xl items-center justify-center"
       >
-        <Text style={{ color: pair.strong }} className="text-labelLg">
+        <Text style={{ color: pair.strong }} className="text-label-lg">
           {glyph}
         </Text>
       </View>
       <View className="flex-1">
-        <Text className="text-bodyBold text-text-primary" numberOfLines={1}>
+        <Text className="text-body-bold text-text-primary" numberOfLines={1}>
           {title}
         </Text>
         {subtitle ? (

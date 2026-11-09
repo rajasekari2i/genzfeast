@@ -39,7 +39,7 @@ export function FormField({
           borderColor: error ? colors.borderDashed : readOnly ? colors.borderDashed : colors.espresso,
           borderRadius: radius.xl,
         }}
-        className={`h-field px-md text-bodyLg ${
+        className={`h-field px-md text-body-lg ${
           readOnly ? 'bg-disabled-fill text-text-secondary' : 'bg-surface text-text-primary'
         }`}
         {...inputProps}

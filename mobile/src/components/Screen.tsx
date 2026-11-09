@@ -20,6 +20,7 @@ export function Screen({
   children,
   scroll = true,
   surface = 'student',
+  header,
 }: {
   title: string;
   subtitle?: string;
@@ -33,18 +34,28 @@ export function Screen({
   scroll?: boolean;
   /** Which ground this screen sits on (research R1). */
   surface?: 'student' | 'admin';
+  /**
+   * Full-bleed chrome rendered ABOVE the padded content — the navy
+   * AdminHeader needs to reach the screen edges and own its own padding,
+   * so it cannot sit inside `p-md`. Scrolls with the content when
+   * `scroll` is true, matching the artboards (the header is part of the
+   * page, not a pinned bar).
+   */
+  header?: React.ReactNode;
 }) {
   const ground = surface === 'admin' ? 'bg-background-alt' : 'bg-background';
 
   if (!scroll) {
     return (
-      <View className={`flex-1 ${ground} p-md`} accessibilityLabel={title}>
-        {children}
+      <View className={`flex-1 ${ground}`} accessibilityLabel={title}>
+        {header}
+        <View className="flex-1 p-md">{children}</View>
       </View>
     );
   }
   return (
     <ScrollView className={`flex-1 ${ground}`} accessibilityLabel={title}>
+      {header}
       <View className="p-md">{children}</View>
     </ScrollView>
   );

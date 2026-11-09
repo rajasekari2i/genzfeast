@@ -26,6 +26,14 @@ export interface ColorTokens {
   primary: string;
   /** Navigation/header chrome on back-of-house surfaces. */
   primaryVariant: string;
+  /** Circular controls inside the navy header (AdminHeader). */
+  navyTint: string;
+  /** The role tag beside the header wordmark. */
+  navyMuted: string;
+  /** Divider between the drawer's nav groups. */
+  navyDivider: string;
+  /** The drawer's footer line. */
+  navyFooter: string;
   /** Primary text AND primary action fill. */
   espresso: string;
   /** Alias of `espresso`; retained so existing importers keep compiling. */
@@ -38,6 +46,8 @@ export interface ColorTokens {
   espressoRaised: string;
   /** Links and brand-coloured text. The brand itself never clears 4.5:1 as a foreground. */
   link: string;
+  /** Destructive action outline/label. */
+  danger: string;
   /** Student-facing ground. */
   background: string;
   /** Back-of-house ground (research R1 — the app has two grounds, not one). */
@@ -48,6 +58,8 @@ export interface ColorTokens {
   secondary: string;
   nonVeg: string;
   border: string;
+  /** Hairline on the Dashboard quick-link cards. */
+  borderCard: string;
   borderSoft: string;
   /** Disabled/read-only outline — a dashed border, so the state differs in SHAPE not just colour. */
   borderDashed: string;
@@ -93,9 +105,12 @@ export interface TypographyStyle {
 }
 
 export type TypographyName =
-  | 'hero' | 'display' | 'title' | 'titleSm' | 'subtitle' | 'subtitleSm'
+  | 'hero' | 'display' | 'displaySm' | 'wordmark' | 'wordmarkSm'
+  | 'title' | 'titleSm'
+  | 'titleMd' | 'subtitle' | 'subtitleSm'
   | 'price' | 'bodyLg' | 'body' | 'bodyBold'
-  | 'labelLg' | 'label' | 'eyebrow' | 'caption' | 'captionSm';
+  | 'bodySemi' | 'labelBold' | 'labelLg' | 'label' | 'tag'
+  | 'eyebrow' | 'caption' | 'captionSm';
 
 export type SpacingName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -103,8 +118,8 @@ export type SpacingName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type SizeName = 'touch' | 'field' | 'control';
 
 export type RadiusName =
-  | 'glyph' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | 'pill';
+  | 'glyph' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'card' | 'pill';
 
 // tokens.raw.js is annotated with broad JSDoc types (Record<string, string>
 // etc.) so that tailwind.config.js can consume it without TypeScript. These

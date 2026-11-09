@@ -48,7 +48,14 @@ const EXEMPT = new Set([
   'border-solid', 'border-dashed', 'border-dotted',
 ]);
 
-const PREFIXES = /\b((?:text|bg|border|rounded|font)-[a-z0-9-]+)\b/g;
+// NOTE the A-Z in the character class, and why it matters: with a
+// lowercase-only class (`[a-z0-9-]+`) this regex truncated a camelCase
+// utility at the first capital — `text-bodyBold` matched as `text-body`,
+// which IS a valid key, so the gate passed it. 34 such classes were live in
+// src while this gate was green. The emitted utilities are kebab-case
+// (`text-body-bold`), so a capital letter anywhere in a class name is
+// itself the defect; it must be captured to be rejected.
+const PREFIXES = /\b((?:text|bg|border|rounded|font)-[A-Za-z0-9-]+)\b/g;
 
 function isAllowed(cls: string): boolean {
   if (EXEMPT.has(cls)) return true;

@@ -65,7 +65,7 @@ export function ProductCard({
       <View className="px-xs pt-sm gap-xs">
         <View className="flex-row items-center gap-xs">
           {isVeg === undefined ? null : <DietaryMark isVeg={isVeg} />}
-          <Text className="flex-1 text-bodyBold text-text-primary" numberOfLines={1}>
+          <Text className="flex-1 text-body-bold text-text-primary" numberOfLines={1}>
             {name}
           </Text>
         </View>
@@ -86,16 +86,16 @@ export function ProductCard({
                 accessibilityLabel={`Remove one ${name}`}
                 className="w-touch h-touch items-center justify-center active:opacity-80"
               >
-                <Text className="text-bodyBold text-surface">−</Text>
+                <Text className="text-body-bold text-surface">−</Text>
               </Pressable>
-              <Text className="text-bodyBold text-surface">{quantityInCart}</Text>
+              <Text className="text-body-bold text-surface">{quantityInCart}</Text>
               <Pressable
                 onPress={onIncrement}
                 accessibilityRole="button"
                 accessibilityLabel={`Add one more ${name}`}
                 className="w-touch h-touch items-center justify-center active:opacity-80"
               >
-                <Text className="text-bodyBold text-surface">+</Text>
+                <Text className="text-body-bold text-surface">+</Text>
               </Pressable>
             </View>
           ) : (
