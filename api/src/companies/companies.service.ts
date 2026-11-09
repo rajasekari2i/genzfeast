@@ -1,7 +1,8 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import * as argon2 from 'argon2';
 import { TenantContext, TenantPrismaService } from '../common/prisma/tenant-prisma.service';
+import { PasswordService } from '../auth/password.service';
+import { generateProvisioningPassword } from './generated-password';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { CreateCompanyAdminDto } from './dto/create-company-admin.dto';
@@ -9,7 +10,10 @@ import { CompanyResponse, UserResponse, toCompanyResponse, toUserResponse } from
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly tenantPrisma: TenantPrismaService) {}
+  constructor(
+    private readonly tenantPrisma: TenantPrismaService,
+    private readonly passwords: PasswordService,
+  ) {}
 
   async list(ctx: TenantContext): Promise<CompanyResponse[]> {
     const companies = await this.tenantPrisma.runInTenantContext(ctx, (tx) =>
@@ -21,9 +25,38 @@ export class CompaniesService {
     return companies.map(toCompanyResponse);
   }
 
+  /**
+   * Creates the Company AND its first Company Admin, in one transaction.
+   *
+   * Onboarding used to be two calls (this, then POST /:companyId/admins), and
+   * a Company created without the second call had no way for anyone to log
+   * into it. Doing both here means a tenant is never left unreachable: if the
+   * admin insert fails, the company insert rolls back with it.
+   *
+   * The admin is derived from the company's own contact details —
+   * `contact_person` becomes the name, `mobile` the username, `email` the
+   * email — because those are exactly the person the System Admin just
+   * recorded as responsible for the canteen.
+   *
+   * The password is GENERATED and returned once (FR-001a). It is never a
+   * fixed default: a known credential baked into the codebase is safe only
+   * for as long as nobody points it at production, which is the weakness
+   * scripts/seed-system-admin-dev.ts warns about in its own header.
+   */
   async create(ctx: TenantContext, dto: CreateCompanyDto): Promise<CompanyResponse> {
-    const company = await this.tenantPrisma.runInTenantContext(ctx, (tx) =>
-      tx.company.create({
+    const temporaryPassword = generateProvisioningPassword();
+    const passwordHash = await this.passwords.hash(temporaryPassword);
+
+    return this.tenantPrisma.runInTenantContext(ctx, async (tx) => {
+      // Roles are global, not per-company (migration 20260907170000). Read it
+      // BEFORE creating anything, so a corrupt role catalog fails the whole
+      // request rather than leaving a company behind.
+      const role = await tx.role.findFirst({ where: { name: 'company_admin' } });
+      if (!role) {
+        throw new NotFoundException('company_admin role not found');
+      }
+
+      const company = await tx.company.create({
         data: {
           name: dto.name,
           contactPerson: dto.contact_person,
@@ -32,9 +65,30 @@ export class CompaniesService {
           address: dto.address,
           createdBy: ctx.userId,
         },
-      }),
-    );
-    return toCompanyResponse(company);
+      });
+
+      // `username` is unique per TENANT, not globally (migration
+      // 20260912205205), and this company has no other users yet — so the
+      // mobile number cannot collide here, however many other canteens
+      // already use it.
+      const admin = await tx.user.create({
+        data: {
+          companyId: company.id,
+          roleId: role.id,
+          name: dto.contact_person,
+          username: dto.mobile,
+          passwordHash,
+          email: dto.email,
+          createdBy: ctx.userId,
+        },
+        select: { id: true, name: true, username: true, email: true },
+      });
+
+      return {
+        ...toCompanyResponse(company),
+        admin: { ...admin, temporary_password: temporaryPassword },
+      };
+    });
   }
 
   async update(ctx: TenantContext, companyId: string, dto: UpdateCompanyDto): Promise<CompanyResponse> {
@@ -121,7 +175,12 @@ export class CompaniesService {
         throw new NotFoundException('company_admin role not found');
       }
 
-      const passwordHash = await argon2.hash(dto.password);
+      // Through PasswordService, not argon2 directly: this call used to be
+      // `argon2.hash(dto.password)`, which omits `{ type: argon2id }` and so
+      // used the library default (argon2i). Verification still worked —
+      // the hash self-describes — but it contradicted the documented
+      // choice and the service's own claim to be the single hashing path.
+      const passwordHash = await this.passwords.hash(dto.password);
 
       try {
         // select excludes passwordHash — coding_standard.md §4.4 ("always

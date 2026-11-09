@@ -34,7 +34,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a company (System Admin only). Roles are global and seeded once platform-wide, not per-company. */
+        /** Create a company AND its first Company Admin (System Admin only). The admin is derived from the company's own contact details — contact_person as the name, mobile as the username, email as the email — and its password is GENERATED, returned once as `admin.temporary_password`, and never retrievable again. Both rows are written in one transaction, so a company is never left with no way to log into it. Roles are global and seeded once platform-wide, not per-company. */
         post: {
             parameters: {
                 query?: never;
@@ -1228,6 +1228,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description The auto-provisioned Company Admin. Returned ONLY by POST /admin/companies, never by GET or PATCH. `temporary_password` is the sole moment the plaintext exists outside the database — it is hashed on write and cannot be recovered, so a System Admin who loses it must reset the account rather than look it up. */
+        ProvisionedAdmin: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            username?: string;
+            /** Format: email */
+            email?: string;
+            temporary_password?: string;
+        };
         Company: {
             /** Format: uuid */
             id?: string;
@@ -1246,6 +1256,7 @@ export interface components {
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
+            admin?: components["schemas"]["ProvisionedAdmin"];
         };
         CompanyCreateRequest: {
             name: string;

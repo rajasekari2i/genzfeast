@@ -1,6 +1,21 @@
 import type { Company, User } from '@prisma/client';
 
 /** Wire shape of contracts/openapi.yaml's Company schema. */
+/**
+ * The auto-provisioned Company Admin, returned ONCE by POST /admin/companies
+ * and never again. `temporary_password` is the only time the plaintext
+ * exists outside the caller's own response body — it is hashed on the way
+ * into the database and cannot be recovered afterwards, so a System Admin
+ * who loses it must reset the account rather than look it up.
+ */
+export interface ProvisionedAdmin {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  temporary_password: string;
+}
+
 export interface CompanyResponse {
   id: string;
   name: string;
@@ -13,6 +28,8 @@ export interface CompanyResponse {
   operating_hours: string | null;
   created_at: string;
   updated_at: string;
+  /** Present only on the create response — see ProvisionedAdmin. */
+  admin?: ProvisionedAdmin;
 }
 
 /** Wire shape of contracts/openapi.yaml's User schema. */
