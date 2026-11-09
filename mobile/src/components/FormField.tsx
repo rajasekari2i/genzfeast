@@ -9,8 +9,11 @@ import { colors, radius } from '../theme/tokens';
  * between them rather than one being approximated by the other:
  *   student  espresso 1.5px rule at radius 16 (Login, Register)
  *   admin    #DDD6CC 1.5px rule at radius 14 on a white section card
- *            (Add/edit user, Add department, Edit category — and the product
- *            form, which has no artboard of its own and follows them)
+ *            (Add/edit user — and the product form, which has no artboard of
+ *            its own and follows it)
+ *   sheet    a 2px NAVY rule at radius 16, 54px tall with 16px text — the
+ *            single emphasised field in the Edit category / Add department
+ *            bottom sheets, where there is nothing else competing for focus
  *
  * A read-only field is distinguished by BORDER STYLE and fill, not colour
  * alone (FR-016) — a dashed outline on the muted fill. Relying on colour
@@ -32,7 +35,7 @@ export function FormField({
   readOnly?: boolean;
   error?: string | null;
   /** Which artboard family this field belongs to — see the note above. */
-  tone?: 'student' | 'admin';
+  tone?: 'student' | 'admin' | 'sheet';
 }) {
   return (
     <View className="gap-xs">
@@ -42,17 +45,20 @@ export function FormField({
         placeholderTextColor={colors.textSecondary}
         accessibilityLabel={label}
         style={{
-          borderWidth: 1.5,
           borderStyle: readOnly ? 'dashed' : 'solid',
           borderColor:
             error || readOnly
               ? colors.borderDashed
               : tone === 'admin'
                 ? colors.borderChip
-                : colors.espresso,
+                : tone === 'sheet'
+                  ? colors.primaryVariant
+                  : colors.espresso,
+          borderWidth: tone === 'sheet' ? 2 : 1.5,
           borderRadius: tone === 'admin' ? radius.lg : radius.xl,
+          ...(tone === 'sheet' ? { height: 54, paddingHorizontal: 18 } : null),
         }}
-        className={`h-field px-md text-body-lg ${
+        className={`${tone === 'sheet' ? '' : 'h-field px-md'} text-body-lg ${
           readOnly ? 'bg-disabled-fill text-text-secondary' : 'bg-surface text-text-primary'
         }`}
         {...inputProps}

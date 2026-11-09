@@ -34,6 +34,8 @@ export interface ColorTokens {
   navyDivider: string;
   /** The drawer's footer line. */
   navyFooter: string;
+  /** Unselected segmented-tab label on navy. */
+  navyTabMuted: string;
   /** Primary text AND primary action fill. */
   espresso: string;
   /** Alias of `espresso`; retained so existing importers keep compiling. */
@@ -62,6 +64,8 @@ export interface ColorTokens {
   borderCard: string;
   /** Unselected filter-chip rule. */
   borderChip: string;
+  /** Bottom-sheet grab handle. */
+  sheetHandle: string;
   /** Neutral tile behind a list row's edit control. */
   tileNeutral: string;
   borderSoft: string;
@@ -125,7 +129,7 @@ export type SizeName = 'tile' | 'touch' | 'field' | 'control';
 
 export type RadiusName =
   | 'glyph' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'card' | 'pill';
+  | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'card' | 'sheet' | 'pill';
 
 // tokens.raw.js is annotated with broad JSDoc types (Record<string, string>
 // etc.) so that tailwind.config.js can consume it without TypeScript. These

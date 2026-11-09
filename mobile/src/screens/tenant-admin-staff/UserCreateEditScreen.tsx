@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { colors, radius } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { AdminPageHeader } from '../../components/AdminPageHeader';
 import { Dropdown } from '../../components/Dropdown';
 import { PasswordInput } from '../../components/PasswordInput';
 import { FormField } from '../../components/FormField';
@@ -161,10 +162,29 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen title={isEdit ? 'Edit User' : 'Create User'} specRef="UI Design §5.4">
-      <View className="gap-md">
-        <FormField label="Name" placeholder="Arun Prakash" value={name} onChangeText={setName} />
+    <Screen
+      surface="admin"
+      title={isEdit ? 'Edit User' : 'Create User'}
+      specRef="UI Design §5.4"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title={isEdit ? 'Edit user' : 'Add user'}
+          onBack={() => navigation.goBack()}
+        />
+      }
+    >
+      {/* "Company Admin · Add / edit user": one white section card holding
+          every field, admin-tone inputs, and Cancel/Save pinned below at
+          flex 1 / flex 2 with a NAVY primary. */}
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 8 }}>
+        <View
+          style={{ borderRadius: radius['5xl'], borderWidth: 1, borderColor: colors.borderCard }}
+          className="bg-surface p-md gap-sm"
+        >
+        <FormField tone="admin" label="Name" placeholder="Arun Prakash" value={name} onChangeText={setName} />
         <FormField
+          tone="admin"
           label="Username (mobile number)"
           placeholder="9876543210"
           keyboardType="phone-pad"
@@ -186,6 +206,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
           </Text>
         </View>
         <FormField
+          tone="admin"
           label="Email"
           placeholder="arun@college.edu"
           keyboardType="email-address"
@@ -214,20 +235,38 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
           </>
         ) : null}
 
-        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
-
-        <View className="flex-row gap-3">
-          <Pressable
-            className="flex-1 rounded-pill items-center justify-center px-6 py-3 border border-border"
-            onPress={() => navigation.goBack()}
-            disabled={saving}
-          >
-            <Text className="text-center text-button text-text-secondary">Cancel</Text>
-          </Pressable>
-          <View className="flex-1">
-            <PrimaryButton label={isEdit ? 'Update' : 'Save'} onPress={handleSave} loading={saving} disabled={saving} />
-          </View>
         </View>
+
+        {errorMessage ? <Text className="text-body text-red-strong pt-sm">{errorMessage}</Text> : null}
+      </ScrollView>
+
+      <View className="flex-row gap-sm pt-sm">
+        <Pressable
+          onPress={() => navigation.goBack()}
+          disabled={saving}
+          accessibilityRole="button"
+          style={{ flex: 1, height: 56, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.borderChip }}
+          className="items-center justify-center active:opacity-70"
+        >
+          <Text className="text-price text-text-primary">Cancel</Text>
+        </Pressable>
+        <Pressable
+          onPress={handleSave}
+          disabled={saving}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: saving }}
+          style={{
+            flex: 2,
+            height: 56,
+            borderRadius: radius.pill,
+            backgroundColor: colors.primaryVariant,
+            opacity: saving ? 0.6 : 1,
+          }}
+          className="flex-row items-center justify-center gap-xs"
+        >
+          {saving ? <ActivityIndicator size="small" color={colors.surface} /> : null}
+          <Text className="text-price text-surface">{isEdit ? 'Save user' : 'Add user'}</Text>
+        </Pressable>
       </View>
     </Screen>
   );

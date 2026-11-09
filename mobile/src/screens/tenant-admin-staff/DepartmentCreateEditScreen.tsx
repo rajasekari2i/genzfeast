@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Screen } from '../../components/Screen';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { colors, radius } from '../../theme/tokens';
+import { BottomSheet } from '../../components/BottomSheet';
 import { FormField } from '../../components/FormField';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -64,34 +64,77 @@ export function DepartmentCreateEditScreen({ route, navigation }: Props) {
   }
 
   if (loading) {
-    return <Screen surface="admin" title="Edit Department" specRef="UI Design §5.4" />;
+    // The sheet itself, empty — a bare Screen here would briefly paint a
+    // full-height panel over the list before the sheet took its place.
+    return (
+      <BottomSheet title="Edit department" icon="departments" onClose={() => navigation.goBack()}>
+        <ActivityIndicator />
+      </BottomSheet>
+    );
   }
 
   return (
-    <Screen title={isEdit ? 'Edit Department' : 'Add Department'} specRef="UI Design §5.4">
-      <View className="gap-md">
-        <FormField
-          label="Department name"
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-        />
+    <BottomSheet
+      title={isEdit ? 'Edit department' : 'Add department'}
+      icon="departments"
+      accent="mint"
+      onClose={() => navigation.goBack()}
+    >
+      <FormField
+        tone="sheet"
+        label="Department name"
+        placeholder="e.g. Computer Science"
+        value={name}
+        onChangeText={setName}
+      />
 
-        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+      {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
-        <View className="flex-row gap-3">
+      {/* Edit shows a single full-width Save; Add shows Cancel + Add at
+          flex 1 / flex 2. Both commit in navy — back-of-house. */}
+      {isEdit ? (
+        <Pressable
+          onPress={handleSave}
+          disabled={saving}
+          accessibilityRole="button"
+          style={{
+            height: 56,
+            borderRadius: radius.pill,
+            backgroundColor: colors.primaryVariant,
+            opacity: saving ? 0.6 : 1,
+          }}
+          className="items-center justify-center"
+        >
+          <Text className="text-price text-surface">Save changes</Text>
+        </Pressable>
+      ) : (
+        <View className="flex-row gap-sm">
           <Pressable
-            className="flex-1 rounded-pill items-center justify-center px-6 py-3 border border-border"
             onPress={() => navigation.goBack()}
             disabled={saving}
+            accessibilityRole="button"
+            style={{ flex: 1, height: 56, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.borderChip }}
+            className="items-center justify-center active:opacity-70"
           >
-            <Text className="text-center text-button text-text-secondary">Cancel</Text>
+            <Text className="text-price text-text-primary">Cancel</Text>
           </Pressable>
-          <View className="flex-1">
-            <PrimaryButton label={isEdit ? 'Update' : 'Save'} onPress={handleSave} loading={saving} disabled={saving} />
-          </View>
+          <Pressable
+            onPress={handleSave}
+            disabled={saving}
+            accessibilityRole="button"
+            style={{
+              flex: 2,
+              height: 56,
+              borderRadius: radius.pill,
+              backgroundColor: colors.primaryVariant,
+              opacity: saving ? 0.6 : 1,
+            }}
+            className="items-center justify-center"
+          >
+            <Text className="text-price text-surface">Add department</Text>
+          </Pressable>
         </View>
-      </View>
-    </Screen>
+      )}
+    </BottomSheet>
   );
 }

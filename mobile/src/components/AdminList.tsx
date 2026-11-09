@@ -96,31 +96,29 @@ export function AdminSearchField(props: TextInputProps) {
  */
 export function AdminListRow({
   glyph,
+  icon,
   accent = 'neutral',
   title,
   subtitle,
   actions,
 }: {
-  glyph: string;
+  /** Emoji fallback. Prefer `icon` — the artboards use drawn glyphs. */
+  glyph?: string;
+  icon?: IconName;
   accent?: AccentName;
   title: string;
   subtitle?: string;
   actions?: React.ReactNode;
 }) {
-  const pair = accents[accent];
+  // Measured off "Company Admin · Categories" / "· Departments": radius 20,
+  // a 1px borderCard rule (not borderSoft), and a 40px tile at radius 12 —
+  // the tile was 32px with an emoji in it before.
   return (
     <View
-      style={{ borderRadius: radius['3xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+      style={{ borderRadius: radius['3xl'], borderWidth: 1, borderColor: colors.borderCard }}
       className="flex-row items-center gap-sm bg-surface p-sm pl-md min-h-touch"
     >
-      <View
-        style={{ backgroundColor: pair.soft, borderRadius: radius.md }}
-        className="w-xl h-xl items-center justify-center"
-      >
-        <Text style={{ color: pair.strong }} className="text-label-lg">
-          {glyph}
-        </Text>
-      </View>
+      <IconTile glyph={glyph} icon={icon} accent={accent} size="tile" />
       <View className="flex-1">
         <Text className="text-body-bold text-text-primary" numberOfLines={1}>
           {title}

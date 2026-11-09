@@ -27,9 +27,16 @@ const GROUND_EXEMPT = new Set([
 
 describe('screen grounds', () => {
   it('every back-of-house screen declares the admin ground', () => {
-    const missing = walk(BACK_OF_HOUSE).filter(
-      (f) => !/surface=["{]?["']?admin/.test(fs.readFileSync(f, 'utf8')),
-    );
+    const missing = walk(BACK_OF_HOUSE).filter((f) => {
+      const source = fs.readFileSync(f, 'utf8');
+      // A screen presented as a BOTTOM SHEET has no ground of its own — it
+      // floats over the list, which supplies one, and it renders BottomSheet
+      // instead of Screen. "Edit category" and "Add department" are both
+      // sheets in the artboards. Requiring surface="admin" of them would
+      // force a full-height panel that the design does not have.
+      if (/<BottomSheet\b/.test(source)) return false;
+      return !/surface=["{]?["']?admin/.test(source);
+    });
     expect(missing.map((f) => path.relative(SCREENS, f))).toEqual([]);
   });
 

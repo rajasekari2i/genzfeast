@@ -38,6 +38,22 @@ export function productTint(productId: string): string {
   return accents[TINT_ROTATION[hash % TINT_ROTATION.length]].soft;
 }
 
+/**
+ * A stable {background, foreground} pair for a person's initial avatar —
+ * Users rows and the Feedback detail's "Submitted by" card both draw one.
+ *
+ * Deterministic by id for the same reason productTint is: a person should
+ * keep their colour between renders, and a rotation by list index would
+ * reshuffle every time the list is searched or filtered.
+ */
+export function avatarTint(id: string): { backgroundColor: string; color: string } {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return tile(TINT_ROTATION[hash % TINT_ROTATION.length]);
+}
+
 /** Icon-tile colours for a named family. */
 export function tile(name: AccentName): { backgroundColor: string; color: string } {
   return { backgroundColor: accents[name].soft, color: accents[name].strong };

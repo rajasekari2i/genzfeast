@@ -45,6 +45,9 @@ const colors = {
   // line - both measured off the Company Admin - Side menu artboard.
   navyDivider: '#2E4F7A',
   navyFooter: '#9FB3CF',
+  // Unselected label in the segmented control on the navy header
+  // (Company Admin - Feedback). Lighter than navyMuted.
+  navyTabMuted: '#DCE5F1',
 
   // Text and primary action fill.
   espresso: ESPRESSO,
@@ -81,6 +84,8 @@ const colors = {
   // The unselected filter chip's rule, and the neutral tile behind a
   // row's edit control - both from the Company Admin - Products artboard.
   borderChip: '#DDD6CC',
+  // The grab handle on a bottom sheet (Edit category, Add department).
+  sheetHandle: '#E2DBD1',
   tileNeutral: '#F4F1EC',
   borderSoft: '#EFE3D6',
   borderDashed: '#CFC6BB',
@@ -236,6 +241,8 @@ const radius = {
   // and 6xl (28). Named by role so the scale stays evenly spaced.
   card: 26,
   '7xl': 32,
+  // A bottom sheet's top corners are 30px in the artboards.
+  sheet: 30,
   pill: 999,
 };
 

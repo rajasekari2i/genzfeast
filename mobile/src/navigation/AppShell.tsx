@@ -309,15 +309,39 @@ export function AppShell() {
           {/* The registrant-affiliation Category (Student/Teaching Staff/
               Non-Teaching Staff) — not a food/product classification
               (CLAUDE.md's "Category vs Department vs Role" note). */}
-          <Drawer.Screen name="Categories" component={CompanyAdminCategoriesEntry} />
-          <Drawer.Screen name="Departments" component={CompanyAdminDepartmentsEntry} />
+          {/* headerShown: false — the screen renders the navy AdminPageHeader
+              with its own back control. */}
+          <Drawer.Screen
+            name="Categories"
+            component={CompanyAdminCategoriesEntry}
+            options={{ headerShown: false }}
+          />
+          {/* headerShown: false — the screen renders the navy AdminPageHeader
+              with its own back control. */}
+          <Drawer.Screen
+            name="Departments"
+            component={CompanyAdminDepartmentsEntry}
+            options={{ headerShown: false }}
+          />
           {/* "Users" replaces the old "Staff" side-menu concept — this
               task's own explicit ask. */}
-          <Drawer.Screen name="Users" component={CompanyAdminUsersEntry} />
+          {/* headerShown: false — the screen renders the navy AdminPageHeader
+              with its own back control. */}
+          <Drawer.Screen
+            name="Users"
+            component={CompanyAdminUsersEntry}
+            options={{ headerShown: false }}
+          />
           {/* specs/016-feedback-management User Story 2/3 — the review/
               resolve queue is Company-Admin-only; Company Staff never gets
               this entry point (spec Assumptions). */}
-          <Drawer.Screen name="Feedback Review" component={CompanyAdminFeedbackEntry} />
+          {/* headerShown: false — the screen renders the navy AdminPageHeader
+              with its own back control. */}
+          <Drawer.Screen
+            name="Feedback Review"
+            component={CompanyAdminFeedbackEntry}
+            options={{ headerShown: false }}
+          />
         </>
       )}
 

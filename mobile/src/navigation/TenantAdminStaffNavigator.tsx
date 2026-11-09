@@ -69,12 +69,52 @@ export function TenantAdminStaffNavigator({
         component={DashboardScreen}
         options={{ title: '', headerShown: false }}
       />
-      <Stack.Screen name="UserList" component={UserListScreen} options={{ title: '' }} />
-      <Stack.Screen name="UserCreateEdit" component={UserCreateEditScreen} options={{ title: '' }} />
-      <Stack.Screen name="CategoryList" component={CategoryListScreen} options={{ title: '' }} />
-      <Stack.Screen name="CategoryCreateEdit" component={CategoryCreateEditScreen} options={{ title: '' }} />
-      <Stack.Screen name="DepartmentList" component={DepartmentListScreen} options={{ title: '' }} />
-      <Stack.Screen name="DepartmentCreateEdit" component={DepartmentCreateEditScreen} options={{ title: '' }} />
+      <Stack.Screen
+        name="UserList"
+        component={UserListScreen}
+        options={{ title: '', headerShown: false }}
+      />
+      <Stack.Screen
+        name="UserCreateEdit"
+        component={UserCreateEditScreen}
+        options={{ title: '', headerShown: false }}
+      />
+      <Stack.Screen
+        name="CategoryList"
+        component={CategoryListScreen}
+        options={{ title: '', headerShown: false }}
+      />
+      {/* transparentModal — the artboard floats this as a BOTTOM SHEET
+          over the list, which stays visible behind a scrim. Route name
+          and params are unchanged; only the presentation differs. */}
+      <Stack.Screen
+        name="CategoryCreateEdit"
+        component={CategoryCreateEditScreen}
+        options={{
+          title: '',
+          headerShown: false,
+          presentation: 'transparentModal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="DepartmentList"
+        component={DepartmentListScreen}
+        options={{ title: '', headerShown: false }}
+      />
+      {/* transparentModal — the artboard floats this as a BOTTOM SHEET
+          over the list, which stays visible behind a scrim. Route name
+          and params are unchanged; only the presentation differs. */}
+      <Stack.Screen
+        name="DepartmentCreateEdit"
+        component={DepartmentCreateEditScreen}
+        options={{
+          title: '',
+          headerShown: false,
+          presentation: 'transparentModal',
+          animation: 'slide_from_bottom',
+        }}
+      />
       {/* headerShown: false — the screen renders the artboard's navy
           AdminPageHeader (back, title, item count, search) and a floating
           Add pill, neither of which a native stack header can carry. */}
@@ -93,8 +133,16 @@ export function TenantAdminStaffNavigator({
       />
       <Stack.Screen name="IncomingOrders" component={IncomingOrdersScreen} options={{ title: '' }} />
       <Stack.Screen name="OrderFulfilment" component={OrderFulfilmentScreen} options={{ title: '' }} />
-      <Stack.Screen name="FeedbackList" component={FeedbackListScreen} options={{ title: '' }} />
-      <Stack.Screen name="FeedbackDetail" component={FeedbackDetailScreen} options={{ title: '' }} />
+      <Stack.Screen
+        name="FeedbackList"
+        component={FeedbackListScreen}
+        options={{ title: '', headerShown: false }}
+      />
+      <Stack.Screen
+        name="FeedbackDetail"
+        component={FeedbackDetailScreen}
+        options={{ title: '', headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }

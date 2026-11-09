@@ -3,10 +3,11 @@ import { ActivityIndicator, Alert, FlatList, Pressable, Text, TextInput, View } 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { AdminFab, AdminPageHeader, AdminSearchBar } from '../../components/AdminPageHeader';
 import { RowActionButton } from '../../components/RowActionButton';
-import { AdminListRow, AdminSearchField, SectionLabel } from '../../components/AdminList';
+import { AdminListRow, SectionLabel } from '../../components/AdminList';
 import { createTypedClient } from '../../api/client';
-import { colors } from '../../theme/tokens';
+import { colors, radius, size } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/001-company-role-user-setup';
 
@@ -61,13 +62,6 @@ export function CategoryListScreen({ navigation }: Props) {
   }, []);
 
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable onPress={() => navigation.navigate('CategoryCreateEdit', {})} hitSlop={8}>
-          <Text style={{ color: colors.surface }} className="text-button">+ Add</Text>
-        </Pressable>
-      ),
-    });
   }, [navigation]);
 
   useEffect(() => {
@@ -111,17 +105,40 @@ export function CategoryListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen surface="admin" title="Categories" specRef="UI Design §5.4" scroll={false}>
-      <View className="gap-sm mb-md">
-        <Text className="text-caption text-text-secondary">Who's signing up — picked at registration</Text>
-        <AdminSearchField
-          placeholder="Search by name"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-
-        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
-      </View>
+    <Screen
+      surface="admin"
+      title="Categories"
+      specRef="UI Design §5.4"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title="Categories"
+          subtitle="Who's signing up — picked at registration"
+          onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.getParent()?.navigate('Dashboard'))}
+        >
+          <AdminSearchBar>
+            <TextInput
+              accessibilityLabel="Search categories"
+              style={{
+                height: size.field,
+                borderRadius: radius.xl,
+                backgroundColor: colors.surface,
+                paddingLeft: 44,
+                paddingRight: 16,
+                color: colors.espresso,
+              }}
+              className="text-body"
+              placeholder="Search categories"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </AdminSearchBar>
+        </AdminPageHeader>
+      }
+    >
+      {errorMessage ? <Text className="text-body text-red-strong pb-sm">{errorMessage}</Text> : null}
 
       {loading ? (
         <ActivityIndicator />
@@ -146,7 +163,7 @@ export function CategoryListScreen({ navigation }: Props) {
           ListFooterComponent={loadingMore ? <ActivityIndicator className="my-3" /> : null}
           renderItem={({ item: category }) => (
             <AdminListRow
-              glyph="🎓"
+              icon="categories"
               accent="violet"
               title={category.name}
               actions={
@@ -168,6 +185,11 @@ export function CategoryListScreen({ navigation }: Props) {
           )}
         />
       )}
+
+      <AdminFab
+        label="Add category"
+        onPress={() => navigation.navigate('CategoryCreateEdit', {})}
+      />
     </Screen>
   );
 }
