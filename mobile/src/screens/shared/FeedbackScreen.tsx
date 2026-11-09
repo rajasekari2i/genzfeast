@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Switch, Text, TextInput, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { DrawerActions, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { Icon } from '../../components/Icon';
 import { CategoryChip } from '../../components/CategoryChip';
 import { SwitchRow } from '../../components/SwitchRow';
 import { colors, radius } from '../../theme/tokens';
@@ -141,9 +142,30 @@ export function FeedbackScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Feedback">
-      <View className="gap-lg">
-        <Text className="text-title text-text-primary">Feedback</Text>
+    <Screen title="Feedback" scroll={false}>
+      <View className="flex-1 gap-md">
+        {/* Same header row as Profile and Contact us — the artboards share
+            it across the student journey. */}
+        <View className="flex-row items-center gap-sm">
+          <Pressable
+            onPress={() =>
+              // "Back to menu" in the artboard. These three are DRAWER
+              // destinations, not pushed routes, so canGoBack() is not a
+              // reliable signal here — it consults the whole navigator tree
+              // and returned true while there was nothing to pop, leaving
+              // the control dead and the user with no route to the menu now
+              // that the drawer header is hidden. Always open the drawer.
+              navigation.getParent()?.dispatch(DrawerActions.openDrawer())
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
+          >
+            <Icon name="chevronLeft" size={20} color={colors.espresso} />
+          </Pressable>
+          <Text className="flex-1 text-title text-text-primary">Feedback</Text>
+        </View>
 
         {/* Rating — a brand-filled panel with five fillable tiles rather
             than a row of glyphs. Optional (FR-013.2); tapping the current
@@ -152,7 +174,7 @@ export function FeedbackScreen({ navigation }: Props) {
           style={{ backgroundColor: colors.primary, borderRadius: radius['5xl'] }}
           className="p-md gap-sm"
         >
-          <Text className="text-subtitle text-espresso">
+          <Text className="text-title-md text-espresso">
             How was it? <Text className="text-label text-espresso">(optional)</Text>
           </Text>
           <View className="flex-row gap-xs">
@@ -171,9 +193,15 @@ export function FeedbackScreen({ navigation }: Props) {
                   }}
                   className="flex-1 h-control items-center justify-center"
                 >
-                  <Text className={filled ? 'text-subtitle text-accent' : 'text-subtitle text-text-secondary'}>
-                    ★
-                  </Text>
+                  {/* The artboard draws the star and varies its FILL by
+                      state, keeping the espresso outline throughout — the
+                      ★ character cannot express that. */}
+                  <Icon
+                    name="star"
+                    size={26}
+                    color={colors.espresso}
+                    fill={filled ? colors.accent : colors.surface}
+                  />
                 </Pressable>
               );
             })}
@@ -239,7 +267,19 @@ export function FeedbackScreen({ navigation }: Props) {
 
         {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
-        <PrimaryButton label="Send feedback" onPress={handleSubmit} loading={submitting} disabled={submitting} />
+        {/* Pinned to the bottom with a trailing arrow, per the artboard —
+            not the standard filled button. */}
+        <Pressable
+          onPress={handleSubmit}
+          disabled={submitting}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: submitting }}
+          style={{ height: 56, borderRadius: radius.pill, opacity: submitting ? 0.6 : 1 }}
+          className="mt-auto bg-espresso flex-row items-center justify-center gap-xs"
+        >
+          <Text className="text-price text-surface">Send feedback</Text>
+          <Icon name="arrowRight" size={18} color={colors.surface} />
+        </Pressable>
       </View>
     </Screen>
   );

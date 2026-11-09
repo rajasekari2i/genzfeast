@@ -17,7 +17,14 @@ const Stack = createNativeStackNavigator<FeedbackStackParamList>();
 export function FeedbackNavigator() {
   return (
     <Stack.Navigator initialRouteName="Feedback" screenOptions={primaryHeaderOptions}>
-      <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ title: '' }} />
+      {/* headerShown: false — the screen renders the artboard's own header
+          row (back control + Bricolage title), so leaving this on stacks
+          a second cream bar above it. */}
+      <Stack.Screen
+        name="Feedback"
+        component={FeedbackScreen}
+        options={{ title: '', headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }

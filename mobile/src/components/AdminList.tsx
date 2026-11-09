@@ -30,17 +30,22 @@ export function IconTile({
   /** A line icon transcribed from the artboards. Takes precedence over `glyph`. */
   icon?: IconName;
   accent?: AccentName;
-  /** 'md' is the artboard's 44px quick-link tile (radius 14). */
-  size?: 'sm' | 'md' | 'lg';
+  /** 'tile' is a 40px list-row tile (radius 12); 'md' the 44px quick-link tile (radius 14). */
+  size?: 'sm' | 'tile' | 'md' | 'lg';
 }) {
   // This component owns the accents lookup on purpose: gate O3 forbids a
   // SCREEN importing the `accents` map and picking a family by hand, so the
   // screen names a family and this resolves the soft/strong pair.
   const pair = accents[accent];
   const box =
-    size === 'lg' ? 'w-control h-control' : size === 'md' ? 'w-touch h-touch' : 'w-xl h-xl';
-  const corner =
-    size === 'lg' ? radius['2xl'] : size === 'md' ? radius.lg : radius.md;
+    size === 'lg'
+      ? 'w-control h-control'
+      : size === 'md'
+        ? 'w-touch h-touch'
+        : size === 'tile'
+          ? 'w-tile h-tile'
+          : 'w-xl h-xl';
+  const corner = size === 'lg' ? radius['2xl'] : size === 'md' ? radius.lg : radius.md;
 
   return (
     <View

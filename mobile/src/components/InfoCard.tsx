@@ -37,7 +37,7 @@ export function InfoRow({
    * Optional leading tile. The caller names a glyph and an accent FAMILY,
    * never colours — contract O3 keeps family selection out of screens.
    */
-  icon?: { glyph: string; accent?: AccentName };
+  icon?: { glyph?: string; icon?: IconName; accent?: AccentName };
   last?: boolean;
   /** Trailing note on the label, e.g. the lock on a read-only username. */
   note?: string;
@@ -49,7 +49,7 @@ export function InfoRow({
       style={{ borderBottomWidth: last ? 0 : 1, borderBottomColor: colors.border }}
       className="flex-row items-center gap-sm px-md py-sm min-h-touch"
     >
-      {icon ? <IconTile glyph={icon.glyph} accent={icon.accent} /> : null}
+      {icon ? <IconTile glyph={icon.glyph} icon={icon.icon} accent={icon.accent} size="tile" /> : null}
       <View className="flex-1 gap-xs">
         <View className="flex-row items-center gap-glyph">
           <Text className="text-caption text-text-secondary">

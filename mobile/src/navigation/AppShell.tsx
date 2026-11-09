@@ -317,11 +317,23 @@ export function AppShell() {
           also the first navigation entry point 'teaching'/'non_teaching'
           users get, beyond Profile — those roles have no other wired-up
           capability yet (CLAUDE.md). */}
-      {role ? <Drawer.Screen name="Contact Us" component={ContactUsNavigator} /> : null}
+      {role ? (
+        <Drawer.Screen
+          name="Contact Us"
+          component={ContactUsNavigator}
+          options={{ headerShown: false }}
+        />
+      ) : null}
 
       {/* specs/016-feedback-management User Story 1 — every role in this
           tenant-scoped build, same reasoning as Contact Us above. */}
-      {role ? <Drawer.Screen name="Feedback" component={FeedbackNavigator} /> : null}
+      {role ? (
+        <Drawer.Screen
+          name="Feedback"
+          component={FeedbackNavigator}
+          options={{ headerShown: false }}
+        />
+      ) : null}
     </Drawer.Navigator>
   );
 }

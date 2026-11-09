@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
-import { HeroCard } from '../../components/HeroCard';
+import { Icon } from '../../components/Icon';
 import { InfoCard, InfoRow } from '../../components/InfoCard';
 import { colors, radius } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
@@ -29,6 +29,10 @@ type ContactUs = {
  * via React Native's built-in Linking (FR-010) — Address stays plain text.
  */
 export function ContactUsScreen() {
+  // This screen takes no route props — it is mounted directly by
+  // ContactUsNavigator — so the back control and the Feedback link reach
+  // navigation through the hook instead.
+  const navigation = useNavigation();
   const [contactUs, setContactUs] = useState<ContactUs | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -68,11 +72,48 @@ export function ContactUsScreen() {
   }
 
   return (
-    <Screen title="Contact Us">
-      <View className="gap-md">
-        <Text className="text-title text-text-primary">Contact us</Text>
+    <Screen title="Contact Us" scroll={false}>
+      <View className="flex-1 gap-md">
+        {/* Same header row as Profile — the artboards share it across every
+            student-journey screen. */}
+        <View className="flex-row items-center gap-sm">
+          <Pressable
+            onPress={() =>
+              // "Back to menu" in the artboard. These three are DRAWER
+              // destinations, not pushed routes, so canGoBack() is not a
+              // reliable signal here — it consults the whole navigator tree
+              // and returned true while there was nothing to pop, leaving
+              // the control dead and the user with no route to the menu now
+              // that the drawer header is hidden. Always open the drawer.
+              navigation.getParent()?.dispatch(DrawerActions.openDrawer())
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
+          >
+            <Icon name="chevronLeft" size={20} color={colors.espresso} />
+          </Pressable>
+          <Text className="flex-1 text-title text-text-primary">Contact us</Text>
+        </View>
 
-        <HeroCard className="gap-sm">
+        {/* Hero — note the sun disc sits TOP-right here, where Profile's is
+            bottom-right. Canteen name is 30/32/-1, a size up from Profile's. */}
+        <View
+          style={{ borderRadius: radius['6xl'], backgroundColor: colors.primary }}
+          className="gap-sm p-lg overflow-hidden"
+        >
+          <View
+            style={{
+              position: 'absolute',
+              right: -40,
+              top: -40,
+              width: 150,
+              height: 150,
+              borderRadius: radius.pill,
+              backgroundColor: colors.accent,
+            }}
+          />
           <View
             style={{ borderRadius: radius.xl }}
             className="w-control h-control bg-espresso items-center justify-center overflow-hidden"
@@ -84,55 +125,57 @@ export function ContactUsScreen() {
               accessibilityLabel=""
             />
           </View>
-          <Text className="text-title-sm text-espresso">{contactUs.company_name}</Text>
+          <Text className="text-display-xs text-espresso">{contactUs.company_name}</Text>
           {/* Null or an empty string renders as "Not specified" (FR-005),
-              never a blank line. */}
-          <View className="self-start bg-espresso rounded-pill px-sm py-xs">
+              never a blank line. The clock glyph is struck in Sun, per the
+              artboard, not in the pill's own white. */}
+          <View className="self-start flex-row items-center gap-xs bg-espresso rounded-pill px-md py-xs">
+            <Icon name="clock" size={15} color={colors.accent} />
             <Text className="text-label text-surface">
               {contactUs.operating_hours?.trim() || 'Not specified'}
             </Text>
           </View>
-        </HeroCard>
+        </View>
 
         <InfoCard>
           <InfoRow
             label="Contact person"
             value={contactUs.contact_person}
-            icon={{ glyph: '👤', accent: 'neutral' }}
+            icon={{ icon: 'profile', accent: 'neutral' }}
           />
           {/* Phone and email have opened the dialler and mail client since
               specs/015. FR-038 bars ADDING that affordance; removing it
               would itself be a behavioural change (FR-030), so the
               behaviour stays and only the styling changed. */}
           <Pressable onPress={() => void Linking.openURL(`tel:${contactUs.phone_number}`)} hitSlop={8}>
-            <InfoRow
-              label="Phone"
-              value={contactUs.phone_number}
-              icon={{ glyph: '📞', accent: 'mint' }}
-            />
+            <InfoRow label="Phone" value={contactUs.phone_number} icon={{ icon: 'contactUs', accent: 'mint' }} />
           </Pressable>
           <Pressable onPress={() => void Linking.openURL(`mailto:${contactUs.email}`)} hitSlop={8}>
-            <InfoRow
-              label="Email"
-              value={contactUs.email}
-              icon={{ glyph: '✉️', accent: 'violet' }}
-            />
+            <InfoRow label="Email" value={contactUs.email} icon={{ icon: 'email', accent: 'tangerine' }} />
           </Pressable>
-          <InfoRow
-            label="Address"
-            value={contactUs.address}
-            icon={{ glyph: '📍', accent: 'sun' }}
-            last
-          />
+          <InfoRow label="Address" value={contactUs.address} icon={{ icon: 'pin', accent: 'sun' }} last />
         </InfoCard>
 
-        <View
-          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius['5xl'] }}
-          className="bg-surface p-md gap-xs"
+        {/* The artboard makes this a LINK to Feedback with a dashed warm
+            rule, not the solid card it was. Feedback is its own drawer
+            route, so this reaches it through the parent navigator. */}
+        <Pressable
+          onPress={() => navigation.getParent()?.navigate('Feedback')}
+          accessibilityRole="button"
+          style={{
+            borderWidth: 1.5,
+            borderStyle: 'dashed',
+            borderColor: colors.borderDashedWarm,
+            borderRadius: radius['4xl'],
+          }}
+          className="mt-auto flex-row items-center gap-sm p-md"
         >
-          <Text className="text-body-bold text-text-primary">Something to tell us?</Text>
-          <Text className="text-caption text-text-secondary">Share feedback with the canteen</Text>
-        </View>
+          <View className="flex-1 gap-glyph">
+            <Text className="text-body-bold text-text-primary">Something to tell us?</Text>
+            <Text className="text-label text-text-secondary">Share feedback with the canteen</Text>
+          </View>
+          <Icon name="chevronRight" size={20} color={colors.espresso} />
+        </Pressable>
       </View>
     </Screen>
   );

@@ -16,7 +16,8 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 export type IconName =
   | 'cloche' | 'chevronRight' | 'users' | 'feedback' | 'categories' | 'departments'
   | 'close' | 'dashboard' | 'feedbackReview' | 'profile' | 'contactUs'
-  | 'incomingOrders' | 'chevronLeft' | 'edit' | 'lock' | 'logout' | 'check';
+  | 'incomingOrders' | 'chevronLeft' | 'edit' | 'lock' | 'logout' | 'check'
+  | 'star' | 'arrowRight' | 'clock' | 'email' | 'pin';
 
 const STROKE: Record<IconName, number> = {
   cloche: 1.8,
@@ -40,16 +41,29 @@ const STROKE: Record<IconName, number> = {
   lock: 2.2,
   logout: 2.2,
   check: 2.4,
+  // The star is FILLED per rating state, so its stroke is thin (1.6)
+  // and only outlines the shape.
+  star: 1.6,
+  arrowRight: 2.5,
+  clock: 2.4,
+  email: 2,
+  pin: 2,
 };
 
 export function Icon({
   name,
   size = 22,
   color,
+  fill = 'none',
 }: {
   name: IconName;
   size?: number;
   color: string;
+  /**
+   * Only the rating star uses this: the artboard fills it per state and
+   * keeps the espresso outline, so fill and stroke are independent.
+   */
+  fill?: string;
 }) {
   const common = {
     stroke: color,
@@ -143,6 +157,33 @@ export function Icon({
       {name === 'logout' && <Path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" {...common} />}
 
       {name === 'check' && <Path d="M5 13l4 4L19 7" {...common} />}
+
+      {name === 'star' && (
+        <Path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" {...common} fill={fill} />
+      )}
+
+      {name === 'arrowRight' && <Path d="M5 12h14M13 6l6 6-6 6" {...common} />}
+
+      {name === 'clock' && (
+        <>
+          <Circle cx="12" cy="12" r="9" {...common} />
+          <Path d="M12 7v5l3 2" {...common} />
+        </>
+      )}
+
+      {name === 'email' && (
+        <>
+          <Path d="M4 6h16v12H4z" {...common} />
+          <Path d="M4 7l8 6 8-6" {...common} />
+        </>
+      )}
+
+      {name === 'pin' && (
+        <>
+          <Path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z" {...common} />
+          <Circle cx="12" cy="9" r="2.5" {...common} />
+        </>
+      )}
 
       {name === 'departments' && (
         <Path d="M4 21V5l8-3 8 3v16M9 21v-5h6v5M8 9h2M14 9h2M8 13h2M14 13h2" {...common} />

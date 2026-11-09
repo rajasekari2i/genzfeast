@@ -80,6 +80,9 @@ const colors = {
   borderCard: '#E8E3DC',
   borderSoft: '#EFE3D6',
   borderDashed: '#CFC6BB',
+  // A warmer dashed rule than `borderDashed`, used for the opt-in CTA at
+  // the foot of Contact us rather than for a disabled control.
+  borderDashedWarm: '#E1D3C4',
   disabledFill: '#F4EEE7',
   disabledText: '#6E6A78',
 
@@ -128,6 +131,8 @@ const typography = {
   display: { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, letterSpacing: -1 },
   // The admin greeting headline - 32px/34/-1 on the Company Admin -
   // Dashboard artboard, between `display` (34) and `title` (28).
+  // The canteen name on Contact us - Bricolage 800 at 30/32/-1.
+  displayXs: { fontFamily: DISPLAY, fontSize: 30, lineHeight: 32, letterSpacing: -1 },
   displaySm: { fontFamily: DISPLAY, fontSize: 32, lineHeight: 34, letterSpacing: -1 },
   title: { fontFamily: DISPLAY, fontSize: 28, lineHeight: 30, letterSpacing: -0.8 },
   // The 'GenzFeast' lockup — 26px/-0.8 is the most frequent display size
@@ -193,7 +198,7 @@ const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
  * at 40 and stepper segments at 34x40; the floor wins).
  * @type {Record<string, number>}
  */
-const size = { touch: 44, field: 48, control: 52 };
+const size = { tile: 40, touch: 44, field: 48, control: 52 };
 
 /**
  * Twelve steps (FR-008, research R3). `glyph` (3) is the veg/non-veg dietary

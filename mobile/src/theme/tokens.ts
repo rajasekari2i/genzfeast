@@ -63,6 +63,8 @@ export interface ColorTokens {
   borderSoft: string;
   /** Disabled/read-only outline — a dashed border, so the state differs in SHAPE not just colour. */
   borderDashed: string;
+  /** Warm dashed rule for an opt-in CTA (not a disabled control). */
+  borderDashedWarm: string;
   disabledFill: string;
   disabledText: string;
   /** Modal overlay. */
@@ -105,7 +107,7 @@ export interface TypographyStyle {
 }
 
 export type TypographyName =
-  | 'hero' | 'display' | 'displaySm' | 'wordmark' | 'wordmarkSm'
+  | 'hero' | 'display' | 'displaySm' | 'displayXs' | 'wordmark' | 'wordmarkSm'
   | 'title' | 'titleSm'
   | 'titleMd' | 'subtitle' | 'subtitleSm'
   | 'price' | 'bodyLg' | 'body' | 'bodyBold'
@@ -115,7 +117,7 @@ export type TypographyName =
 export type SpacingName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Control heights. `touch` (44) is the accessibility floor — FR-015. */
-export type SizeName = 'touch' | 'field' | 'control';
+export type SizeName = 'tile' | 'touch' | 'field' | 'control';
 
 export type RadiusName =
   | 'glyph' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'

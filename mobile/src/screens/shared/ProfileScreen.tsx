@@ -89,9 +89,13 @@ export function ProfileScreen({ navigation }: Props) {
             // from the drawer, so there is not always a screen to pop —
             // fall back to opening the menu rather than doing nothing.
             onPress={() =>
-              navigation.canGoBack()
-                ? navigation.goBack()
-                : navigation.getParent()?.dispatch(DrawerActions.openDrawer())
+              // "Back to menu" in the artboard. These three are DRAWER
+              // destinations, not pushed routes, so canGoBack() is not a
+              // reliable signal here — it consults the whole navigator tree
+              // and returned true while there was nothing to pop, leaving
+              // the control dead and the user with no route to the menu now
+              // that the drawer header is hidden. Always open the drawer.
+              navigation.getParent()?.dispatch(DrawerActions.openDrawer())
             }
             accessibilityRole="button"
             accessibilityLabel="Back"
