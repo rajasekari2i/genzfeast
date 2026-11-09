@@ -131,7 +131,13 @@ export function TenantAdminStaffNavigator({
         component={ProductCreateEditScreen}
         options={{ title: '', headerShown: false }}
       />
-      <Stack.Screen name="IncomingOrders" component={IncomingOrdersScreen} options={{ title: '' }} />
+      {/* headerShown: false — the screen renders the navy AdminPageHeader
+          with the hamburger, canteen meta and refresh control. */}
+      <Stack.Screen
+        name="IncomingOrders"
+        component={IncomingOrdersScreen}
+        options={{ title: '', headerShown: false }}
+      />
       <Stack.Screen name="OrderFulfilment" component={OrderFulfilmentScreen} options={{ title: '' }} />
       <Stack.Screen
         name="FeedbackList"

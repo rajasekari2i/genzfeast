@@ -22,6 +22,11 @@ import { Icon } from './Icon';
  * carries a timestamp and a status pill instead of the title, and the title
  * drops to its own line at 28/30.
  *
+ * `onMenu` swaps the back control for a hamburger, and `action` adds a second
+ * circular control at the end of row 1 — the "Staff · Incoming orders"
+ * arrangement, which is a drawer ROOT (nothing to go back to) with a refresh.
+ * `pill` sits beside the dropped title there, carrying the hand-over count.
+ *
  * Deliberately a separate component from AdminHeader, not a variant of it:
  * the dashboard header carries an identity (logo, wordmark, role tag,
  * avatar) and 32px corners, this one carries navigation (back, title, count)
@@ -35,6 +40,9 @@ export function AdminPageHeader({
   meta,
   badge,
   onBack,
+  onMenu,
+  action,
+  pill,
   children,
 }: {
   title: string;
@@ -46,7 +54,13 @@ export function AdminPageHeader({
   meta?: string;
   /** Detail arrangement: a status pill at the end of the back row. */
   badge?: React.ReactNode;
-  onBack: () => void;
+  onBack?: () => void;
+  /** Renders a hamburger instead of back — for a screen that is a drawer root. */
+  onMenu?: () => void;
+  /** A second circular control at the end of row 1, e.g. refresh. */
+  action?: React.ReactNode;
+  /** Pill beside the dropped title (the hand-over count). */
+  pill?: React.ReactNode;
   /** Row two — the search field, the segmented control, or nothing. */
   children?: React.ReactNode;
 }) {
@@ -67,8 +81,8 @@ export function AdminPageHeader({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={onBack}
+          accessibilityLabel={onMenu ? 'Open menu' : 'Back'}
+          onPress={onMenu ?? onBack}
           style={{
             width: size.touch,
             height: size.touch,
@@ -78,7 +92,7 @@ export function AdminPageHeader({
             justifyContent: 'center',
           }}
         >
-          <Icon name="chevronLeft" size={20} color={colors.surface} />
+          <Icon name={onMenu ? 'menu' : 'chevronLeft'} size={20} color={colors.surface} />
         </Pressable>
 
         {meta ? (
@@ -99,6 +113,7 @@ export function AdminPageHeader({
         )}
 
         {badge}
+        {action}
 
         {count ? (
           <Text style={{ color: colors.navyMuted }} className="text-label">
@@ -109,7 +124,19 @@ export function AdminPageHeader({
 
       {/* In the detail arrangement the title sits on its own line, a size up
           from the list screens' 26px. */}
-      {meta ? <Text className="text-title text-surface">{title}</Text> : null}
+      {meta ? (
+        pill ? (
+          /* Staff · Incoming orders: a 32/34 title with the count pill on the
+             same row, bottom-aligned so the pill sits on the baseline of the
+             title's last line rather than floating beside its cap height. */
+          <View className="flex-row items-end justify-between">
+            <Text className="text-display-sm text-surface">{title}</Text>
+            {pill}
+          </View>
+        ) : (
+          <Text className="text-title text-surface">{title}</Text>
+        )
+      ) : null}
 
       {children}
     </View>

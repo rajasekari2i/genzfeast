@@ -273,7 +273,12 @@ export function AppShell() {
         <>
           {/* UI Design §5.6/§5.7 — Incoming Orders + OTP verification, the
               screen a Staff login needs immediately (this task's own ask). */}
-          <Drawer.Screen name="Incoming Orders" component={StaffIncomingOrdersEntry} />
+          {/* headerShown: false — the screen owns the navy header. */}
+          <Drawer.Screen
+            name="Incoming Orders"
+            component={StaffIncomingOrdersEntry}
+            options={{ headerShown: false }}
+          />
           {/* UI Design §5.5 — same Product list as Company Admin's, but
               read/toggle-only (ProductListScreen itself checks the role). */}
           {/* headerShown: false — ProductListScreen renders the artboard's navy
