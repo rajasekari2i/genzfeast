@@ -1,7 +1,27 @@
 # Bundled typefaces
 
 `specs/017-ui-refresh` requires **five static font files** in this directory.
-They are not committed — add them here, then run `npm run fonts:link`.
+They **are committed** to this repo, together with `OFL.txt` — a fresh clone
+needs no font download. Both families are SIL Open Font License 1.1, which
+permits redistribution with the licence alongside.
+
+If you ever replace them, re-run `npm run fonts:link` so the copies under
+`android/app/src/main/assets/fonts/` match, then rebuild natively — a Metro
+reload does not pick up new native assets.
+
+## How these were produced
+
+Google Fonts serves both families as VARIABLE fonts, and a variable `.ttf`
+does not work here (see below). The committed files are:
+
+- `BricolageGrotesque-ExtraBold.ttf` — a static instance published upstream
+  at `ateliertriay/bricolage` (`fonts/ttf/`).
+- The four `Inter-*.ttf` — static instances cut from the variable
+  `Inter[opsz,wght].ttf` in `google/fonts` with
+  `fonttools varLib.instancer`, pinned at `opsz=14` and `wght=500/600/700/800`.
+
+Verify a replacement has no `fvar` table before committing it; a variable
+font is accepted silently by the build and then renders as the system face.
 
 | File | Family | Weight | Source |
 |---|---|---|---|

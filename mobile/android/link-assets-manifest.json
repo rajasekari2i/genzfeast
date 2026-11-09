@@ -1,0 +1,33 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/BricolageGrotesque-ExtraBold.ttf",
+      "sha1": "10b684c54b5daf2dd97883d1e425b193db6b0957"
+    },
+    {
+      "path": "assets/fonts/Inter-Bold.ttf",
+      "sha1": "864b420b2135bf23efc7b95df4380f5a0052fe17"
+    },
+    {
+      "path": "assets/fonts/Inter-ExtraBold.ttf",
+      "sha1": "89e7ced4df19d9fd7362664da6a75151dbdc0df8"
+    },
+    {
+      "path": "assets/fonts/Inter-Medium.ttf",
+      "sha1": "20f0b039c397f727a5d8efe043cc5c2e1567127b"
+    },
+    {
+      "path": "assets/fonts/Inter-SemiBold.ttf",
+      "sha1": "5d7c7d4174ac3cfc8e191316188fb94e9bf62591"
+    },
+    {
+      "path": "assets/fonts/OFL.txt",
+      "sha1": "b022e0c3e0455838b296b9f7d929207f91cb6c6b"
+    },
+    {
+      "path": "assets/fonts/README.md",
+      "sha1": "9fe274bfefe56cb94006f820f0fdde1e4547b2ea"
+    }
+  ]
+}
