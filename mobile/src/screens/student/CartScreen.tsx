@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import RazorpayCheckout from 'react-native-razorpay';
 import { Screen } from '../../components/Screen';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { Icon } from '../../components/Icon';
+import { productTint, tile } from '../../theme/accents';
+import { colors, radius } from '../../theme/tokens';
 import { EmptyState } from '../../components/EmptyState';
 import { createTypedClient } from '../../api/client';
 import { useCart } from '../../cart/CartContext';
@@ -130,49 +132,160 @@ export function CartScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Cart" specRef="UI Design §4.6">
-      <View className="gap-3">
-        {lines.map(({ product, quantity }) => (
-          <View
-            key={product.id}
-            className={`border-b border-border pb-3 ${unavailableIds.includes(product.id) ? 'opacity-60' : ''}`}
+    <Screen title="Cart" specRef="UI Design §4.6" scroll={false}>
+      <View className="flex-1">
+        {/* Section 07. Header row, line cards with a tint tile + stepper, a
+            fulfilment/total card, and a white pinned footer carrying the UPI
+            option and Place order. */}
+        <View className="flex-row items-center gap-sm pb-md">
+          <Pressable
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
           >
-            <View className="flex-row justify-between">
-              <Text className="text-body-bold text-text-primary flex-1" numberOfLines={1}>
-                {product.name}
-              </Text>
-              <Text className="text-price text-text-primary">{formatRupees(product.price * quantity)}</Text>
-            </View>
-            <Text className="text-caption text-text-secondary" numberOfLines={1}>
-              {product.description}
+            <Icon name="chevronLeft" size={20} color={colors.espresso} />
+          </Pressable>
+          <Text className="flex-1 text-title text-text-primary">Your cart</Text>
+          <View
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="bg-surface rounded-pill px-md py-xs"
+          >
+            <Text className="text-label text-text-primary">
+              {lines.length} {lines.length === 1 ? 'item' : 'items'}
             </Text>
-            {unavailableIds.includes(product.id) ? (
-              <Text className="text-caption text-red-strong">No longer available</Text>
-            ) : (
-              <View className="flex-row items-center gap-3 mt-1">
-                <Text className="text-body-bold text-espresso" onPress={() => setQuantity(product.id, quantity - 1)}>
-                  −
-                </Text>
-                <Text className="text-body text-text-primary">{quantity}</Text>
-                <Text className="text-body-bold text-espresso" onPress={() => setQuantity(product.id, quantity + 1)}>
-                  +
-                </Text>
-              </View>
-            )}
           </View>
-        ))}
-
-        <View className="flex-row justify-between pt-1">
-          <Text className="text-h2 text-text-primary">Total Amount</Text>
-          <Text className="text-h2 text-text-primary">{formatRupees(totalInPaise)}</Text>
         </View>
 
-        <Text className="text-caption text-text-secondary">Fulfilment: Canteen Pickup</Text>
-        <Text className="text-caption text-text-secondary">Payment: UPI via Razorpay (only option in V1)</Text>
+        <View className="flex-1">
+          <View className="gap-sm">
+            {lines.map(({ product, quantity }) => {
+              const gone = unavailableIds.includes(product.id);
+              return (
+                <View
+                  key={product.id}
+                  style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.border, opacity: gone ? 0.6 : 1 }}
+                  className="bg-surface p-sm flex-row items-center gap-sm"
+                >
+                  <View
+                    style={{ width: 64, height: 64, borderRadius: radius.xl, backgroundColor: productTint(product.id) }}
+                    className="items-center justify-center"
+                  >
+                    <Icon name="cloche" size={28} color={colors.textBody} />
+                  </View>
+                  <View className="flex-1 gap-glyph">
+                    <Text className="text-body-bold text-text-primary" numberOfLines={1}>{product.name}</Text>
+                    {product.description ? (
+                      <Text className="text-caption text-text-secondary" numberOfLines={1}>{product.description}</Text>
+                    ) : null}
+                    <Text className="text-caption text-text-secondary">{formatRupees(product.price)} each</Text>
+                  </View>
+                  <View className="items-end gap-xs">
+                    <Text className="text-body-bold text-text-primary">{formatRupees(product.price * quantity)}</Text>
+                    {gone ? (
+                      <Text className="text-caption text-red-strong">Unavailable</Text>
+                    ) : (
+                      <View
+                        style={{ height: 36, backgroundColor: colors.disabledFill, borderRadius: radius.pill }}
+                        className="flex-row items-center"
+                      >
+                        <Pressable
+                          onPress={() => setQuantity(product.id, quantity - 1)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Remove one ${product.name}`}
+                          style={{ width: 34, height: 36 }}
+                          className="items-center justify-center"
+                        >
+                          <Icon name="chevronLeft" size={14} color={colors.espresso} />
+                        </Pressable>
+                        <Text className="text-label-bold text-text-primary" style={{ minWidth: 14, textAlign: 'center' }}>
+                          {quantity}
+                        </Text>
+                        <Pressable
+                          onPress={() => setQuantity(product.id, quantity + 1)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Add one ${product.name}`}
+                          style={{ width: 34, height: 36 }}
+                          className="items-center justify-center"
+                        >
+                          <Icon name="plus" size={14} color={colors.espresso} />
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
 
-        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
+            <View
+              style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.border }}
+              className="bg-surface p-md gap-md mt-sm"
+            >
+              <View className="flex-row items-center gap-sm">
+                <View
+                  style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: tile('sun').backgroundColor }}
+                  className="items-center justify-center"
+                >
+                  <Icon name="pin" size={19} color={tile('sun').color} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-caption text-text-secondary">Fulfilment</Text>
+                  <Text className="text-body-bold text-text-primary">Canteen Pickup</Text>
+                </View>
+              </View>
+              <View style={{ height: 1, backgroundColor: colors.border }} />
+              <View className="flex-row items-baseline justify-between">
+                <Text className="text-label-lg text-text-body">Total amount</Text>
+                <Text className="text-display-xs text-text-primary">{formatRupees(totalInPaise)}</Text>
+              </View>
+            </View>
 
-        <PrimaryButton label="Place Order" onPress={handlePlaceOrder} loading={placing} disabled={placing} />
+            {errorMessage ? <Text className="text-body text-red-strong pt-sm">{errorMessage}</Text> : null}
+          </View>
+        </View>
+
+        {/* Pinned white footer — the artboard bleeds it edge-to-edge with a
+            rounded top. Negative margins cancel Screen's p-md so it meets the
+            screen edges. */}
+        <View
+          style={{
+            marginHorizontal: -16,
+            marginBottom: -16,
+            borderTopLeftRadius: radius['6xl'],
+            borderTopRightRadius: radius['6xl'],
+            borderTopWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+          }}
+          className="flex-row items-center gap-sm px-md pt-md pb-lg"
+        >
+          <View
+            style={{ height: 56, borderWidth: 1.5, borderColor: colors.espresso, borderRadius: radius['2xl'] }}
+            className="flex-1 flex-row items-center gap-sm px-md"
+          >
+            <View
+              style={{ width: 18, height: 18, borderRadius: radius.pill, borderWidth: 2, borderColor: colors.espresso }}
+              className="items-center justify-center"
+            >
+              <View style={{ width: 8, height: 8, borderRadius: radius.pill, backgroundColor: colors.espresso }} />
+            </View>
+            <View>
+              <Text className="text-label-bold text-text-primary">UPI</Text>
+              <Text className="text-caption text-text-secondary">via Razorpay</Text>
+            </View>
+          </View>
+          <Pressable
+            onPress={handlePlaceOrder}
+            disabled={placing}
+            accessibilityRole="button"
+            style={{ height: 56, backgroundColor: colors.espresso, borderRadius: radius.pill, opacity: placing ? 0.6 : 1 }}
+            className="px-lg flex-row items-center gap-xs"
+          >
+            <Text className="text-price text-surface">Place order</Text>
+            <Icon name="arrowRight" size={16} color={colors.surface} />
+          </Pressable>
+        </View>
       </View>
     </Screen>
   );

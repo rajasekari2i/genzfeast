@@ -18,7 +18,7 @@ export type IconName =
   | 'close' | 'dashboard' | 'feedbackReview' | 'profile' | 'contactUs'
   | 'incomingOrders' | 'chevronLeft' | 'edit' | 'lock' | 'logout' | 'check'
   | 'star' | 'arrowRight' | 'clock' | 'email' | 'pin'
-  | 'search' | 'plus' | 'trash' | 'menu' | 'refresh';
+  | 'search' | 'plus' | 'trash' | 'menu' | 'refresh' | 'copy';
 
 const STROKE: Record<IconName, number> = {
   cloche: 1.8,
@@ -55,6 +55,7 @@ const STROKE: Record<IconName, number> = {
   // Matches AdminHeader's hand-built bars: the third line is SHORTER.
   menu: 2.2,
   refresh: 2.2,
+  copy: 2,
 };
 
 export function Icon({
@@ -214,6 +215,13 @@ export function Icon({
           as a loading spinner rather than an action. */}
       {name === 'refresh' && (
         <Path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" {...common} />
+      )}
+
+      {name === 'copy' && (
+        <>
+          <Rect x="9" y="9" width="11" height="11" rx="2" {...common} />
+          <Path d="M5 15V5a2 2 0 0 1 2-2h8" {...common} />
+        </>
       )}
 
       {name === 'departments' && (

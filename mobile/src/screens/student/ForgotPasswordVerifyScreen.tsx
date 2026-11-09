@@ -87,9 +87,10 @@ export function ForgotPasswordVerifyScreen({ route, navigation }: Props) {
         <AuthHeader onBack={() => navigation.goBack()} canteen={canteen} />
 
         <View className="gap-xs">
-          <Text className="text-display-xs text-text-primary">
-            Check your<Highlight>messages</Highlight>
-          </Text>
+          <View className="flex-row flex-wrap items-center">
+            <Text className="text-display-xs text-text-primary">Check your </Text>
+            <Highlight textClassName="text-display-xs text-espresso">messages</Highlight>
+          </View>
           <Text className="text-body-lg text-text-secondary">
             Enter the 6-character code sent for{' '}
             <Text className="text-body-lg text-text-primary">{username}</Text>, then pick a new

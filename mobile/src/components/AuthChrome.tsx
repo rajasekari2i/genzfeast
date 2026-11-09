@@ -44,18 +44,27 @@ export function AuthHeader({ onBack, canteen }: { onBack: () => void; canteen?: 
 
 /**
  * A word inside a headline sitting on a brand-coloured plate — "Join the
- * [feast]", "Check your [messages]". The artboards use
- * `background: brand; padding: 0 8px; border-radius: 10px`.
+ * [feast]", "Check your [messages]", "what's the [craving?]".
  *
- * Rendered as a nested <Text>, not a wrapping View, so it stays on the text
- * baseline and wraps with the sentence instead of becoming its own block.
+ * MUST be a View, not a nested <Text> with a background: React Native ignores
+ * borderRadius on an inline text background entirely, so the earlier Text
+ * version rendered a SHARP rectangle however the radius was set. The trade is
+ * that a View does not sit inside a <Text> flow, so the call site lays the
+ * lead text and this plate out in a `flex-row flex-wrap items-center` row
+ * rather than one Text string. `textClassName` must match the headline's own
+ * type class so the word is the same size as the words around it.
  */
-export function Highlight({ children }: { children: React.ReactNode }) {
+export function Highlight({
+  children,
+  textClassName,
+}: {
+  children: React.ReactNode;
+  textClassName: string;
+}) {
   return (
-    <Text style={{ backgroundColor: colors.primary, borderRadius: radius.sm }}>
-      {' '}
-      {children}{' '}
-    </Text>
+    <View style={{ backgroundColor: colors.primary, borderRadius: radius.md }} className="px-xs">
+      <Text className={textClassName}>{children}</Text>
+    </View>
   );
 }
 

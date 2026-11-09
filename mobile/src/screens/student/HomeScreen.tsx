@@ -135,10 +135,15 @@ export function HomeScreen({ navigation }: Props) {
                 </Pressable>
               </View>
 
-              <Text className="text-display text-text-primary">
-                {firstName ? `Hey ${firstName},` : 'Hey there,'}
-                {'\n'}what's the<Highlight>craving?</Highlight>
-              </Text>
+              <View className="gap-glyph">
+                <Text className="text-display text-text-primary">
+                  {firstName ? `Hey ${firstName},` : 'Hey there,'}
+                </Text>
+                <View className="flex-row flex-wrap items-center">
+                  <Text className="text-display text-text-primary">what's the </Text>
+                  <Highlight textClassName="text-display text-espresso">craving?</Highlight>
+                </View>
+              </View>
 
               {errorMessage ? (
                 <EmptyState icon="⚠️" title="Something went wrong" subtitle={errorMessage} />

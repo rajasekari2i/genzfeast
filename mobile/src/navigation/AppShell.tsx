@@ -271,8 +271,10 @@ export function AppShell() {
             component={StudentHomeEntry}
             options={{ headerShown: false }}
           />
-          <Drawer.Screen name="Cart" component={StudentCartEntry} />
-          <Drawer.Screen name="My Orders" component={StudentMyOrdersEntry} />
+          {/* headerShown: false — CartScreen renders its own back-header row. */}
+          <Drawer.Screen name="Cart" component={StudentCartEntry} options={{ headerShown: false }} />
+          {/* headerShown: false — the screen renders its own back-header row. */}
+          <Drawer.Screen name="My Orders" component={StudentMyOrdersEntry} options={{ headerShown: false }} />
         </>
       )}
 

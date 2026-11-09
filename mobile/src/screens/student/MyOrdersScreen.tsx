@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { DrawerActions } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { Icon } from '../../components/Icon';
 import { EmptyState } from '../../components/EmptyState';
 import { StatusBadge } from '../../components/StatusBadge';
 import { createTypedClient } from '../../api/client';
@@ -44,9 +46,20 @@ export function MyOrdersScreen({ navigation }: Props) {
   }, [navigation, load, view]);
 
   return (
-    <Screen title="My Orders">
-      <View className="gap-md">
-        <Text className="text-title text-text-primary">My orders</Text>
+    <Screen title="My Orders" scroll={false}>
+      <View className="flex-1 gap-md">
+        <View className="flex-row items-center gap-sm">
+          <Pressable
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.getParent()?.dispatch(DrawerActions.openDrawer()))}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
+          >
+            <Icon name="chevronLeft" size={20} color={colors.espresso} />
+          </Pressable>
+          <Text className="flex-1 text-title text-text-primary">My orders</Text>
+        </View>
 
         {/* Segmented control — the artboard's pill-in-a-trough, not two
             loose chips. The count sits on the active tab. */}

@@ -319,9 +319,10 @@ export function RegisterScreen() {
         <View className="gap-xs">
           {/* 32/36/-1 in the artboard, with "feast" on a brand plate — the
               old `title` (28) with a bg-primary span was close but not it. */}
-          <Text className="text-display-sm text-text-primary">
-            Join the<Highlight>feast</Highlight>
-          </Text>
+          <View className="flex-row flex-wrap items-center">
+            <Text className="text-display-sm text-text-primary">Join the </Text>
+            <Highlight textClassName="text-display-sm text-espresso">feast</Highlight>
+          </View>
           <Text className="text-body text-text-secondary">
             One minute. Then your canteen is in your pocket.
           </Text>
