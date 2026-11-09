@@ -111,7 +111,7 @@ export function FeedbackListScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('FeedbackDetail', { feedbackId: item.id })}
             >
               <View className="flex-row items-center justify-between">
-                <Text className="text-bodyBold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
+                <Text className="text-body-bold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
                 <View
                   className={`rounded-pill px-sm py-xs ${
                     item.status === 'resolved' ? 'bg-mint-soft' : 'bg-sun-soft'

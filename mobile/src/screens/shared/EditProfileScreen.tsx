@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { Icon } from '../../components/Icon';
+import { InfoCard, InfoRow } from '../../components/InfoCard';
+import { colors } from '../../theme/tokens';
 import { FormField } from '../../components/FormField';
 import { CategoryChip } from '../../components/CategoryChip';
 import { createTypedClient } from '../../api/client';
@@ -68,10 +70,18 @@ export function EditProfileScreen({ navigation }: Props) {
   }, []);
 
   async function handleSave() {
+    // The server's UpdateProfileDto enforces MinLength(1) on name; checking
+    // here too turns a 400 into an inline message instead of a generic
+    // failure alert.
+    if (!name.trim()) {
+      setErrorMessage('Name cannot be empty.');
+      return;
+    }
     setSaving(true);
     setErrorMessage(null);
     const { error } = await profileClient.PATCH('/me/profile', {
       body: {
+        name: name.trim(),
         email: email.trim(),
         ...(isStudent && departmentId ? { department_id: departmentId } : {}),
       },
@@ -92,16 +102,55 @@ export function EditProfileScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Edit Profile">
-      <View className="gap-lg">
-        {/* No artboard (FR-029) — the Profile and UserForm field patterns.
-            Name and Username are permanently read-only (FR-030), and the
-            dashed border + muted fill says so by SHAPE, not colour alone. */}
-        <Text className="text-title text-text-primary">Edit profile</Text>
+    <Screen title="Edit Profile" scroll={false}>
+      <View className="flex-1 gap-md">
+        {/* No artboard for this screen (FR-029), so it borrows ProfileScreen's
+            language wholesale: the same 44px back control, the same Bricolage
+            title, and the same espresso action pill — here Save rather than
+            Edit. Shared across every role, since ProfileNavigator is mounted
+            once in AppShell for all of them. */}
+        <View className="flex-row items-center gap-sm">
+          <Pressable
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
+          >
+            <Icon name="chevronLeft" size={20} color={colors.espresso} />
+          </Pressable>
+          <Text className="flex-1 text-title text-text-primary">Edit profile</Text>
+          <Pressable
+            onPress={handleSave}
+            disabled={saving}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: saving }}
+            style={{ opacity: saving ? 0.6 : 1 }}
+            className="h-touch px-md bg-espresso rounded-pill flex-row items-center gap-xs"
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color={colors.surface} />
+            ) : (
+              <Icon name="check" size={16} color={colors.surface} />
+            )}
+            <Text className="text-label-bold text-surface">Save</Text>
+          </Pressable>
+        </View>
+
+        {/* Name and Username are permanently read-only (FR-030). Profile
+            presents unchangeable values as LIST ROWS with a lock on the
+            label, not as disabled inputs — a disabled text box invites a tap
+            that does nothing. Same treatment here. */}
+        {/* Username alone is permanently read-only (FR-005): it is the login
+            identifier and is unique per tenant, so changing it would need a
+            uniqueness check and a session story /me/profile does not have.
+            Name IS editable for every role — the endpoint accepts it. */}
+        <InfoCard>
+          <InfoRow label="Username" noteIcon="lock" value={username || '—'} last />
+        </InfoCard>
 
         <View className="gap-md">
-          <FormField label="Name" value={name} readOnly />
-          <FormField label="Username" value={username} readOnly hint="Your username cannot be changed." />
+          <FormField label="Name" value={name} onChangeText={setName} autoCapitalize="words" />
           <FormField
             label="Email"
             keyboardType="email-address"
@@ -132,8 +181,6 @@ export function EditProfileScreen({ navigation }: Props) {
 
           {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
         </View>
-
-        <PrimaryButton label="Save" onPress={handleSave} loading={saving} disabled={saving} />
       </View>
     </Screen>
   );

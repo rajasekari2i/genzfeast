@@ -62,7 +62,7 @@ export function MyOrdersScreen({ navigation }: Props) {
                 style={{ backgroundColor: active ? colors.espresso : 'transparent' }}
                 className="flex-1 h-touch rounded-pill items-center justify-center"
               >
-                <Text className={active ? 'text-bodyBold text-surface' : 'text-body text-text-body'}>
+                <Text className={active ? 'text-body-bold text-surface' : 'text-body text-text-body'}>
                   {tab === 'upcoming' ? 'Upcoming' : 'History'}
                   {active && orders.length > 0 ? ` · ${orders.length}` : ''}
                 </Text>
@@ -118,7 +118,7 @@ export function MyOrdersScreen({ navigation }: Props) {
                     <Text className={`text-subtitle ${awaiting ? 'text-surface' : 'text-text-primary'}`}>
                       {formatRupees(order.total_amount)}
                     </Text>
-                    {resumable ? <Text className="text-bodyBold text-link">Resume payment →</Text> : null}
+                    {resumable ? <Text className="text-body-bold text-link">Resume payment →</Text> : null}
                   </View>
                 </Pressable>
               );
@@ -137,7 +137,7 @@ export function MyOrdersScreen({ navigation }: Props) {
             style={{ borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.borderDashed }}
             className="items-center gap-xs p-md rounded-5xl"
           >
-            <Text className="text-labelLg text-text-body">Delivered and failed orders live in History</Text>
+            <Text className="text-label-lg text-text-body">Delivered and failed orders live in History</Text>
             <Text className="text-caption text-text-secondary">Most recent first</Text>
           </View>
         ) : null}

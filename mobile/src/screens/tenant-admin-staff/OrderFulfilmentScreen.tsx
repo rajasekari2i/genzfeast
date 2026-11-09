@@ -119,7 +119,7 @@ export function OrderFulfilmentScreen({ route, navigation }: Props) {
                 driven by `error` rather than by the component judging the
                 code — only the server knows, and a mismatch leaves the
                 order completely untouched (FR-018). */}
-            <Text className="text-bodyBold text-text-primary mt-sm">Enter the student's code</Text>
+            <Text className="text-body-bold text-text-primary mt-sm">Enter the student's code</Text>
             <Text className="text-caption text-text-secondary">6 digits, shown on their phone</Text>
             <OtpInput
               onComplete={setCode}

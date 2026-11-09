@@ -200,7 +200,7 @@ export function FeedbackScreen({ navigation }: Props) {
           <Text className="text-label text-text-body">Message</Text>
           <TextInput
             style={{ borderWidth: 1.5, borderColor: colors.espresso, borderRadius: radius['2xl'], height: 118 }}
-            className="bg-surface px-md py-sm text-bodyLg text-text-primary"
+            className="bg-surface px-md py-sm text-body-lg text-text-primary"
             placeholder={`Tell us more — what happened, or what would make ${tenantName} better?`}
             placeholderTextColor={colors.textSecondary}
             multiline

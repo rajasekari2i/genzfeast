@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { Icon } from '../../components/Icon';
+import { colors } from '../../theme/tokens';
 import { PasswordInput } from '../../components/PasswordInput';
 import { createTypedClient, getStoredRefreshToken } from '../../api/client';
 import type { ProfileStackParamList } from '../../navigation/ProfileNavigator';
@@ -66,15 +67,46 @@ export function ChangePasswordScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Change Password">
-      <View className="gap-lg">
-        {/* No artboard (FR-029) — Login's password-field pattern. */}
-        <View className="gap-xs">
-          <Text className="text-title text-text-primary">Change password</Text>
-          <Text className="text-body text-text-secondary">
-            Changing your password signs you out of your other devices.
-          </Text>
+    <Screen title="Change Password" scroll={false}>
+      <View className="flex-1 gap-md">
+        {/* No artboard for this screen (FR-029), so it follows ProfileScreen:
+            the same 44px back control, the same Bricolage title, and the same
+            espresso action pill. Shared by every role — ProfileNavigator is
+            mounted once in AppShell for all of them. */}
+        <View className="flex-row items-center gap-sm">
+          <Pressable
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
+          >
+            <Icon name="chevronLeft" size={20} color={colors.espresso} />
+          </Pressable>
+          <Text className="flex-1 text-title text-text-primary">Change password</Text>
+          <Pressable
+            onPress={handleSubmit}
+            disabled={saving}
+            accessibilityRole="button"
+            // The pill reads "Update" for width; the full intent stays on the
+            // accessible label so a screen reader is not left guessing.
+            accessibilityLabel="Update password"
+            accessibilityState={{ disabled: saving }}
+            style={{ opacity: saving ? 0.6 : 1 }}
+            className="h-touch px-md bg-espresso rounded-pill flex-row items-center gap-xs"
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color={colors.surface} />
+            ) : (
+              <Icon name="check" size={16} color={colors.surface} />
+            )}
+            <Text className="text-label-bold text-surface">Update</Text>
+          </Pressable>
         </View>
+
+        <Text className="text-body text-text-secondary">
+          Changing your password signs you out of your other devices.
+        </Text>
 
         <View className="gap-md">
           <PasswordInput placeholder="Current password" value={currentPassword} onChangeText={setCurrentPassword} />
@@ -82,8 +114,6 @@ export function ChangePasswordScreen({ navigation }: Props) {
           <PasswordInput placeholder="Retype new password" value={retypePassword} onChangeText={setRetypePassword} />
           {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
         </View>
-
-        <PrimaryButton label="Update password" onPress={handleSubmit} loading={saving} disabled={saving} />
       </View>
     </Screen>
   );

@@ -60,7 +60,15 @@ export function TenantAdminStaffNavigator({
   return (
     <Stack.Navigator initialRouteName={initialRouteName} screenOptions={secondaryHeaderOptions}>
       {/* No header title text on any screen here — the Drawer's own header (AppShell.tsx) already labels the current side-menu section next to the hamburger icon; this stack's header keeps its color/back-button but shows no duplicate text. */}
-      <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: '' }} />
+      {/* headerShown: false — DashboardScreen renders the navy AdminHeader
+          itself (the artboard header has rounded bottom corners, inset
+          circular controls and a second row, none of which a native
+          stack header can produce). Route name and params unchanged. */}
+      <Stack.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ title: '', headerShown: false }}
+      />
       <Stack.Screen name="UserList" component={UserListScreen} options={{ title: '' }} />
       <Stack.Screen name="UserCreateEdit" component={UserCreateEditScreen} options={{ title: '' }} />
       <Stack.Screen name="CategoryList" component={CategoryListScreen} options={{ title: '' }} />

@@ -108,7 +108,7 @@ export function LoginScreen({ navigation }: Props) {
                 accessibilityLabel=""
               />
             </View>
-            <Text className="text-titleSm text-espresso">
+            <Text className="text-title-sm text-espresso">
               Genz<Text className="text-surface">Feast</Text>
             </Text>
           </View>
@@ -141,7 +141,7 @@ export function LoginScreen({ navigation }: Props) {
             className="self-end min-h-touch justify-center"
             accessibilityRole="button"
           >
-            <Text className="text-labelLg text-link">Forgot password?</Text>
+            <Text className="text-label-lg text-link">Forgot password?</Text>
           </Pressable>
 
           {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
@@ -156,7 +156,7 @@ export function LoginScreen({ navigation }: Props) {
             className="min-h-touch justify-center"
             accessibilityRole="button"
           >
-            <Text className="text-bodyBold text-link">Create an account</Text>
+            <Text className="text-body-bold text-link">Create an account</Text>
           </Pressable>
         </View>
       </View>

@@ -111,10 +111,10 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 
 > Independent of US2; may run in parallel with Phase 4.
 
-- [ ] T043 [P] [US3] Generate adaptive launcher icon layers from `mobile/assets/brand/gf-icon-v2.png` into `mobile/android/app/src/main/res/mipmap-*/` (FR-022)
-- [ ] T044 [P] [US3] Set the adaptive-icon background in `mobile/android/app/src/main/res/values/ic_launcher_background.xml`
-- [ ] T045 [US3] Restyle `mobile/src/screens/student/SplashScreen.tsx` with `gf-logo-v2.png` on a brand ground (FR-023, FR-029 — no artboard, follow established patterns)
-- [ ] T046 [US3] Install the build and verify the launcher icon from `mobile/android/app/src/main/res/mipmap-*/` renders correctly under **round, squircle and square** masking
+- [X] T043 [P] [US3] Generate adaptive launcher icon layers from `mobile/assets/brand/gf-icon-v2.png` into `mobile/android/app/src/main/res/mipmap-*/` (FR-022)
+- [X] T044 [P] [US3] Set the adaptive-icon background in `mobile/android/app/src/main/res/values/ic_launcher_background.xml`
+- [X] T045 [US3] Restyle `mobile/src/screens/student/SplashScreen.tsx` with `gf-logo-v2.png` on a brand ground (FR-023, FR-029 — no artboard, follow established patterns)
+- [!] T046 ⛔ BLOCKED (needs a device/emulator to verify masking) — [US3] Install the build and verify the launcher icon from `mobile/android/app/src/main/res/mipmap-*/` renders correctly under **round, squircle and square** masking
 
 **Checkpoint**: US3 complete and independently shippable.
 
@@ -235,8 +235,8 @@ Mobile-only. All paths are under `mobile/`. **No task touches `api/` or `mobile/
 - [X] T104 [P] Write `mobile/test/theme/touch-targets.spec.ts` — AST scan asserting every pressable's `h-`/`min-h-`/`height` is ≥44 (O4, SC-006)
 - [X] T105 Run `npm test` in `mobile/` — all eleven gates across nine spec files must pass
 - [X] T106 Verify the six prohibitions by inspection (SC-010): no open/closed toggle (FR-036), no menu search or filter (FR-037), no tap-to-call or tap-to-email (FR-038), no Company-Admin-creates-Company-Admin (FR-039), Category still required for Student (FR-040), feedback resolve still one-way (FR-041)
-- [ ] T107 Run the full `quickstart.md` sign-off: fresh install, all five faces render and differ, all 27 screen files reviewed, all 10 edge-case rows exercised, all 6 regression paths identical to the previous build
-- [ ] T108 Run `/self-reflect` and commit knowledge-base updates (mandatory before PR per `CLAUDE.md`)
+- [ ] T107 **BLOCKED** (needs a device + the five font binaries) Run the full `quickstart.md` sign-off: fresh install, all five faces render and differ, all 27 screen files reviewed, all 10 edge-case rows exercised, all 6 regression paths identical to the previous build
+- [X] T108 Run `/self-reflect` and commit knowledge-base updates (mandatory before PR per `CLAUDE.md`) — 9 learnings captured in `.beads/knowledge/`
 - [ ] T109 Open the PR
 
 ---

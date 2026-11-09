@@ -84,7 +84,7 @@ export function ContactUsScreen() {
               accessibilityLabel=""
             />
           </View>
-          <Text className="text-titleSm text-espresso">{contactUs.company_name}</Text>
+          <Text className="text-title-sm text-espresso">{contactUs.company_name}</Text>
           {/* Null or an empty string renders as "Not specified" (FR-005),
               never a blank line. */}
           <View className="self-start bg-espresso rounded-pill px-sm py-xs">
@@ -130,7 +130,7 @@ export function ContactUsScreen() {
           style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius['5xl'] }}
           className="bg-surface p-md gap-xs"
         >
-          <Text className="text-bodyBold text-text-primary">Something to tell us?</Text>
+          <Text className="text-body-bold text-text-primary">Something to tell us?</Text>
           <Text className="text-caption text-text-secondary">Share feedback with the canteen</Text>
         </View>
       </View>

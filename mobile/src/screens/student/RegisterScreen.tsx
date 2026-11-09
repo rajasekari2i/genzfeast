@@ -444,7 +444,7 @@ export function RegisterScreen() {
               className="min-h-touch justify-center items-center"
               accessibilityRole="button"
             >
-              <Text className="text-labelLg text-link">Resend code</Text>
+              <Text className="text-label-lg text-link">Resend code</Text>
             </Pressable>
           ) : null}
           {otpStatus !== 'verified' ? (
@@ -453,7 +453,7 @@ export function RegisterScreen() {
               className="min-h-touch justify-center items-center"
               accessibilityRole="button"
             >
-              <Text className="text-labelLg text-text-secondary">Skip for now</Text>
+              <Text className="text-label-lg text-text-secondary">Skip for now</Text>
             </Pressable>
           ) : null}
         </View>

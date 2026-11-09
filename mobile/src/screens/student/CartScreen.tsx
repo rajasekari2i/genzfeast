@@ -150,11 +150,11 @@ export function CartScreen({ navigation }: Props) {
               <Text className="text-caption text-red-strong">No longer available</Text>
             ) : (
               <View className="flex-row items-center gap-3 mt-1">
-                <Text className="text-bodyBold text-espresso" onPress={() => setQuantity(product.id, quantity - 1)}>
+                <Text className="text-body-bold text-espresso" onPress={() => setQuantity(product.id, quantity - 1)}>
                   −
                 </Text>
                 <Text className="text-body text-text-primary">{quantity}</Text>
-                <Text className="text-bodyBold text-espresso" onPress={() => setQuantity(product.id, quantity + 1)}>
+                <Text className="text-body-bold text-espresso" onPress={() => setQuantity(product.id, quantity + 1)}>
                   +
                 </Text>
               </View>

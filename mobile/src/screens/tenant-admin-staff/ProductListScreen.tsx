@@ -195,7 +195,7 @@ export function ProductListScreen({ navigation }: Props) {
                     {/* Shape as well as colour (FR-005) — the previous
                         coloured circles were colour-only. */}
                     <DietaryMark isVeg={product.is_veg} />
-                    <Text className="flex-1 text-bodyBold text-text-primary" numberOfLines={1}>
+                    <Text className="flex-1 text-body-bold text-text-primary" numberOfLines={1}>
                       {product.name}
                     </Text>
                   </View>
