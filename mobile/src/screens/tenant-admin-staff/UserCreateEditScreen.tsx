@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { colors, radius } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { AdminPageHeader } from '../../components/AdminPageHeader';
 import { Dropdown } from '../../components/Dropdown';
 import { PasswordInput } from '../../components/PasswordInput';
+import { FormField } from '../../components/FormField';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/001-company-role-user-setup';
@@ -156,34 +158,57 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
   }
 
   if (loadingUser) {
-    return <Screen title="Edit User" specRef="UI Design §5.4" />;
+    return <Screen surface="admin" title="Edit User" specRef="UI Design §5.4" />;
   }
 
   return (
-    <Screen title={isEdit ? 'Edit User' : 'Create User'} specRef="UI Design §5.4">
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
+    <Screen
+      surface="admin"
+      title={isEdit ? 'Edit User' : 'Create User'}
+      specRef="UI Design §5.4"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title={isEdit ? 'Edit user' : 'Add user'}
+          onBack={() => navigation.goBack()}
         />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Username (mobile number)"
+      }
+    >
+      {/* "Company Admin · Add / edit user": one white section card holding
+          every field, admin-tone inputs, and Cancel/Save pinned below at
+          flex 1 / flex 2 with a NAVY primary. */}
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 8 }}>
+        <View
+          style={{ borderRadius: radius['5xl'], borderWidth: 1, borderColor: colors.borderCard }}
+          className="bg-surface p-md gap-sm"
+        >
+        <FormField tone="admin" label="Name" placeholder="Arun Prakash" value={name} onChangeText={setName} />
+        <FormField
+          tone="admin"
+          label="Username (mobile number)"
+          placeholder="9876543210"
           keyboardType="phone-pad"
           autoCapitalize="none"
           value={username}
           onChangeText={setUsername}
         />
-        <PasswordInput
-          placeholder={isEdit ? 'New password (leave blank to keep current)' : 'Temporary password (min 8 characters)'}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Email"
+        <View className="gap-xs">
+          <Text className="text-label text-text-body">
+            {isEdit ? 'New password' : 'Temporary password'}
+          </Text>
+          <PasswordInput
+            placeholder={isEdit ? 'Leave blank to keep current' : 'Min 8 characters'}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <Text className="text-caption text-text-secondary">
+            Min 8 characters. When editing, leave blank to keep the current one.
+          </Text>
+        </View>
+        <FormField
+          tone="admin"
+          label="Email"
+          placeholder="arun@college.edu"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -210,20 +235,38 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
           </>
         ) : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
-
-        <View className="flex-row gap-3">
-          <Pressable
-            className="flex-1 rounded-pill items-center justify-center px-6 py-3 border border-border"
-            onPress={() => navigation.goBack()}
-            disabled={saving}
-          >
-            <Text className="font-semibold text-center text-button text-text-secondary">Cancel</Text>
-          </Pressable>
-          <View className="flex-1">
-            <PrimaryButton label={isEdit ? 'Update' : 'Save'} onPress={handleSave} loading={saving} disabled={saving} />
-          </View>
         </View>
+
+        {errorMessage ? <Text className="text-body text-red-strong pt-sm">{errorMessage}</Text> : null}
+      </ScrollView>
+
+      <View className="flex-row gap-sm pt-sm">
+        <Pressable
+          onPress={() => navigation.goBack()}
+          disabled={saving}
+          accessibilityRole="button"
+          style={{ flex: 1, height: 56, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.borderChip }}
+          className="items-center justify-center active:opacity-70"
+        >
+          <Text className="text-price text-text-primary">Cancel</Text>
+        </Pressable>
+        <Pressable
+          onPress={handleSave}
+          disabled={saving}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: saving }}
+          style={{
+            flex: 2,
+            height: 56,
+            borderRadius: radius.pill,
+            backgroundColor: colors.primaryVariant,
+            opacity: saving ? 0.6 : 1,
+          }}
+          className="flex-row items-center justify-center gap-xs"
+        >
+          {saving ? <ActivityIndicator size="small" color={colors.surface} /> : null}
+          <Text className="text-price text-surface">{isEdit ? 'Save user' : 'Add user'}</Text>
+        </Pressable>
       </View>
     </Screen>
   );

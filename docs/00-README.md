@@ -17,14 +17,19 @@ Generated from the original high-level PRD. Read in this order:
    - `modules/Module-6-Checkout-and-Payment.md`
    - `modules/Module-7-Student-Profile.md`
    - `modules/Module-8-My-Orders.md`
-6. **06-UI-Design.md** — Screen-by-screen UI specs and navigation maps
+6. **`ui-screen/*.html`** — the redesign artboards (`GenzFeast-Admin-and-Staff`,
+   `GenzFeast-Student-Journey`, `GenzFeast App Redesign`). These replaced the
+   old `06-UI-Design.md` markdown spec, which predated the redesign.
 
 ## How to use this with Claude Code (spec-kit / metaswarm style)
 
 - Treat **01-BRD** + **04-Architecture** as the "constitution" — invariant ground rules.
 - Treat **02-PRD** + **03-Data-Model** as the "specify" layer — what to build.
 - Treat **05-Modules** as the "plan" — hand one module to one agent/session at a time, in the build order listed at the bottom of that document.
-- Treat **06-UI-Design** as the shared reference every module's frontend work should match.
+- Treat the **`ui-screen/*.html` artboards** as the shared reference every module's
+  frontend work should match. Unpack them for the real CSS — the values are
+  measured, not approximate, and eyeballing them from a screenshot has produced
+  wrong type scales before.
 
 ## Open items requiring a business decision
 

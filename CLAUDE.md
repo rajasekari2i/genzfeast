@@ -23,7 +23,17 @@ Guidance for Claude Code when working in this repository. Source of truth is the
 - `docs/product/01-BRD.md` — business scope, business rules, **§11 Known Gaps**, §12 next phase *(reconciled with the code, v2.0)*
 - `docs/product/02-PRD.md` — FR-1..FR-16, each marked Built / Built (changed) / Not built with its implementing endpoint; §6 resolved questions, §7 still open *(reconciled, v2.0)*
 - `docs/architecture/04-Architecture.md` — stack, module/route map, tenant isolation, OTP routing, §13 what a web client would need *(reconciled, v3.0)*
-- `docs/ui-screen/06-UI-Design.md` — screen-by-screen UX spec. **Not yet reconciled with the build** — treat as the original design intent, not as a description of the shipped screens
+- `docs/ui-screen/*.html` — the **redesign artboards**, and the source of truth for
+  what every screen should look like. Three saved pages, each packing its
+  artboards as gzipped base64 (`GenzFeast App Redesign.html`) or escaped JSON
+  (the other two) — unpack them to read the real CSS rather than eyeballing a
+  screenshot:
+  - `GenzFeast-Admin-and-Staff.html` — Company Admin + Staff, 16 artboards
+  - `GenzFeast-Student-Journey.html` — the diner journey, 14 artboards
+  - `GenzFeast App Redesign.html` — the foundations and 27 combined artboards
+
+  These replaced `06-UI-Design.md`, the original markdown UX spec, which was
+  written before the redesign and described screens the app no longer has.
 
 **Coding standard**: `coding_standard.md` governs how code is actually written (NestJS module structure, TypeScript rules, Prisma/RLS query patterns, error handling, testing, secrets). Read it before writing any implementation code — it's especially load-bearing on how Prisma must be used alongside this project's Postgres RLS design (§4.3 there), which is easy to get subtly wrong.
 

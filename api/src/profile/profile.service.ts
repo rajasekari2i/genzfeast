@@ -57,6 +57,7 @@ export class ProfileService {
       const updated = await tx.user.update({
         where: { id: ctx.userId as string },
         data: {
+          ...(dto.name !== undefined && { name: dto.name }),
           ...(dto.email !== undefined && { email: dto.email }),
           ...(dto.department_id !== undefined && { departmentId: dto.department_id }),
           updatedBy: ctx.userId,

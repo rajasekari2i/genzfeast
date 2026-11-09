@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { formatRupees } from '../theme/money';
+import { colors } from '../theme/tokens';
 
 // Persistent floating cart summary — specs/013-blue-theme-visual-design
 // FR-006. Renders nothing when the cart is empty, so callers can always
@@ -21,23 +22,23 @@ export function CartSummaryBar({
   }
 
   return (
-    <View className="absolute left-4 right-4 bottom-4">
+    <View className="absolute left-md right-md bottom-lg">
       <Pressable
         onPress={onViewCart}
         accessibilityRole="button"
-        className="flex-row items-center justify-between bg-primary rounded-lg px-5 py-4 active:opacity-90"
+        className="flex-row items-center justify-between bg-espresso rounded-pill px-lg min-h-control active:opacity-90"
         style={{
-          shadowColor: '#000',
+          shadowColor: colors.shadow,
           shadowOpacity: 0.2,
           shadowRadius: 8,
           shadowOffset: { width: 0, height: 4 },
           elevation: 6,
         }}
       >
-        <Text className="text-surface font-semibold text-body">
+        <Text className="text-surface text-body">
           {itemCount} {itemCount === 1 ? 'item' : 'items'} · {formatRupees(totalInPaise)}
         </Text>
-        <Text className="text-surface font-bold text-button">View Cart →</Text>
+        <Text className="text-surface text-button">View Cart →</Text>
       </Pressable>
     </View>
   );

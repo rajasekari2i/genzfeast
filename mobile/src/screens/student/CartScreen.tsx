@@ -147,14 +147,14 @@ export function CartScreen({ navigation }: Props) {
               {product.description}
             </Text>
             {unavailableIds.includes(product.id) ? (
-              <Text className="text-caption text-red-600">No longer available</Text>
+              <Text className="text-caption text-red-strong">No longer available</Text>
             ) : (
               <View className="flex-row items-center gap-3 mt-1">
-                <Text className="text-body text-primary" onPress={() => setQuantity(product.id, quantity - 1)}>
+                <Text className="text-body-bold text-espresso" onPress={() => setQuantity(product.id, quantity - 1)}>
                   −
                 </Text>
                 <Text className="text-body text-text-primary">{quantity}</Text>
-                <Text className="text-body text-primary" onPress={() => setQuantity(product.id, quantity + 1)}>
+                <Text className="text-body-bold text-espresso" onPress={() => setQuantity(product.id, quantity + 1)}>
                   +
                 </Text>
               </View>
@@ -170,7 +170,7 @@ export function CartScreen({ navigation }: Props) {
         <Text className="text-caption text-text-secondary">Fulfilment: Canteen Pickup</Text>
         <Text className="text-caption text-text-secondary">Payment: UPI via Razorpay (only option in V1)</Text>
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         <PrimaryButton label="Place Order" onPress={handlePlaceOrder} loading={placing} disabled={placing} />
       </View>

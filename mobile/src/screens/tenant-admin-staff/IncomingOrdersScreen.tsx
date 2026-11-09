@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { EmptyState } from '../../components/EmptyState';
+import { colors, radius } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
 import { formatRupees } from '../../theme/money';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
@@ -48,9 +49,9 @@ export function IncomingOrdersScreen({ navigation }: Props) {
   }, [navigation, load]);
 
   return (
-    <Screen title="Incoming Orders" specRef="UI Design §5.6">
-      <View className="gap-3">
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+    <Screen surface="admin" title="Incoming Orders" specRef="UI Design §5.6">
+      <View className="gap-sm">
+        {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
         {loading ? (
           <ActivityIndicator />
@@ -62,16 +63,18 @@ export function IncomingOrdersScreen({ navigation }: Props) {
               key={order.id}
               onPress={() => navigation.navigate('OrderFulfilment', { orderId: order.id })}
               accessibilityRole="button"
-              className="bg-surface border border-border rounded-md p-4 active:opacity-80"
+              style={{ borderRadius: radius['3xl'], borderWidth: 1, borderColor: colors.borderSoft }}
+              className="bg-surface p-md gap-xs active:opacity-80"
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-h2 text-text-primary">{order.reference}</Text>
-                <Text className="text-price text-text-primary">{formatRupees(order.total_amount)}</Text>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-subtitle text-text-primary">{order.reference}</Text>
+                <Text className="text-subtitle text-text-primary">{formatRupees(order.total_amount)}</Text>
               </View>
-              <Text className="text-body text-text-secondary">
+              <Text className="text-caption text-text-secondary">
                 {order.item_count} item{order.item_count === 1 ? '' : 's'} · placed{' '}
                 {new Date(order.placed_at).toLocaleTimeString()}
               </Text>
+              {/* Oldest first — first-in-first-served at the counter. */}
             </Pressable>
           ))
         )}

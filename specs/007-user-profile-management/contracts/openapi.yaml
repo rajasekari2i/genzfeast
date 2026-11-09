@@ -31,9 +31,9 @@ paths:
     patch:
       tags: [Profile]
       summary: >
-        Update the caller's own Email (all roles) and Department (Student
-        only). All-or-nothing (FR-007) — Name, Username, Category are never
-        accepted here regardless of role.
+        Update the caller's own Name and Email (all roles) and Department
+        (Student only). All-or-nothing (FR-007) — Username and Category are
+        never accepted here regardless of role.
       requestBody:
         required: true
         content:
@@ -110,6 +110,10 @@ components:
       type: object
       description: Any subset of these fields; department is rejected for non-Student roles
       properties:
+        name:
+          type: string
+          minLength: 1
+          description: "The caller's own display name. Accepted for every role. Username and Category remain read-only and are rejected outright."
         email: { type: string, format: email }
         department_id:
           type: string

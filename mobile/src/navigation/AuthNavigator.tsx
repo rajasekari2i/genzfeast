@@ -5,8 +5,7 @@ import { LoginScreen } from '../screens/student/LoginScreen';
 import { RegisterScreen } from '../screens/student/RegisterScreen';
 import { ForgotPasswordRequestScreen } from '../screens/student/ForgotPasswordRequestScreen';
 import { ForgotPasswordVerifyScreen } from '../screens/student/ForgotPasswordVerifyScreen';
-import { primaryHeaderOptions } from '../theme/navigationHeader';
-import { colors } from '../theme/tokens';
+import { authHeaderOptions } from '../theme/navigationHeader';
 
 /**
  * The pre-login stack — shared by every role (one app, not separate apps
@@ -28,34 +27,36 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export function AuthNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Splash" screenOptions={{ ...primaryHeaderOptions, headerShown: false }}>
+    <Stack.Navigator initialRouteName="Splash" screenOptions={{ ...authHeaderOptions, headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
       {/* Header bar stays shown (for the back gesture area) but matches the
-          screen's own background instead of the brand-orange used
-          elsewhere in this stack — the logo/tagline hero underneath already
-          identifies the screen, so a contrasting header bar here was just
-          an unwanted stripe, not a deliberate title bar (Login only). */}
+          screen's own background — the logo/tagline hero underneath already
+          identifies the screen, so a contrasting header bar here was just an
+          unwanted stripe (commit c2b7b0c). specs/017-ui-refresh moves those
+          values into navigationHeader.ts's authHeaderOptions rather than
+          repeating them inline; routing this at primaryHeaderOptions instead
+          would regress that fix. */}
       <Stack.Screen
         name="Login"
         component={LoginScreen}
-        options={{
-          headerShown: true,
-          title: '',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.textPrimary,
-          headerShadowVisible: false,
-        }}
+        // headerShown: false — the Login artboard has no chrome above the
+        // hero card at all. c2b7b0c made this header MATCH the screen
+        // background rather than be brand orange, which hid it visually but
+        // still reserved its height, leaving a blank bar across the top.
+        options={{ ...authHeaderOptions, headerShown: false }}
       />
-      <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Register' }} />
+      {/* headerShown: false — these three render the artboards' own header row
+          (back control + canteen name), so the native bar would sit above it. */}
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="ForgotPasswordRequest"
         component={ForgotPasswordRequestScreen}
-        options={{ headerShown: true, title: 'Forgot Password' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ForgotPasswordVerify"
         component={ForgotPasswordVerifyScreen}
-        options={{ headerShown: true, title: 'Verify OTP' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

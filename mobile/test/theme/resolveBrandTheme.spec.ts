@@ -16,17 +16,17 @@ describe('resolveBrandTheme', () => {
     const result = resolveBrandTheme(
       {
         companyId: VALID_COMPANY_ID,
-        accentColor: '#004D40', // dark teal — passes AA against the light defaults
+        accentColor: '#FFB020', // amber — espresso on it scores 8.90:1 (FR-010)
         appDisplayName: 'Campus Bites',
         logoAssetPath: 'brands/campus-bites/icon.png',
       },
       onWarn,
     );
 
-    expect(result.tokens.colors.primary).toBe('#004D40');
+    expect(result.tokens.colors.primary).toBe('#FFB020');
     expect(result.tokens.colors).toMatchObject({
       ...defaultColors,
-      primary: '#004D40',
+      primary: '#FFB020',
     });
     expect(result.tokens.typography).toEqual(defaultTokens.typography);
     expect(result.tokens.spacing).toEqual(defaultTokens.spacing);
@@ -42,7 +42,7 @@ describe('resolveBrandTheme', () => {
     const result = resolveBrandTheme(
       {
         companyId: VALID_COMPANY_ID,
-        accentColor: '#FFF9C4', // pale yellow — fails AA
+        accentColor: '#E4572E', // espresso on it scores 4.42:1 — fails 4.5 (research R8)
         appDisplayName: 'Campus Bites',
         logoAssetPath: 'brands/campus-bites/icon.png',
       },
@@ -60,7 +60,7 @@ describe('resolveBrandTheme', () => {
   it('rejects a malformed config (schema mismatch) and falls back to full defaults', () => {
     const onWarn = jest.fn();
     const result = resolveBrandTheme(
-      { companyId: 'not-a-uuid', accentColor: '#004D40', appDisplayName: 'X' },
+      { companyId: 'not-a-uuid', accentColor: '#FFB020', appDisplayName: 'X' },
       onWarn,
     );
 

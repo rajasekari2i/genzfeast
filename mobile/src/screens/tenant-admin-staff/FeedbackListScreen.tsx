@@ -3,7 +3,9 @@ import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { CategoryChip } from '../../components/CategoryChip';
+import { AdminPageHeader, AdminSegmented } from '../../components/AdminPageHeader';
+import { Icon } from '../../components/Icon';
+import { colors, radius } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/016-feedback-management';
@@ -78,25 +80,34 @@ export function FeedbackListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Feedback Review" scroll={false}>
-      <View className="flex-row mb-3">
-        {FILTERS.map((filter) => (
-          <CategoryChip
-            key={filter.label}
-            label={filter.label}
-            selected={status === filter.value}
-            onPress={() => handleFilterChange(filter.value)}
+    <Screen
+      surface="admin"
+      title="Feedback Review"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title="Feedback"
+          onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.getParent()?.navigate('Dashboard'))}
+        >
+          {/* The artboard puts the All / New / Resolved filter INSIDE the
+              navy header as a segmented control on a navyTint track — not
+              as loose chips on the ground below it. */}
+          <AdminSegmented
+            options={FILTERS.map((f) => ({ value: String(f.value), label: f.label }))}
+            value={String(status)}
+            onChange={(next) => handleFilterChange(FILTERS.find((f) => String(f.value) === next)!.value)}
           />
-        ))}
-      </View>
-
-      {errorMessage ? <Text className="text-body text-red-600 mb-3">{errorMessage}</Text> : null}
+        </AdminPageHeader>
+      }
+    >
+      {errorMessage ? <Text className="text-body text-red-strong pb-sm">{errorMessage}</Text> : null}
 
       {loading ? (
         <ActivityIndicator />
       ) : (
         <FlatList
           className="flex-1"
+          contentContainerStyle={{ gap: 10 }}
           data={feedback}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -104,19 +115,20 @@ export function FeedbackListScreen({ navigation }: Props) {
           }
           renderItem={({ item }) => (
             <Pressable
-              className="border-b border-border py-3"
+              style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.borderCard }}
+              className="bg-surface p-md gap-sm active:opacity-80"
               onPress={() => navigation.navigate('FeedbackDetail', { feedbackId: item.id })}
             >
-              <View className="flex-row items-center justify-between mb-1">
+              <View className="flex-row items-center justify-between">
                 <Text className="text-body-bold text-text-primary">{CATEGORY_LABELS[item.category] ?? item.category}</Text>
                 <View
-                  className={`rounded-pill px-3 py-1 border ${
-                    item.status === 'resolved' ? 'border-green-600 bg-green-50' : 'border-amber-500 bg-amber-50'
+                  className={`rounded-pill px-sm py-xs ${
+                    item.status === 'resolved' ? 'bg-mint-soft' : 'bg-sun-soft'
                   }`}
                 >
                   <Text
-                    className={`text-caption font-semibold ${
-                      item.status === 'resolved' ? 'text-green-700' : 'text-amber-700'
+                    className={`text-eyebrow ${
+                      item.status === 'resolved' ? 'text-mint-strong' : 'text-sun-strong'
                     }`}
                   >
                     {item.status === 'resolved' ? 'Resolved' : 'New'}
@@ -127,9 +139,21 @@ export function FeedbackListScreen({ navigation }: Props) {
                 {item.message}
               </Text>
               <View className="flex-row items-center gap-3 mt-1">
-                {item.rating ? <Text className="text-caption text-text-secondary">{'★'.repeat(item.rating)}</Text> : null}
+                {item.rating ? (
+                  <View className="flex-row gap-glyph">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Icon
+                        key={n}
+                        name="star"
+                        size={13}
+                        color={colors.espresso}
+                        fill={n <= (item.rating ?? 0) ? colors.accent : colors.surface}
+                      />
+                    ))}
+                  </View>
+                ) : null}
                 <Text className="text-caption text-text-secondary">{item.submitted_by.name}</Text>
-                {item.contact_requested ? <Text className="text-caption text-primary">Wants contact</Text> : null}
+                {item.contact_requested ? <Text className="text-label text-link">Wants contact</Text> : null}
               </View>
             </Pressable>
           )}

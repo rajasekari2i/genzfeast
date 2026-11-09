@@ -1,19 +1,20 @@
-// Order-status → {color, label} map — specs/013-blue-theme-visual-design
-// contracts/design-tokens.md "Status Colors".
+// Order-status presentation — specs/017-ui-refresh FR-004 (supersedes
+// specs/013-blue-theme-visual-design's flat colour map).
 //
-// Consumed by StatusBadge wherever an order status is shown (Student My
-// Orders/Order Detail, Staff Incoming Orders, any admin order view — FR-002).
-// Every status MUST be paired with its text label, never color alone (FR-003).
+// A status is ALWAYS rendered as a labelled badge with a matching dot, never
+// colour alone (accessibility: colour is not an accessible distinction on its
+// own). Each status maps to one of the shared accent families rather than
+// carrying its own hex, so a badge, an icon tile and a product tint of the
+// same family cannot drift apart (research R4).
 //
-// order_placed intentionally reuses colors.primary directly rather than a
-// tenant-overridden brand color, so a branded build never changes what a
-// status color means (see resolveBrandTheme.ts and data-model.md §1).
+// This is the only sanctioned path from a status to a colour — no screen may
+// map one itself (contract O3).
 //
-// This mirrors the literal order-status union already generated from
-// specs/006 and specs/008's openapi.yaml (see src/api/generated/*.d.ts) —
-// kept as an independent literal type here since the generated files don't
-// export a single shared enum.
-import { colors } from './tokens';
+// The literal union mirrors the order-status values generated from specs/006
+// and specs/008's openapi.yaml (src/api/generated/*.d.ts), kept independent
+// here because those files export no shared enum. This file does not import
+// from src/api/generated — that directory is untouched by this feature.
+import { accents, type AccentName, type AccentPair } from './tokens';
 
 export type OrderStatus =
   | 'payment_pending'
@@ -22,16 +23,60 @@ export type OrderStatus =
   | 'delivered';
 
 export interface StatusColorEntry {
-  color: string;
+  /** Badge background. */
+  soft: string;
+  /** Label text. Clears 4.5:1 on `soft`. */
+  strong: string;
+  /** The 7px leading dot. */
+  dot: string;
   label: string;
+  /** Retained for callers that still read a single colour; equals `strong`. */
+  color: string;
+}
+
+const STATUS_ACCENT: Record<OrderStatus, { accent: AccentName; label: string }> = {
+  payment_pending: { accent: 'sun', label: 'Payment Pending' },
+  order_placed: { accent: 'tangerine', label: 'Order Placed' },
+  payment_failed: { accent: 'red', label: 'Payment Failed' },
+  delivered: { accent: 'mint', label: 'Delivered' },
+};
+
+function entry(pair: AccentPair, label: string): StatusColorEntry {
+  return {
+    soft: pair.soft,
+    strong: pair.strong,
+    dot: pair.dot ?? pair.strong,
+    label,
+    color: pair.strong,
+  };
 }
 
 export const statusColors: Record<OrderStatus, StatusColorEntry> = {
-  // Warning/Error/Success from the GenzFeast brand color system.
-  payment_pending: { color: '#F59E0B', label: 'Payment Pending' },
-  order_placed: { color: colors.primary, label: 'Order Placed' },
-  payment_failed: { color: '#DC2626', label: 'Payment Failed' },
-  delivered: { color: '#16A34A', label: 'Delivered' },
+  payment_pending: entry(accents.sun, STATUS_ACCENT.payment_pending.label),
+  order_placed: entry(accents.tangerine, STATUS_ACCENT.order_placed.label),
+  payment_failed: entry(accents.red, STATUS_ACCENT.payment_failed.label),
+  delivered: entry(accents.mint, STATUS_ACCENT.delivered.label),
 };
+
+/**
+ * Resolves any status string, including one outside the four designed values
+ * (contract G6). An unmapped status renders in the neutral family with its
+ * raw value as the label — readable and never blank. The order lifecycle also
+ * defines `cancelled`, which no code path currently sets, and a future status
+ * must not produce an empty badge.
+ */
+export function resolveStatus(status: string): StatusColorEntry {
+  const known = statusColors[status as OrderStatus];
+  if (known) return known;
+  // An unmapped status falls back to the neutral family, and its label is
+  // title-cased rather than echoed raw: the artboards render every badge in
+  // uppercase, and a raw API value ("new", "company_staff") read as debug
+  // output next to the mapped ones.
+  return entry(accents.neutral, humanise(status));
+}
+
+function humanise(status: string): string {
+  return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export default statusColors;

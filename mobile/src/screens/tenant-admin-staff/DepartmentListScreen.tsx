@@ -3,9 +3,11 @@ import { ActivityIndicator, Alert, FlatList, Pressable, Text, TextInput, View } 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { AdminFab, AdminPageHeader, AdminSearchBar } from '../../components/AdminPageHeader';
 import { RowActionButton } from '../../components/RowActionButton';
+import { AdminListRow, SectionLabel } from '../../components/AdminList';
 import { createTypedClient } from '../../api/client';
-import { colors } from '../../theme/tokens';
+import { colors, radius, size } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/001-company-role-user-setup';
 
@@ -58,13 +60,6 @@ export function DepartmentListScreen({ navigation }: Props) {
   }, []);
 
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable onPress={() => navigation.navigate('DepartmentCreateEdit', {})} hitSlop={8}>
-          <Text style={{ color: colors.surface, fontWeight: '700', fontSize: 15 }}>+ Add</Text>
-        </Pressable>
-      ),
-    });
   }, [navigation]);
 
   useEffect(() => {
@@ -108,24 +103,52 @@ export function DepartmentListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Departments" specRef="UI Design §5.4" scroll={false}>
-      <View className="gap-3 mb-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Search by name"
-          autoCapitalize="none"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
-      </View>
+    <Screen
+      surface="admin"
+      title="Departments"
+      specRef="UI Design §5.4"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title="Departments"
+          subtitle="Academic departments for student profiles"
+          onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.getParent()?.navigate('Dashboard'))}
+        >
+          <AdminSearchBar>
+            <TextInput
+              accessibilityLabel="Search departments"
+              style={{
+                height: size.field,
+                borderRadius: radius.xl,
+                backgroundColor: colors.surface,
+                paddingLeft: 44,
+                paddingRight: 16,
+                color: colors.espresso,
+              }}
+              className="text-body"
+              placeholder="Search departments"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </AdminSearchBar>
+        </AdminPageHeader>
+      }
+    >
+      {errorMessage ? <Text className="text-body text-red-strong pb-sm">{errorMessage}</Text> : null}
 
       {loading ? (
         <ActivityIndicator />
       ) : (
         <FlatList
           className="flex-1"
+          contentContainerStyle={{ gap: 10 }}
+          ListHeaderComponent={
+            departments.length > 0 ? (
+              <SectionLabel>{`${departments.length} departments`}</SectionLabel>
+            ) : null
+          }
           data={departments}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -137,27 +160,34 @@ export function DepartmentListScreen({ navigation }: Props) {
           onEndReached={handleEndReached}
           ListFooterComponent={loadingMore ? <ActivityIndicator className="my-3" /> : null}
           renderItem={({ item: department }) => (
-            <View className="flex-row items-center justify-between gap-2 border-b border-border py-3">
-              <Text className="flex-1 text-body-bold text-text-primary" numberOfLines={1}>
-                {department.name}
-              </Text>
-              <View className="flex-row gap-2">
-                <RowActionButton
-                  variant="edit"
-                  label={`Edit ${department.name}`}
-                  onPress={() => navigation.navigate('DepartmentCreateEdit', { departmentId: department.id })}
-                />
-                <RowActionButton
-                  variant="delete"
-                  label={`Delete ${department.name}`}
-                  loading={deletingId === department.id}
-                  onPress={() => confirmDelete(department)}
-                />
-              </View>
-            </View>
+            <AdminListRow
+              icon="departments"
+              accent="blue"
+              title={department.name}
+              actions={
+                <>
+                  <RowActionButton
+                    variant="edit"
+                    label={`Edit ${department.name}`}
+                    onPress={() => navigation.navigate('DepartmentCreateEdit', { departmentId: department.id })}
+                  />
+                  <RowActionButton
+                    variant="delete"
+                    label={`Delete ${department.name}`}
+                    loading={deletingId === department.id}
+                    onPress={() => confirmDelete(department)}
+                  />
+                </>
+              }
+            />
           )}
         />
       )}
+
+      <AdminFab
+        label="Add department"
+        onPress={() => navigation.navigate('DepartmentCreateEdit', {})}
+      />
     </Screen>
   );
 }
