@@ -151,7 +151,24 @@ export function ProductListScreen({ navigation }: Props) {
         <AdminPageHeader
           title="Products"
           count={total !== undefined ? `${total} ${total === 1 ? 'item' : 'items'}` : undefined}
-          onBack={() => navigation.navigate('Dashboard')}
+          onBack={() => {
+            // This screen is reached two ways and back must mean different
+            // things in each:
+            //   Dashboard card -> ProductList   pushed on the Dashboard
+            //     drawer screen's stack, so back should POP.
+            //   Drawer -> Products              a fresh stack mounted at
+            //     ProductList with nothing to pop, so back should switch the
+            //     DRAWER to Dashboard.
+            // Navigating the stack to 'Dashboard' (what this did before) was
+            // wrong for both: it left the Products drawer screen's stack
+            // parked on Dashboard, so tapping Products in the menu again
+            // showed the Dashboard.
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.getParent()?.navigate('Dashboard');
+            }
+          }}
         >
           <AdminSearchBar>
             <TextInput
