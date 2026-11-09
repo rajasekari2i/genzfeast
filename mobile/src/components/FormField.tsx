@@ -3,9 +3,14 @@ import { Text, TextInput, View, type TextInputProps } from 'react-native';
 import { colors, radius } from '../theme/tokens';
 
 /**
- * Labelled text field — specs/017-ui-refresh FR-016, the field treatment the
- * `Login`, `Register`, `UserForm`, `CategoryForm` and `DepartmentForm`
- * artboards all share.
+ * Labelled text field — specs/017-ui-refresh FR-016.
+ *
+ * The two artboard families draw this field DIFFERENTLY, so `tone` selects
+ * between them rather than one being approximated by the other:
+ *   student  espresso 1.5px rule at radius 16 (Login, Register)
+ *   admin    #DDD6CC 1.5px rule at radius 14 on a white section card
+ *            (Add/edit user, Add department, Edit category — and the product
+ *            form, which has no artboard of its own and follows them)
  *
  * A read-only field is distinguished by BORDER STYLE and fill, not colour
  * alone (FR-016) — a dashed outline on the muted fill. Relying on colour
@@ -18,6 +23,7 @@ export function FormField({
   hint,
   readOnly = false,
   error,
+  tone = 'student',
   ...inputProps
 }: TextInputProps & {
   label: string;
@@ -25,6 +31,8 @@ export function FormField({
   hint?: string;
   readOnly?: boolean;
   error?: string | null;
+  /** Which artboard family this field belongs to — see the note above. */
+  tone?: 'student' | 'admin';
 }) {
   return (
     <View className="gap-xs">
@@ -36,8 +44,13 @@ export function FormField({
         style={{
           borderWidth: 1.5,
           borderStyle: readOnly ? 'dashed' : 'solid',
-          borderColor: error ? colors.borderDashed : readOnly ? colors.borderDashed : colors.espresso,
-          borderRadius: radius.xl,
+          borderColor:
+            error || readOnly
+              ? colors.borderDashed
+              : tone === 'admin'
+                ? colors.borderChip
+                : colors.espresso,
+          borderRadius: tone === 'admin' ? radius.lg : radius.xl,
         }}
         className={`h-field px-md text-body-lg ${
           readOnly ? 'bg-disabled-fill text-text-secondary' : 'bg-surface text-text-primary'

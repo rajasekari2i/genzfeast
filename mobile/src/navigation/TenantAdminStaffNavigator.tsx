@@ -83,7 +83,14 @@ export function TenantAdminStaffNavigator({
         component={ProductListScreen}
         options={{ title: '', headerShown: false }}
       />
-      <Stack.Screen name="ProductCreateEdit" component={ProductCreateEditScreen} options={{ title: '' }} />
+      {/* headerShown: false — the form renders the navy AdminPageHeader with
+          its own back control, matching "Company Admin · Add / edit user".
+          The native bar would stack an empty navy band above it. */}
+      <Stack.Screen
+        name="ProductCreateEdit"
+        component={ProductCreateEditScreen}
+        options={{ title: '', headerShown: false }}
+      />
       <Stack.Screen name="IncomingOrders" component={IncomingOrdersScreen} options={{ title: '' }} />
       <Stack.Screen name="OrderFulfilment" component={OrderFulfilmentScreen} options={{ title: '' }} />
       <Stack.Screen name="FeedbackList" component={FeedbackListScreen} options={{ title: '' }} />
