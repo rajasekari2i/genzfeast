@@ -1,6 +1,8 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
 import { colors } from '../theme/tokens';
+import { Icon } from './Icon';
+import type { IconName } from './Icon';
 
 /**
  * Shared CTA — specs/017-ui-refresh FR-012, FR-013, FR-015.
@@ -27,6 +29,7 @@ export function PrimaryButton({
   loading = false,
   size = 'md',
   variant = 'primary',
+  trailingIcon,
 }: {
   label: string;
   onPress: () => void;
@@ -35,6 +38,12 @@ export function PrimaryButton({
   /** 'sm' still meets the 44-unit touch floor (FR-015). */
   size?: 'sm' | 'md';
   variant?: 'primary' | 'brand';
+  /**
+   * Glyph after the label. The Login and Feedback artboards both put an
+   * arrow here — it signals "this submits and moves you on", which a bare
+   * label does not.
+   */
+  trailingIcon?: IconName;
 }) {
   const isInteractionDisabled = disabled || loading;
   const isMuted = disabled && !loading;
@@ -60,12 +69,27 @@ export function PrimaryButton({
       disabled={isInteractionDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isInteractionDisabled, busy: loading }}
-      className={`${height} ${padding} ${fill} rounded-pill items-center justify-center active:opacity-80`}
+      className={`${height} ${padding} ${fill} rounded-pill flex-row items-center justify-center gap-xs active:opacity-80`}
     >
       {loading ? (
         <ActivityIndicator color={variant === 'brand' ? colors.espresso : colors.surface} size="small" />
       ) : (
-        <Text className={`text-button text-center ${labelColor}`}>{label}</Text>
+        <>
+          <Text className={`text-button text-center ${labelColor}`}>{label}</Text>
+          {trailingIcon ? (
+            <Icon
+              name={trailingIcon}
+              size={18}
+              color={
+                isMuted
+                  ? colors.disabledText
+                  : variant === 'brand'
+                    ? colors.espresso
+                    : colors.surface
+              }
+            />
+          ) : null}
+        </>
       )}
     </Pressable>
   );

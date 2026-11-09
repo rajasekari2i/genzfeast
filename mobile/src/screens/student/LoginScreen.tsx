@@ -96,10 +96,36 @@ export function LoginScreen({ navigation }: Props) {
               right: -40,
             }}
           />
+          {/* The rotated mark in the hero's bottom-right — 108x111 at radius
+              32, tilted 10 degrees with the logo counter-rotated so it sits
+              upright inside. This was missing entirely, which is why the
+              card's lower right read as empty orange. */}
+          <View
+            style={{
+              position: 'absolute',
+              right: 25,
+              bottom: 32,
+              width: 108,
+              height: 111,
+              borderRadius: radius['7xl'],
+              backgroundColor: colors.espresso,
+              transform: [{ rotate: '10deg' }],
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Image
+              source={require('../../../assets/brand/gf-mark-white.png')}
+              style={{ width: 92, height: 92, transform: [{ rotate: '-10deg' }] }}
+              resizeMode="contain"
+              accessibilityLabel=""
+            />
+          </View>
+
           <View className="flex-row items-center gap-sm">
             <View
-              style={{ borderRadius: radius.md }}
-              className="w-touch h-touch bg-espresso items-center justify-center overflow-hidden"
+              style={{ width: 40, height: 40, borderRadius: radius.md }}
+              className="bg-espresso items-center justify-center overflow-hidden"
             >
               <Image
                 source={require('../../../assets/brand/gf-mark-white.png')}
@@ -108,12 +134,13 @@ export function LoginScreen({ navigation }: Props) {
                 accessibilityLabel=""
               />
             </View>
-            <Text className="text-title-sm text-espresso">
+            <Text className="text-wordmark text-espresso">
               Genz<Text className="text-surface">Feast</Text>
             </Text>
           </View>
 
-          <Text className="text-display text-espresso" style={{ maxWidth: 210 }}>
+          {/* `hero`, not `display`: the artboard sets 40/41/-1.5 here. */}
+          <Text className="text-hero text-espresso" style={{ maxWidth: 210 }}>
             Skip the queue. Grab the good stuff.
           </Text>
         </View>
@@ -146,7 +173,13 @@ export function LoginScreen({ navigation }: Props) {
 
           {errorMessage ? <Text className="text-body text-red-strong">{errorMessage}</Text> : null}
 
-          <PrimaryButton label="Log in" onPress={handleSubmit} loading={loading} disabled={loading} />
+          <PrimaryButton
+            label="Log in"
+            trailingIcon="arrowRight"
+            onPress={handleSubmit}
+            loading={loading}
+            disabled={loading}
+          />
         </View>
 
         <View className="flex-row justify-center items-center gap-xs">

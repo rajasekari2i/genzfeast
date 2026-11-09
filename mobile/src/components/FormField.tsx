@@ -56,9 +56,11 @@ export function FormField({
                   : colors.espresso,
           borderWidth: tone === 'sheet' ? 2 : 1.5,
           borderRadius: tone === 'admin' ? radius.lg : radius.xl,
-          ...(tone === 'sheet' ? { height: 54, paddingHorizontal: 18 } : null),
+          // 54px on BOTH the student artboards (Login, Register) and the
+          // sheets — size.field (48) is the admin forms' height, not these.
+          ...(tone === 'sheet' || tone === 'student' ? { height: 54, paddingHorizontal: 18 } : null),
         }}
-        className={`${tone === 'sheet' ? '' : 'h-field px-md'} text-body-lg ${
+        className={`${tone === 'admin' ? 'h-field px-md' : ''} text-body-lg ${
           readOnly ? 'bg-disabled-fill text-text-secondary' : 'bg-surface text-text-primary'
         }`}
         {...inputProps}

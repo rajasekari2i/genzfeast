@@ -39,7 +39,11 @@ export function AuthNavigator() {
       <Stack.Screen
         name="Login"
         component={LoginScreen}
-        options={{ ...authHeaderOptions, headerShown: true, title: '' }}
+        // headerShown: false — the Login artboard has no chrome above the
+        // hero card at all. c2b7b0c made this header MATCH the screen
+        // background rather than be brand orange, which hid it visually but
+        // still reserved its height, leaving a blank bar across the top.
+        options={{ ...authHeaderOptions, headerShown: false }}
       />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Register' }} />
       <Stack.Screen
