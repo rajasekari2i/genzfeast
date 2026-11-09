@@ -17,7 +17,8 @@
 
 GenzFeast is a multi-tenant (multi-company) mobile food ordering platform that connects college canteens ("companies"/tenants) with the people on their campus. Each canteen operates as an independent tenant with its own staff, products, master data, and orders, while a central System Admin governs onboarding and platform-wide oversight.
 
-This document defines the business need, objectives, stakeholders, scope, and business rules. It is the governing business artifact for the PRD (`02-PRD.md`), the Architecture doc (`../architecture/04-Architecture.md`), and the UI spec (`../ui-screen/06-UI-Design.md`).
+This document defines the business need, objectives, stakeholders, scope, and business rules. It is the governing business artifact for the PRD (`02-PRD.md`), the Architecture doc (`../architecture/04-Architecture.md`), and the UI artboards (`../ui-screen/*.html`, which replaced the original
+`06-UI-Design.md` markdown spec).
 
 ## 2. Business Problem
 
