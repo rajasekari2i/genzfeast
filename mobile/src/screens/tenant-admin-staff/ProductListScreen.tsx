@@ -228,20 +228,23 @@ export function ProductListScreen({ navigation }: Props) {
               style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.borderCard }}
               className="flex-row items-center gap-sm bg-surface p-sm"
             >
-              {product.image_url ? (
-                <Image
-                  source={{ uri: product.image_url }}
-                  style={{ width: 56, height: 56, borderRadius: radius.xl }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View
-                  style={{ width: 56, height: 56, backgroundColor: productTint(product.id), borderRadius: radius.xl }}
-                  className="items-center justify-center"
-                >
-                  <Icon name="cloche" size={26} color={colors.textBody} />
-                </View>
-              )}
+              {/* The tinted tile and its glyph are the GROUND, with the photo
+                  layered over it — not an either/or. A product whose
+                  image_url 404s or is still loading previously rendered an
+                  empty 56px hole; now it falls back to the artboard's tile. */}
+              <View
+                style={{ width: 56, height: 56, backgroundColor: productTint(product.id), borderRadius: radius.xl }}
+                className="items-center justify-center overflow-hidden"
+              >
+                <Icon name="cloche" size={26} color={colors.textBody} />
+                {product.image_url ? (
+                  <Image
+                    source={{ uri: product.image_url }}
+                    style={{ position: 'absolute', width: 56, height: 56 }}
+                    resizeMode="cover"
+                  />
+                ) : null}
+              </View>
               <View className="flex-1 gap-glyph">
                 <View className="flex-row items-center gap-xs">
                   {/* Shape as well as colour (FR-005) — the previous

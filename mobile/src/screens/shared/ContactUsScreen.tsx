@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from 'react-native';
-import { DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CommonActions, DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { Icon } from '../../components/Icon';
 import { InfoCard, InfoRow } from '../../components/InfoCard';
@@ -85,7 +85,7 @@ export function ContactUsScreen() {
               // and returned true while there was nothing to pop, leaving
               // the control dead and the user with no route to the menu now
               // that the drawer header is hidden. Always open the drawer.
-              navigation.getParent()?.dispatch(DrawerActions.openDrawer())
+              navigation.dispatch(DrawerActions.openDrawer())
             }
             accessibilityRole="button"
             accessibilityLabel="Back"
@@ -160,7 +160,12 @@ export function ContactUsScreen() {
             rule, not the solid card it was. Feedback is its own drawer
             route, so this reaches it through the parent navigator. */}
         <Pressable
-          onPress={() => navigation.getParent()?.navigate('Feedback')}
+          onPress={() =>
+            // Same reasoning as the back control: dispatch on this
+            // navigator and let the action bubble to whichever navigator
+            // owns the Feedback route.
+            navigation.dispatch(CommonActions.navigate({ name: 'Feedback' }))
+          }
           accessibilityRole="button"
           style={{
             borderWidth: 1.5,

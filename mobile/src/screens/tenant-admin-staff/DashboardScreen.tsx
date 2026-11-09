@@ -73,7 +73,7 @@ export function DashboardScreen({ navigation }: Props) {
         <AdminHeader
           role="ADMIN"
           initial={(adminName || 'A').trim().charAt(0).toUpperCase()}
-          onOpenMenu={() => navigation.getParent()?.dispatch(DrawerActions.openDrawer())}
+          onOpenMenu={() => navigation.dispatch(DrawerActions.openDrawer())}
         >
           <Text style={{ ...typography.label, color: colors.navyMuted }}>
             {[getTenantDisplayName(), 'Company Admin'].filter(Boolean).join(' \u00B7 ')}

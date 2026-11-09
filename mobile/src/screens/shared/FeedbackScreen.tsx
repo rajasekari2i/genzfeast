@@ -155,7 +155,7 @@ export function FeedbackScreen({ navigation }: Props) {
               // and returned true while there was nothing to pop, leaving
               // the control dead and the user with no route to the menu now
               // that the drawer header is hidden. Always open the drawer.
-              navigation.getParent()?.dispatch(DrawerActions.openDrawer())
+              navigation.dispatch(DrawerActions.openDrawer())
             }
             accessibilityRole="button"
             accessibilityLabel="Back"

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, GestureResponderEvent, Pressable, Text } from 'react-native';
-import { accents, colors } from '../theme/tokens';
+import { accents, colors, radius, size } from '../theme/tokens';
+import { Icon } from './Icon';
 
 /**
  * A list card's Edit/Delete action, styled as the same rounded-pill chip the
@@ -30,6 +31,13 @@ export function RowActionButton({
 }) {
   const isDelete = variant === 'delete';
 
+  // The artboards give a list row a compact 44x44 SQUARE control carrying a
+  // glyph, not a text pill — "Company Admin · Products" draws the edit
+  // control at radius 14 on tileNeutral with a navy pencil. Two stacked text
+  // pills ate roughly a third of the row's width and pushed the product
+  // name into an ellipsis.
+  const tone = isDelete ? colors.danger : colors.primaryVariant;
+
   return (
     <Pressable
       accessibilityLabel={label}
@@ -37,15 +45,18 @@ export function RowActionButton({
       hitSlop={8}
       disabled={disabled || loading}
       onPress={onPress}
-      style={{ borderColor: isDelete ? accents.red.strong : colors.link }}
-      className="rounded-pill px-sm min-h-touch justify-center border active:opacity-70"
+      style={{
+        width: size.touch,
+        height: size.touch,
+        borderRadius: radius.lg,
+        backgroundColor: isDelete ? accents.red.soft : colors.tileNeutral,
+      }}
+      className="items-center justify-center active:opacity-70"
     >
       {loading ? (
-        <ActivityIndicator size="small" color={isDelete ? accents.red.strong : colors.link} />
+        <ActivityIndicator size="small" color={tone} />
       ) : (
-        <Text style={{ color: isDelete ? accents.red.strong : colors.link }} className="text-label">
-          {isDelete ? 'Delete' : 'Edit'}
-        </Text>
+        <Icon name={isDelete ? 'trash' : 'edit'} size={18} color={tone} />
       )}
     </Pressable>
   );

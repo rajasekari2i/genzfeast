@@ -99,7 +99,13 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
   return (
     <DrawerContentScrollView
       {...props}
-      style={{ backgroundColor: panel }}
+      style={{
+        backgroundColor: panel,
+        // The artboard's `border-radius: 0 32px 32px 0`, applied here rather
+        // than on drawerStyle — see the note in screenOptions.
+        borderTopRightRadius: radius['7xl'],
+        borderBottomRightRadius: radius['7xl'],
+      }}
       contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.lg }}
     >
       {/* Brand row — "Genz" light, "Feast" in the tenant brand colour. */}
@@ -238,14 +244,18 @@ export function AppShell() {
         headerTintColor: colors.espresso,
         // The panel itself is painted by CustomDrawerContent (role-aware:
         // espresso for students, navy for back-of-house), so this only needs
-        // to match so no seam shows at the edges, and to carry the
-        // artboard's rounded right corners (border-radius: 0 32px 32px 0).
+        // to match so no seam shows at the edges.
+        //
+        // DO NOT put the artboard's rounded right corners here. Setting
+        // borderTopRightRadius/borderBottomRightRadius on drawerStyle makes
+        // the whole panel render INVISIBLY — the drawer opens (its content
+        // re-renders, the navigation action lands) but nothing appears, and
+        // swipe-to-open breaks with it. Verified by bisecting it out. The
+        // radius lives on the content view below instead.
         drawerStyle: {
           backgroundColor:
             role === 'company_admin' || role === 'company_staff' ? colors.primaryVariant : colors.espresso,
           width: 316,
-          borderTopRightRadius: radius['7xl'],
-          borderBottomRightRadius: radius['7xl'],
         },
         drawerType: 'front',
       }}
@@ -266,7 +276,14 @@ export function AppShell() {
           <Drawer.Screen name="Incoming Orders" component={StaffIncomingOrdersEntry} />
           {/* UI Design §5.5 — same Product list as Company Admin's, but
               read/toggle-only (ProductListScreen itself checks the role). */}
-          <Drawer.Screen name="Products" component={StaffProductsEntry} />
+          {/* headerShown: false — ProductListScreen renders the artboard's navy
+              AdminPageHeader, which carries its own back control. The drawer
+              header would stack a second cream bar above it. */}
+          <Drawer.Screen
+            name="Products"
+            component={StaffProductsEntry}
+            options={{ headerShown: false }}
+          />
         </>
       )}
 
@@ -281,7 +298,14 @@ export function AppShell() {
             component={CompanyAdminDashboardEntry}
             options={{ headerShown: false }}
           />
-          <Drawer.Screen name="Products" component={CompanyAdminProductsEntry} />
+          {/* headerShown: false — ProductListScreen renders the artboard's navy
+              AdminPageHeader, which carries its own back control. The drawer
+              header would stack a second cream bar above it. */}
+          <Drawer.Screen
+            name="Products"
+            component={CompanyAdminProductsEntry}
+            options={{ headerShown: false }}
+          />
           {/* The registrant-affiliation Category (Student/Teaching Staff/
               Non-Teaching Staff) — not a food/product classification
               (CLAUDE.md's "Category vs Department vs Role" note). */}

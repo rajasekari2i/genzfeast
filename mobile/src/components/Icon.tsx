@@ -18,7 +18,7 @@ export type IconName =
   | 'close' | 'dashboard' | 'feedbackReview' | 'profile' | 'contactUs'
   | 'incomingOrders' | 'chevronLeft' | 'edit' | 'lock' | 'logout' | 'check'
   | 'star' | 'arrowRight' | 'clock' | 'email' | 'pin'
-  | 'search' | 'plus';
+  | 'search' | 'plus' | 'trash';
 
 const STROKE: Record<IconName, number> = {
   cloche: 1.8,
@@ -51,6 +51,7 @@ const STROKE: Record<IconName, number> = {
   pin: 2,
   search: 2.2,
   plus: 2.8,
+  trash: 2.2,
 };
 
 export function Icon({
@@ -196,6 +197,13 @@ export function Icon({
       )}
 
       {name === 'plus' && <Path d="M12 5v14M5 12h14" {...common} />}
+
+      {name === 'trash' && (
+        <>
+          <Path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13" {...common} />
+          <Path d="M10 11v5M14 11v5" {...common} />
+        </>
+      )}
 
       {name === 'departments' && (
         <Path d="M4 21V5l8-3 8 3v16M9 21v-5h6v5M8 9h2M14 9h2M8 13h2M14 13h2" {...common} />
