@@ -26,6 +26,20 @@ type OrdersView = 'upcoming' | 'history';
  * research.md §1: one endpoint filtered by a query param, not two routes).
  * Both views sort most-recently-placed-first, already the server's default.
  */
+/** Compact order time — "Today, 1:43 PM" / "10 Nov, 1:43 PM", never a full
+ * locale string with seconds and a 4-digit year (which overflowed the card
+ * header and shoved the status badge off-screen). */
+function formatOrderTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const today = new Date();
+  if (d.toDateString() === today.toDateString()) return `Today, ${time}`;
+  const yest = new Date(today.getTime() - 86_400_000);
+  if (d.toDateString() === yest.toDateString()) return `Yesterday, ${time}`;
+  return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}, ${time}`;
+}
+
 export function MyOrdersScreen({ navigation }: Props) {
   const [view, setView] = useState<OrdersView>('upcoming');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -117,12 +131,15 @@ export function MyOrdersScreen({ navigation }: Props) {
                   }}
                   className="p-md gap-sm active:opacity-80"
                 >
-                  <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-sm">
+                    {/* flex-1 + ellipsis so a long reference/time never pushes
+                        the status badge off the right edge; the badge keeps its
+                        natural width. */}
                     <Text
-                      className={`text-label ${awaiting ? 'text-text-on-dark' : 'text-text-body'}`}
+                      className={`flex-1 text-label ${awaiting ? 'text-text-on-dark' : 'text-text-body'}`}
                       numberOfLines={1}
                     >
-                      #{order.id.slice(0, 8).toUpperCase()} · {new Date(order.placed_at).toLocaleString()}
+                      #{order.id.slice(0, 8).toUpperCase()} · {formatOrderTime(order.placed_at)}
                     </Text>
                     <StatusBadge status={order.status} />
                   </View>
