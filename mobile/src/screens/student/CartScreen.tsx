@@ -125,8 +125,26 @@ export function CartScreen({ navigation }: Props) {
 
   if (lines.length === 0) {
     return (
-      <Screen title="Cart" specRef="UI Design §4.6">
-        <EmptyState icon="🛒" title="Your cart is empty" subtitle="Add items from Home to get started." />
+      <Screen title="Cart" specRef="UI Design §4.6" scroll={false}>
+        <View className="flex-1">
+          {/* Same header row as the filled cart — the back control must be
+              present whether or not there are items. */}
+          <View className="flex-row items-center gap-sm pb-md">
+            <Pressable
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+              className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
+            >
+              <Icon name="chevronLeft" size={20} color={colors.espresso} />
+            </Pressable>
+            <Text className="flex-1 text-title text-text-primary">Your cart</Text>
+          </View>
+          <View className="flex-1 items-center justify-center">
+            <EmptyState icon="🛒" title="Your cart is empty" subtitle="Add items from Home to get started." />
+          </View>
+        </View>
       </Screen>
     );
   }
