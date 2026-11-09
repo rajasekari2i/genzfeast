@@ -75,7 +75,14 @@ export function TenantAdminStaffNavigator({
       <Stack.Screen name="CategoryCreateEdit" component={CategoryCreateEditScreen} options={{ title: '' }} />
       <Stack.Screen name="DepartmentList" component={DepartmentListScreen} options={{ title: '' }} />
       <Stack.Screen name="DepartmentCreateEdit" component={DepartmentCreateEditScreen} options={{ title: '' }} />
-      <Stack.Screen name="ProductList" component={ProductListScreen} options={{ title: '' }} />
+      {/* headerShown: false — the screen renders the artboard's navy
+          AdminPageHeader (back, title, item count, search) and a floating
+          Add pill, neither of which a native stack header can carry. */}
+      <Stack.Screen
+        name="ProductList"
+        component={ProductListScreen}
+        options={{ title: '', headerShown: false }}
+      />
       <Stack.Screen name="ProductCreateEdit" component={ProductCreateEditScreen} options={{ title: '' }} />
       <Stack.Screen name="IncomingOrders" component={IncomingOrdersScreen} options={{ title: '' }} />
       <Stack.Screen name="OrderFulfilment" component={OrderFulfilmentScreen} options={{ title: '' }} />

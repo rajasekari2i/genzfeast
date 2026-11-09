@@ -78,6 +78,10 @@ const colors = {
   border: '#F1E6DA',
   // The 1px hairline on the Dashboard's white quick-link cards.
   borderCard: '#E8E3DC',
+  // The unselected filter chip's rule, and the neutral tile behind a
+  // row's edit control - both from the Company Admin - Products artboard.
+  borderChip: '#DDD6CC',
+  tileNeutral: '#F4F1EC',
   borderSoft: '#EFE3D6',
   borderDashed: '#CFC6BB',
   // A warmer dashed rule than `borderDashed`, used for the opt-in CTA at
@@ -113,6 +117,7 @@ const DISPLAY = 'BricolageGrotesque-ExtraBold';
 const BODY = 'Inter-Medium';
 const BODY_SEMI = 'Inter-SemiBold';
 const BODY_BOLD = 'Inter-Bold';
+const BODY_XBOLD = 'Inter-ExtraBold';
 
 /**
  * Type scale (FR-007).
@@ -149,6 +154,9 @@ const typography = {
   subtitleSm: { fontFamily: DISPLAY, fontSize: 18, lineHeight: 22, letterSpacing: 0 },
 
   // Body family — four weights, each its own family.
+  // The floating action label on Company Admin - Products: Inter 800 at
+  // 16px. Inter-ExtraBold was bundled but had no token until now.
+  action: { fontFamily: BODY_XBOLD, fontSize: 16, lineHeight: 22, letterSpacing: 0 },
   price: { fontFamily: BODY_BOLD, fontSize: 16, lineHeight: 22, letterSpacing: 0 },
   bodyLg: { fontFamily: BODY, fontSize: 16, lineHeight: 22, letterSpacing: 0 },
   body: { fontFamily: BODY, fontSize: 15, lineHeight: 21, letterSpacing: 0 },
@@ -165,6 +173,9 @@ const typography = {
   tag: { fontFamily: BODY_SEMI, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
   eyebrow: { fontFamily: BODY_BOLD, fontSize: 12, lineHeight: 16, letterSpacing: 1.5 },
   caption: { fontFamily: BODY, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
+  // The tiny uppercase switch caption ('SOLD OUT') - 10px/700 at 0.5
+  // tracking, smaller and tighter than `captionSm`.
+  micro: { fontFamily: BODY_BOLD, fontSize: 10, lineHeight: 13, letterSpacing: 0.5 },
   captionSm: { fontFamily: BODY_SEMI, fontSize: 11, lineHeight: 14, letterSpacing: 0.8 },
 };
 

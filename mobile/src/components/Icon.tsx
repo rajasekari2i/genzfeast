@@ -17,7 +17,8 @@ export type IconName =
   | 'cloche' | 'chevronRight' | 'users' | 'feedback' | 'categories' | 'departments'
   | 'close' | 'dashboard' | 'feedbackReview' | 'profile' | 'contactUs'
   | 'incomingOrders' | 'chevronLeft' | 'edit' | 'lock' | 'logout' | 'check'
-  | 'star' | 'arrowRight' | 'clock' | 'email' | 'pin';
+  | 'star' | 'arrowRight' | 'clock' | 'email' | 'pin'
+  | 'search' | 'plus';
 
 const STROKE: Record<IconName, number> = {
   cloche: 1.8,
@@ -48,6 +49,8 @@ const STROKE: Record<IconName, number> = {
   clock: 2.4,
   email: 2,
   pin: 2,
+  search: 2.2,
+  plus: 2.8,
 };
 
 export function Icon({
@@ -184,6 +187,15 @@ export function Icon({
           <Circle cx="12" cy="9" r="2.5" {...common} />
         </>
       )}
+
+      {name === 'search' && (
+        <>
+          <Circle cx="11" cy="11" r="7" {...common} />
+          <Path d="M20 20l-4-4" {...common} />
+        </>
+      )}
+
+      {name === 'plus' && <Path d="M12 5v14M5 12h14" {...common} />}
 
       {name === 'departments' && (
         <Path d="M4 21V5l8-3 8 3v16M9 21v-5h6v5M8 9h2M14 9h2M8 13h2M14 13h2" {...common} />

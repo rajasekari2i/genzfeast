@@ -60,6 +60,10 @@ export interface ColorTokens {
   border: string;
   /** Hairline on the Dashboard quick-link cards. */
   borderCard: string;
+  /** Unselected filter-chip rule. */
+  borderChip: string;
+  /** Neutral tile behind a list row's edit control. */
+  tileNeutral: string;
   borderSoft: string;
   /** Disabled/read-only outline — a dashed border, so the state differs in SHAPE not just colour. */
   borderDashed: string;
@@ -111,7 +115,7 @@ export type TypographyName =
   | 'title' | 'titleSm'
   | 'titleMd' | 'subtitle' | 'subtitleSm'
   | 'price' | 'bodyLg' | 'body' | 'bodyBold'
-  | 'bodySemi' | 'labelBold' | 'labelLg' | 'label' | 'tag'
+  | 'action' | 'bodySemi' | 'labelBold' | 'labelLg' | 'label' | 'tag' | 'micro'
   | 'eyebrow' | 'caption' | 'captionSm';
 
 export type SpacingName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
