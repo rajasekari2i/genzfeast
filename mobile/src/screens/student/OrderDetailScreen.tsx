@@ -102,8 +102,10 @@ export function OrderDetailScreen({ route, navigation }: Props) {
             name: 'GenzFeast',
             description: 'Canteen order',
           });
-        } catch {
+        } catch (e) {
           // Same reasoning as CartScreen — only the webhook decides the real outcome.
+          // TEMP DIAGNOSTIC: see CartScreen — remove once checkout is fixed.
+          console.log('[RZP] pay-again checkout failed:', JSON.stringify(e));
         }
       }
       await load();
