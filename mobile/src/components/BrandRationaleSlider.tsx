@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, Text, View, useWindowDimensions } from 'react-native';
-import { colors, spacing } from '../theme/tokens';
+import { accents, colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
  * "Brand Direction Rationale" from the GenzFeast brand board — shown as a
@@ -13,19 +13,19 @@ import { colors, spacing } from '../theme/tokens';
 const CARDS = [
   {
     emoji: '👥',
-    badgeBg: '#FFE4D6',
+    badgeBg: accents.tangerine.soft,
     title: 'Youthful Campus Energy',
     description: 'A modern, friendly identity that resonates with Gen Z students and celebrates campus life.',
   },
   {
     emoji: '🍲',
-    badgeBg: '#DCF3E8',
+    badgeBg: accents.mint.soft,
     title: 'Appetizing Food Warmth',
     description: 'Warm, vibrant colors and a food-centric mark that instantly feels delicious and inviting.',
   },
   {
     emoji: '📱',
-    badgeBg: '#E3EAF2',
+    badgeBg: accents.blue.soft,
     title: 'Clear Mobile Usability',
     description: 'A clean, simple, scalable design that works beautifully on mobile and builds instant trust.',
   },
@@ -68,7 +68,7 @@ export function BrandRationaleSlider() {
               className="items-center justify-center rounded-pill"
               style={{ width: 56, height: 56, backgroundColor: card.badgeBg }}
             >
-              <Text style={{ fontSize: 26 }}>{card.emoji}</Text>
+              <Text style={{ fontSize: typography.titleSm.fontSize }}>{card.emoji}</Text>
             </View>
             <Text className="text-body-bold text-text-primary text-center mt-3">{card.title}</Text>
             <Text className="text-body text-text-secondary text-center mt-1">{card.description}</Text>
@@ -83,7 +83,7 @@ export function BrandRationaleSlider() {
             style={{
               width: index === activeIndex ? 18 : 6,
               height: 6,
-              borderRadius: 3,
+              borderRadius: radius.glyph,
               backgroundColor: index === activeIndex ? colors.primary : colors.border,
             }}
           />

@@ -25,3 +25,15 @@ export function getRazorpayKeyId(): string | undefined {
 export function getRazorpayConfigId(): string | undefined {
   return Config.RAZORPAY_CONFIG_ID || undefined;
 }
+
+// The canteen's display name for this branded build — specs/017-ui-refresh
+// FR-027, which requires every side menu to show the user's name and their
+// canteen, and never their role.
+//
+// Build-time only, exactly like COMPANY_ID above. Deliberately NOT fetched:
+// the drawer currently issues no request, and adding one to render a label
+// would be a behavioural change this feature forbids (FR-032). A build that
+// does not set it simply omits the line.
+export function getTenantDisplayName(): string | undefined {
+  return Config.APP_DISPLAY_NAME || undefined;
+}

@@ -1,5 +1,18 @@
 <resources>
-  <color name="splashscreen_background">#FFFFFF</color>
+  <!-- specs/017-ui-refresh. These mirror src/theme/tokens.raw.js — the
+       native layer cannot read the JS token module, so the two values that
+       genuinely need to exist here are repeated and named after their
+       token. Keep them in step with `primary`. -->
+
+  <!-- colors.primary (Tangerine). The cold-launch splash matches the
+       launcher icon's own background, so the icon appears to expand into
+       the splash rather than cutting to an unrelated white field. -->
+  <color name="splashscreen_background">#FF6B35</color>
+
+  <!-- Adaptive-icon background layer. -->
   <color name="iconBackground">#FF6B35</color>
-  <color name="colorPrimary">#023c69</color>
+
+  <!-- Was #023c69 — a leftover from specs/013-blue-theme-visual-design,
+       which this feature supersedes. Now colors.primary. -->
+  <color name="colorPrimary">#FF6B35</color>
 </resources>

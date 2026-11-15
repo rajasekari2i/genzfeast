@@ -1,79 +1,159 @@
-// Design Token Set — GenzFeast brand system (orange/campus identity,
-// supersedes specs/013-blue-theme-visual-design's original blue palette;
-// mechanism and every non-color token below is unchanged).
+// Design Token Set — GenzFeast brand system (specs/017-ui-refresh,
+// superseding specs/013-blue-theme-visual-design).
 //
-// The single source of truth for every color, typography, spacing, and radius
-// value used anywhere in mobile/. No screen or component may hardcode a value
-// this file already defines (spec SC-003) — import from here instead.
+// This file is now a TYPED RE-EXPORT of tokens.raw.js, which is the single
+// source of raw values shared with tailwind.config.js (research R9). Its
+// public shape is deliberately unchanged: `colors`, `typography`, `spacing`,
+// `radius` and `tokens` all still export, and `ColorTokens.primary` is still
+// typed `string` so a tenant override remains assignable.
 //
-// colors.primary is the ONLY token overridable per tenant, and only via
-// resolveBrandTheme.ts at build time (see brand/resolveBrandTheme.ts). Every
-// other token is fixed platform-wide.
+// colors.primary is the ONLY token a tenant build may override, and only via
+// brand/resolveBrandTheme.ts at build time. Every other value is fixed
+// platform-wide (FR-009).
+//
+// No screen or component may hardcode a value defined here (FR-002) — that
+// now covers styling CLASS NAMES too, not just literals, because the app
+// styles through utility classes and NativeWind drops an unknown class
+// silently (research R11).
+import raw from './tokens.raw';
 
-// Typed as `string`, not narrowed via `as const` — colors.primary is the one
-// token a build-time brand override (resolveBrandTheme.ts) may replace with
-// an arbitrary tenant-supplied hex value, so its type must accept any hex
-// string, not just the literal default.
+/**
+ * Typed as `string`, not a literal union — `primary` is the one token a
+ * build-time brand override may replace with an arbitrary tenant hex.
+ */
 export interface ColorTokens {
+  /** Brand. The only tenant-overridable token. */
   primary: string;
-  /** Navigation/header chrome — "Trust/Navigation" in the brand color system, not a shade of primary. */
+  /** Navigation/header chrome on back-of-house surfaces. */
   primaryVariant: string;
-  accent: string;
-  /** Fresh/secondary actions and healthy-food indicators — "Secondary/Fresh" in the brand color system. Not yet consumed by any screen; available for e.g. a future "Fresh" product badge. */
-  secondary: string;
-  surface: string;
-  background: string;
+  /** Circular controls inside the navy header (AdminHeader). */
+  navyTint: string;
+  /** The role tag beside the header wordmark. */
+  navyMuted: string;
+  /** Divider between the drawer's nav groups. */
+  navyDivider: string;
+  /** The drawer's footer line. */
+  navyFooter: string;
+  /** Unselected segmented-tab label on navy. */
+  navyTabMuted: string;
+  /** Primary text AND primary action fill. */
+  espresso: string;
+  /** Alias of `espresso`; retained so existing importers keep compiling. */
   textPrimary: string;
+  textBody: string;
   textSecondary: string;
-  /** Subtle card/chip/divider borders, and disabled-control fills — the one neutral gray in the palette (added during WU2, contracts/design-tokens.md). */
+  /** Text on an espresso ground. */
+  textOnDark: string;
+  /** A raised panel on the espresso ground. */
+  espressoRaised: string;
+  /** Links and brand-coloured text. The brand itself never clears 4.5:1 as a foreground. */
+  link: string;
+  /** Destructive action outline/label. */
+  danger: string;
+  /** Student-facing ground. */
+  background: string;
+  /** Back-of-house ground (research R1 — the app has two grounds, not one). */
+  backgroundAlt: string;
+  surface: string;
+  accent: string;
+  /** Veg mark. */
+  secondary: string;
+  nonVeg: string;
   border: string;
+  /** Hairline on the Dashboard quick-link cards. */
+  borderCard: string;
+  /** Unselected filter-chip rule. */
+  borderChip: string;
+  /** Bottom-sheet grab handle. */
+  sheetHandle: string;
+  /** Neutral tile behind a list row's edit control. */
+  tileNeutral: string;
+  borderSoft: string;
+  /** Unfocused field rule on the student auth screens. */
+  borderField: string;
+  /** Disabled/read-only outline — a dashed border, so the state differs in SHAPE not just colour. */
+  borderDashed: string;
+  /** Warm dashed rule for an opt-in CTA (not a disabled control). */
+  borderDashedWarm: string;
+  disabledFill: string;
+  disabledText: string;
+  /** Modal overlay. */
+  scrim: string;
+  /** Elevation shadow colour. */
+  shadow: string;
 }
 
-export const colors: ColorTokens = {
-  primary: '#FF6B35',
-  primaryVariant: '#183153',
-  accent: '#FFC857',
-  secondary: '#0E9F6E',
-  surface: '#FFFFFF',
-  background: '#FFF7ED',
-  textPrimary: '#1F2937',
-  textSecondary: '#6B7280',
-  border: '#E5E7EB',
-};
+/**
+ * A soft-accent family (FR-003a). One set, three consumers: status badges,
+ * icon tiles, and the product-image tint rotation.
+ */
+export interface AccentPair {
+  soft: string;
+  strong: string;
+  dot?: string;
+  glyph?: string;
+}
 
+export type AccentName =
+  | 'tangerine'
+  | 'sun'
+  | 'mint'
+  | 'red'
+  | 'violet'
+  | 'blue'
+  | 'neutral';
+
+/**
+ * A text style. NOTE: there is deliberately NO `fontWeight` (FR-007a).
+ * Android resolves a bundled face by asset FILE NAME and collapses any
+ * numeric weight >= 700 onto a "_bold" suffix, so a bundled family plus a
+ * weight silently renders the system font. Weight is carried by the family.
+ */
 export interface TypographyStyle {
+  fontFamily: string;
   fontSize: number;
-  fontWeight: '400' | '600' | '700';
   lineHeight: number;
+  letterSpacing: number;
 }
 
-export const typography: Record<
-  'h1' | 'h2' | 'body' | 'bodyBold' | 'price' | 'caption' | 'button',
-  TypographyStyle
-> = {
-  h1: { fontSize: 24, fontWeight: '700', lineHeight: 32 },
-  h2: { fontSize: 18, fontWeight: '700', lineHeight: 24 },
-  body: { fontSize: 14, fontWeight: '400', lineHeight: 20 },
-  bodyBold: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
-  price: { fontSize: 16, fontWeight: '700', lineHeight: 22 },
-  caption: { fontSize: 12, fontWeight: '400', lineHeight: 16 },
-  button: { fontSize: 15, fontWeight: '600', lineHeight: 20 },
-};
+export type TypographyName =
+  | 'heroLg' | 'hero' | 'display' | 'displaySm' | 'displayXs' | 'wordmark' | 'wordmarkSm'
+  | 'title' | 'titleSm'
+  | 'titleMd' | 'subtitle' | 'subtitleSm'
+  | 'price' | 'bodyLg' | 'body' | 'bodyBold'
+  | 'action' | 'bodySemi' | 'labelBold' | 'labelLg' | 'label' | 'tag' | 'micro'
+  | 'eyebrow' | 'caption' | 'captionSm';
 
-export const spacing: Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', number> = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-};
+export type SpacingName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export const radius: Record<'sm' | 'md' | 'lg' | 'pill', number> = {
-  sm: 4,
-  md: 12,
-  lg: 20,
-  pill: 999,
-};
+/** Control heights. `touch` (44) is the accessibility floor — FR-015. */
+export type SizeName = 'tile' | 'touch' | 'field' | 'control';
+
+export type RadiusName =
+  | 'glyph' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'card' | 'sheet' | 'pill';
+
+// tokens.raw.js is annotated with broad JSDoc types (Record<string, string>
+// etc.) so that tailwind.config.js can consume it without TypeScript. These
+// casts narrow it to the interfaces above. The cast is why G5
+// (theme/tokens.spec) asserts the two agree at RUNTIME — a compile-time
+// guarantee is not available across the .js boundary.
+export const colors = raw.colors as unknown as ColorTokens;
+export const accents = raw.accents as unknown as Record<AccentName, AccentPair>;
+export const typography = raw.typography as unknown as Record<TypographyName, TypographyStyle>;
+export const spacing = raw.spacing as unknown as Record<SpacingName, number>;
+export const size = raw.size as unknown as Record<SizeName, number>;
+export const radius = raw.radius as unknown as Record<RadiusName, number>;
+
+/** The five bundled faces. theme/fonts.spec asserts every style resolves to one. */
+export const fontFamilies = raw.fontFamilies as string[];
+
+/**
+ * Tenant brand swatches that pass the espresso-on-brand gate. `#E4572E` is
+ * offered by the design canvas but scores 4.42:1 and is excluded — a defect
+ * in the canvas, reported to the designer (research R8).
+ */
+export const sanctionedBrandSwatches = raw.sanctionedBrandSwatches as string[];
 
 export const tokens = { colors, typography, spacing, radius } as const;
 

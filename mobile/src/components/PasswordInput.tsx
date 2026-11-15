@@ -34,7 +34,7 @@ export function PasswordInput({
         accessibilityRole="button"
         accessibilityLabel={visible ? 'Hide password' : 'Show password'}
       >
-        <Text className="text-caption font-semibold text-primary">{visible ? 'Hide' : 'Show'}</Text>
+        <Text className="text-label text-link">{visible ? 'Hide' : 'Show'}</Text>
       </Pressable>
     </View>
   );

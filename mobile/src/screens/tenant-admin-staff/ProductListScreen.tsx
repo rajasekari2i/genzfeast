@@ -3,10 +3,15 @@ import { ActivityIndicator, FlatList, Image, Pressable, Switch, Text, TextInput,
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { AdminPageHeader, AdminSearchBar } from '../../components/AdminPageHeader';
+import { Icon } from '../../components/Icon';
 import { RowActionButton } from '../../components/RowActionButton';
+import { SwitchRow } from '../../components/SwitchRow';
+import { DietaryMark } from '../../components/DietaryMark';
+import { productTint } from '../../theme/accents';
 import { createTypedClient, getCurrentUser } from '../../api/client';
 import { formatRupees } from '../../theme/money';
-import { colors } from '../../theme/tokens';
+import { colors, radius, size } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/004-company-admin-product-crud';
 
@@ -46,6 +51,10 @@ export function ProductListScreen({ navigation }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  /** Shown in the header, straight from the paginated response's `total`. */
+  const [total, setTotal] = useState<number | undefined>(undefined);
+  /** Client-side only — the products endpoint takes no dietary parameter. */
+  const [dietFilter, setDietFilter] = useState<'all' | 'veg' | 'nonveg'>('all');
   const pageRef = useRef(1);
   const searchRef = useRef('');
 
@@ -63,6 +72,7 @@ export function ProductListScreen({ navigation }: Props) {
       const items = (data.items ?? []).filter((p): p is Product => Boolean(p.id && p.name)) as Product[];
       setProducts((prev) => (append ? [...prev, ...items] : items));
       setHasMore(page * (data.limit ?? PAGE_LIMIT) < (data.total ?? 0));
+      setTotal(data.total ?? undefined);
       pageRef.current = page;
     }
     if (append) setLoadingMore(false);
@@ -77,15 +87,6 @@ export function ProductListScreen({ navigation }: Props) {
   }, []);
 
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: isCompanyAdmin
-        ? () => (
-            <Pressable onPress={() => navigation.navigate('ProductCreateEdit', {})} hitSlop={8}>
-              <Text style={{ color: colors.surface, fontWeight: '700', fontSize: 15 }}>+ Add</Text>
-            </Pressable>
-          )
-        : undefined,
-    });
   }, [navigation, isCompanyAdmin]);
 
   // Debounced — resets to page 1 on every settled search-query change.
@@ -137,79 +138,204 @@ export function ProductListScreen({ navigation }: Props) {
     setBusyId(null);
   }
 
-  return (
-    <Screen title="Products" specRef="UI Design §5.2 / §5.5" scroll={false}>
-      <View className="gap-3 mb-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Search by name"
-          autoCapitalize="none"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+  const visibleProducts =
+    dietFilter === 'all' ? products : products.filter((p) => (dietFilter === 'veg' ? p.is_veg : !p.is_veg));
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
+  return (
+    <Screen
+      surface="admin"
+      title="Products"
+      specRef="UI Design §5.2 / §5.5"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title="Products"
+          count={total !== undefined ? `${total} ${total === 1 ? 'item' : 'items'}` : undefined}
+          onBack={() => {
+            // This screen is reached two ways and back must mean different
+            // things in each:
+            //   Dashboard card -> ProductList   pushed on the Dashboard
+            //     drawer screen's stack, so back should POP.
+            //   Drawer -> Products              a fresh stack mounted at
+            //     ProductList with nothing to pop, so back should switch the
+            //     DRAWER to Dashboard.
+            // Navigating the stack to 'Dashboard' (what this did before) was
+            // wrong for both: it left the Products drawer screen's stack
+            // parked on Dashboard, so tapping Products in the menu again
+            // showed the Dashboard.
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.getParent()?.navigate('Dashboard');
+            }
+          }}
+        >
+          <AdminSearchBar>
+            <TextInput
+              accessibilityLabel="Search products"
+              style={{
+                height: size.field,
+                borderRadius: radius.xl,
+                backgroundColor: colors.surface,
+                paddingLeft: 44,
+                paddingRight: 16,
+                color: colors.espresso,
+              }}
+              className="text-body"
+              placeholder="Search products"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </AdminSearchBar>
+        </AdminPageHeader>
+      }
+    >
+      {/* Veg / Non-veg filtering is client-side over the loaded page — the
+          products endpoint takes no dietary parameter, so this adds no
+          request and changes nothing server-side. */}
+      <View className="flex-row gap-sm pb-sm">
+        {(['all', 'veg', 'nonveg'] as const).map((key) => {
+          const active = dietFilter === key;
+          const label = key === 'all' ? 'All' : key === 'veg' ? 'Veg' : 'Non-veg';
+          return (
+            <Pressable
+              key={key}
+              onPress={() => setDietFilter(key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              style={{
+                height: 40,
+                borderRadius: radius.pill,
+                backgroundColor: active ? colors.espresso : colors.surface,
+                borderWidth: active ? 0 : 1,
+                borderColor: colors.borderChip,
+              }}
+              className="px-md items-center justify-center"
+            >
+              <Text className={active ? 'text-label text-surface' : 'text-label text-text-primary'}>{label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
+
+      {errorMessage ? <Text className="text-body text-red-strong pb-sm">{errorMessage}</Text> : null}
 
       {loading ? (
         <ActivityIndicator />
       ) : (
         <FlatList
           className="flex-1"
-          data={products}
+          contentContainerStyle={{ gap: 10, paddingBottom: 100 }}
+          data={visibleProducts}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <Text className="text-body text-text-secondary text-center mt-8">
-              {searchQuery ? 'No products match your search.' : 'No products yet. Tap + Add to create one.'}
+              {searchQuery || dietFilter !== 'all'
+                ? 'No products match your search.'
+                : 'No products yet. Tap Add product to create one.'}
             </Text>
           }
           onEndReachedThreshold={0.5}
           onEndReached={handleEndReached}
           ListFooterComponent={loadingMore ? <ActivityIndicator className="my-3" /> : null}
           renderItem={({ item: product }) => (
-              <View className="flex-row items-center gap-3 border-b border-border py-2">
+            <View
+              style={{ borderRadius: radius['4xl'], borderWidth: 1, borderColor: colors.borderCard }}
+              className="flex-row items-center gap-sm bg-surface p-sm"
+            >
+              {/* The tinted tile and its glyph are the GROUND, with the photo
+                  layered over it — not an either/or. A product whose
+                  image_url 404s or is still loading previously rendered an
+                  empty 56px hole; now it falls back to the artboard's tile. */}
+              <View
+                style={{ width: 56, height: 56, backgroundColor: productTint(product.id), borderRadius: radius.xl }}
+                className="items-center justify-center overflow-hidden"
+              >
+                <Icon name="cloche" size={26} color={colors.textBody} />
                 {product.image_url ? (
-                  <Image source={{ uri: product.image_url }} className="w-14 h-14 rounded-md" resizeMode="cover" />
-                ) : (
-                  <View className="w-14 h-14 rounded-md bg-background items-center justify-center">
-                    <Text>🍽️</Text>
-                  </View>
-                )}
-                <View className="flex-1">
-                  <Text className="text-body-bold text-text-primary" numberOfLines={1}>
-                    {product.is_veg ? '🟢' : '🔴'} {product.name}
-                  </Text>
-                  <Text className="text-price text-text-primary">{formatRupees(product.price)}</Text>
-                </View>
-                <View className="items-center gap-1">
-                  <Switch
-                    value={!product.is_soldout}
-                    onValueChange={() => handleToggleSoldout(product)}
-                    disabled={busyId === product.id}
+                  <Image
+                    source={{ uri: product.image_url }}
+                    style={{ position: 'absolute', width: 56, height: 56 }}
+                    resizeMode="cover"
                   />
-                  <Text className="text-caption text-text-secondary">
-                    {product.is_soldout ? 'Sold Out' : 'Available'}
-                  </Text>
-                </View>
-                {isCompanyAdmin ? (
-                  <View className="items-end gap-2">
-                    <RowActionButton
-                      variant="edit"
-                      label={`Edit ${product.name}`}
-                      onPress={() => navigation.navigate('ProductCreateEdit', { productId: product.id })}
-                    />
-                    <RowActionButton
-                      variant="delete"
-                      label={`Delete ${product.name}`}
-                      loading={busyId === product.id}
-                      onPress={() => handleRemove(product.id)}
-                    />
-                  </View>
                 ) : null}
               </View>
-            )}
+              <View className="flex-1 gap-glyph">
+                <View className="flex-row items-center gap-xs">
+                  {/* Shape as well as colour (FR-005) — the previous
+                      coloured circles were colour-only. */}
+                  <DietaryMark isVeg={product.is_veg} />
+                  <Text className="flex-1 text-body-bold text-text-primary" numberOfLines={1}>
+                    {product.name}
+                  </Text>
+                </View>
+                <Text className="text-label-lg text-text-body">{formatRupees(product.price)}</Text>
+              </View>
+              {/* FR-019: the sold-out control. State is conveyed by the
+                  switch POSITION and by its label, never colour alone —
+                  staff read this at speed under canteen lighting. */}
+              <SwitchRow
+                compact
+                label={`${product.name} availability`}
+                value={!product.is_soldout}
+                onValueChange={() => handleToggleSoldout(product)}
+                disabled={busyId === product.id}
+                onLabel="Available"
+                offLabel="Sold Out"
+              />
+              {isCompanyAdmin ? (
+                <View className="items-end gap-xs">
+                  <RowActionButton
+                    variant="edit"
+                    label={`Edit ${product.name}`}
+                    onPress={() => navigation.navigate('ProductCreateEdit', { productId: product.id })}
+                  />
+                  {/* The artboard's row carries only Edit. Delete is kept:
+                      dropping it would remove a Company Admin capability
+                      from the UI, which is a functional regression, not a
+                      restyle. */}
+                  <RowActionButton
+                    variant="delete"
+                    label={`Delete ${product.name}`}
+                    loading={busyId === product.id}
+                    onPress={() => handleRemove(product.id)}
+                  />
+                </View>
+              ) : null}
+            </View>
+          )}
         />
       )}
+
+      {/* The artboard replaces the header's "+ Add" text link with a
+          floating brand pill. headerShown is false on this route now, so
+          the old headerRight had nowhere to render anyway. */}
+      {isCompanyAdmin ? (
+        <Pressable
+          onPress={() => navigation.navigate('ProductCreateEdit', {})}
+          accessibilityRole="button"
+          accessibilityLabel="Add product"
+          style={{
+            position: 'absolute',
+            right: 20,
+            bottom: 24,
+            height: 60,
+            borderRadius: radius.pill,
+            backgroundColor: colors.primary,
+            shadowColor: colors.primaryVariant,
+            shadowOpacity: 0.25,
+            shadowRadius: 24,
+            shadowOffset: { width: 0, height: 10 },
+            elevation: 8,
+          }}
+          className="px-lg flex-row items-center gap-xs"
+        >
+          <Icon name="plus" size={20} color={colors.espresso} />
+          <Text className="text-action text-espresso">Add product</Text>
+        </Pressable>
+      ) : null}
     </Screen>
   );
 }

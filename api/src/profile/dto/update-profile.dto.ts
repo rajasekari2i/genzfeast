@@ -1,13 +1,27 @@
-import { IsEmail, IsOptional, IsUUID } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 
 /**
- * Matches contracts/openapi.yaml's ProfileUpdateRequest. Deliberately has no
- * `name`/`username`/`category_id` fields at all — FR-003/FR-005/FR-008 make
- * those permanently read-only, so there's nothing for the DTO to even
- * reject; the global ValidationPipe's `forbidNonWhitelisted` does that job
- * automatically for any such field a client tries to send.
+ * Matches contracts/openapi.yaml's ProfileUpdateRequest.
+ *
+ * `name` IS accepted (every role may correct their own display name).
+ * `username` and `category_id` are still absent entirely — FR-005/FR-008
+ * keep those permanently read-only, so there is nothing for the DTO to even
+ * reject; the global ValidationPipe's `forbidNonWhitelisted` rejects any
+ * such field a client tries to send. Username in particular is the login
+ * identifier and is unique per tenant, so letting a user change it here
+ * would need a uniqueness check and a session story this endpoint does not
+ * have.
+ *
+ * MinLength(1) mirrors UpdateTenantUserDto's own `name` rule, so a user
+ * editing their own name and an admin editing it for them are validated
+ * identically.
  */
 export class UpdateProfileDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  name?: string;
+
   @IsOptional()
   @IsEmail()
   email?: string;

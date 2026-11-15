@@ -1,34 +1,51 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { DrawerActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { createTypedClient, getCurrentUser } from '../../api/client';
-import { colors } from '../../theme/tokens';
+import { IconTile, SectionLabel } from '../../components/AdminList';
+import { Icon } from '../../components/Icon';
+import type { IconName } from '../../components/Icon';
+import { AdminHeader } from '../../components/AdminHeader';
+import { getTenantDisplayName } from '../../config/tenant';
+import { getCurrentUser } from '../../api/client';
+import { colors, radius, typography } from '../../theme/tokens';
+import type { AccentName } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
-import type { paths as ProductPaths } from '../../api/generated/004-company-admin-product-crud';
-import type { paths as CorePaths } from '../../api/generated/001-company-role-user-setup';
 
 type Props = NativeStackScreenProps<TenantAdminStaffStackParamList, 'Dashboard'>;
 
-const productsClient = createTypedClient<ProductPaths>();
-const coreClient = createTypedClient<CorePaths>();
 
-type QuickLinkRoute = 'ProductList' | 'CategoryList' | 'DepartmentList' | 'UserList';
-type CardKey = 'products' | 'categories' | 'departments' | 'users';
+type QuickLinkRoute = 'ProductList' | 'CategoryList' | 'DepartmentList' | 'UserList' | 'FeedbackList';
 
-const CARDS: Record<CardKey, { label: string; icon: string; color: string; route: QuickLinkRoute }> = {
-  products: { label: 'Products', icon: '🍽️', color: colors.primary, route: 'ProductList' },
-  categories: { label: 'Categories', icon: '🎓', color: colors.secondary, route: 'CategoryList' },
-  departments: { label: 'Departments', icon: '🏫', color: colors.accent, route: 'DepartmentList' },
-  users: { label: 'Users', icon: '👥', color: colors.primaryVariant, route: 'UserList' },
-};
+/**
+ * The 2x2 grid, in the artboard's own order. Each entry's accent family is
+ * the one the artboard uses for that tile — blue #E4ECF7/#183153 for Users,
+ * sun #FFF1D6/#8A5300 for Feedback, violet #EDE7FB/#4C2E91 for Categories,
+ * mint #DDF4EA/#0B6B4B for Departments — which the token set already
+ * carries verbatim, so no new colours were needed.
+ */
+const QUICK_LINKS: ReadonlyArray<{
+  label: string;
+  hint: string;
+  icon: IconName;
+  accent: AccentName;
+  route: QuickLinkRoute;
+}> = [
+  { label: 'Users', hint: 'Staff & students', icon: 'users', accent: 'blue', route: 'UserList' },
+  { label: 'Feedback', hint: 'Review & resolve', icon: 'feedback', accent: 'sun', route: 'FeedbackList' },
+  { label: 'Categories', hint: 'Student, staff types', icon: 'categories', accent: 'violet', route: 'CategoryList' },
+  { label: 'Departments', hint: 'Academic depts', icon: 'departments', accent: 'mint', route: 'DepartmentList' },
+];
 
 /**
  * UI Design §5.1 — quick links to Users/Categories/Departments/Products
- * (specs/001, 004), redesigned from a plain stacked-button list into a
- * tappable stat-card grid (this task's own explicit ask for "a good
- * design"), each card showing a live count so the dashboard actually
- * reflects the canteen's data rather than being pure navigation chrome.
+ * (specs/001, 004), laid out exactly as the "Company Admin · Dashboard"
+ * artboard specifies: a brand hero row for Products plus a 2x2 grid of
+ * Users / Feedback / Categories / Departments.
+ * The artboard shows no item counts — each quick link carries a static
+ * descriptive subtitle instead — so the four count queries this screen
+ * used to issue on mount are gone. That is fewer requests, not more.
  * §5.1's own "canteen open/closed toggle" isn't built here — no
  * company_admin-facing endpoint exists yet for a Company Admin to toggle
  * their own Company's is_open (today that's System-Admin-only via
@@ -40,70 +57,91 @@ const CARDS: Record<CardKey, { label: string; icon: string; color: string; route
  */
 export function DashboardScreen({ navigation }: Props) {
   const [adminName, setAdminName] = useState<string | undefined>(undefined);
-  const [counts, setCounts] = useState<Partial<Record<CardKey, number>>>({});
-  const [loadingCounts, setLoadingCounts] = useState(true);
 
   useEffect(() => {
     (async () => {
       const user = await getCurrentUser();
       setAdminName(user?.name);
-
-      try {
-        // limit: 1 on the paginated endpoints — only `total` is needed here,
-        // not the page of items itself.
-        const [products, categories, departments, users] = await Promise.all([
-          productsClient.GET('/tenant/products', { params: { query: { page: 1, limit: 1 } } }),
-          coreClient.GET('/tenant/categories', { params: { query: { page: 1, limit: 1 } } }),
-          coreClient.GET('/tenant/departments', { params: { query: { page: 1, limit: 1 } } }),
-          coreClient.GET('/tenant/users'),
-        ]);
-        setCounts({
-          products: products.data?.total,
-          categories: categories.data?.total,
-          departments: departments.data?.total,
-          users: users.data?.length,
-        });
-      } finally {
-        setLoadingCounts(false);
-      }
     })();
   }, []);
 
   return (
-    <Screen title="Dashboard" subtitle="Company Admin" specRef="UI Design §5.1">
-      <Text className="text-h1 text-text-primary mb-1">
-        {adminName ? `Welcome back, ${adminName.split(' ')[0]}` : 'Dashboard'}
-      </Text>
-      <Text className="text-body text-text-secondary mb-5">Manage your canteen from here.</Text>
+    <Screen
+      surface="admin"
+      title="Dashboard"
+      header={
+        <AdminHeader
+          role="ADMIN"
+          initial={(adminName || 'A').trim().charAt(0).toUpperCase()}
+          onOpenMenu={() => navigation.dispatch(DrawerActions.openDrawer())}
+        >
+          <Text style={{ ...typography.label, color: colors.navyMuted }}>
+            {[getTenantDisplayName(), 'Company Admin'].filter(Boolean).join(' \u00B7 ')}
+          </Text>
+          <Text style={{ ...typography.displaySm, color: colors.surface }}>
+            {adminName ? `Morning, ${adminName.split(' ')[0]}.` : 'Dashboard'}
+            {'\n'}What's on the menu?
+          </Text>
+        </AdminHeader>
+      }
+    >
+      <View className="gap-md">
+        <SectionLabel>Manage</SectionLabel>
 
-      <View className="flex-row flex-wrap justify-between gap-y-3">
-        {(Object.keys(CARDS) as CardKey[]).map((key) => {
-          const card = CARDS[key];
-          const count = counts[key];
-          return (
+        {/* Transcribed from the "Company Admin · Dashboard" artboard in
+            docs/ui-screen/GenzFeast-Admin-and-Staff.html: a full-width brand
+            row for Products (radius 26, 52px espresso tile, sun cloche
+            glyph, trailing chevron), then a 2x2 grid in the artboard's own
+            order — Users, Feedback, Categories, Departments — each on white
+            with a 1px hairline, a 44px tile in its accent family, and a
+            static descriptive subtitle.
+
+            The artboard carries no item counts, so the per-entity count
+            fetch this screen used to run is gone with them; Feedback is now
+            present, which it was not before. */}
+        <Pressable
+          onPress={() => navigation.navigate('ProductList')}
+          accessibilityRole="button"
+          accessibilityLabel="Products"
+          style={{ backgroundColor: colors.primary, borderRadius: radius.card }}
+          className="flex-row items-center gap-md p-md active:opacity-80"
+        >
+          <View
+            style={{ borderRadius: radius['2xl'] }}
+            className="w-control h-control bg-espresso items-center justify-center"
+          >
+            <Icon name="cloche" size={26} color={colors.accent} />
+          </View>
+          <View className="flex-1 gap-glyph">
+            <Text className="text-title-md text-espresso">Products</Text>
+            <Text className="text-label text-espresso">Menu, prices, photos, sold-out</Text>
+          </View>
+          <Icon name="chevronRight" size={22} color={colors.espresso} />
+        </Pressable>
+
+        <View className="flex-row flex-wrap justify-between gap-y-sm">
+          {QUICK_LINKS.map((card) => (
             <Pressable
-              key={key}
+              key={card.label}
               onPress={() => navigation.navigate(card.route)}
-              className="bg-surface rounded-lg p-4 border border-border active:opacity-80"
-              style={{ width: '48%' }}
+              accessibilityRole="button"
+              accessibilityLabel={card.label}
+              style={{
+                width: '48%',
+                borderRadius: radius['5xl'],
+                borderWidth: 1,
+                borderColor: colors.borderCard,
+              }}
+              className="bg-surface p-sm gap-lg active:opacity-80"
             >
-              <View
-                className="w-12 h-12 rounded-full items-center justify-center mb-3"
-                style={{ backgroundColor: `${card.color}1F` }}
-              >
-                <Text style={{ fontSize: 22 }}>{card.icon}</Text>
+              <IconTile icon={card.icon} accent={card.accent} size="md" />
+              <View className="gap-glyph">
+                <Text className="text-price text-text-primary">{card.label}</Text>
+                <Text className="text-caption text-text-secondary">{card.hint}</Text>
               </View>
-              <Text className="text-body-bold text-text-primary">{card.label}</Text>
-              {loadingCounts ? (
-                <ActivityIndicator size="small" style={{ alignSelf: 'flex-start', marginTop: 6 }} />
-              ) : (
-                <Text className="text-caption text-text-secondary mt-1">
-                  {count !== undefined ? `${count} ${count === 1 ? 'item' : 'items'}` : 'Manage'}
-                </Text>
-              )}
             </Pressable>
-          );
-        })}
+          ))}
+        </View>
       </View>
     </Screen>
   );

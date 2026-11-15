@@ -18,7 +18,14 @@ const Stack = createNativeStackNavigator<ContactUsStackParamList>();
 export function ContactUsNavigator() {
   return (
     <Stack.Navigator initialRouteName="ContactUs" screenOptions={primaryHeaderOptions}>
-      <Stack.Screen name="ContactUs" component={ContactUsScreen} options={{ title: '' }} />
+      {/* headerShown: false — the screen renders the artboard's own header
+          row (back control + Bricolage title), so leaving this on stacks
+          a second cream bar above it. */}
+      <Stack.Screen
+        name="ContactUs"
+        component={ContactUsScreen}
+        options={{ title: '', headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }

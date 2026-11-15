@@ -38,7 +38,15 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [Companies]
-      summary: Create a company (System Admin only). Roles are global and seeded once platform-wide, not per-company.
+      summary: >
+        Create a company AND its first Company Admin (System Admin only).
+        The admin is derived from the company's own contact details —
+        contact_person as the name, mobile as the username, email as the
+        email — and its password is GENERATED, returned once as
+        `admin.temporary_password`, and never retrievable again. Both rows
+        are written in one transaction, so a company is never left with no
+        way to log into it. Roles are global and seeded once platform-wide,
+        not per-company.
       requestBody:
         required: true
         content:
@@ -692,6 +700,21 @@ components:
       description: Username already exists within the target company
 
   schemas:
+    ProvisionedAdmin:
+      type: object
+      description: >
+        The auto-provisioned Company Admin. Returned ONLY by
+        POST /admin/companies, never by GET or PATCH. `temporary_password` is
+        the sole moment the plaintext exists outside the database — it is
+        hashed on write and cannot be recovered, so a System Admin who loses
+        it must reset the account rather than look it up.
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        username: { type: string }
+        email: { type: string, format: email }
+        temporary_password: { type: string }
+
     Company:
       type: object
       properties:
@@ -718,6 +741,8 @@ components:
             (GET /me/contact-us). Null until a System Admin sets it.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        admin:
+          $ref: "#/components/schemas/ProvisionedAdmin"
 
     CompanyCreateRequest:
       type: object

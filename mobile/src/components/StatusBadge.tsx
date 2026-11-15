@@ -1,23 +1,32 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { statusColors, OrderStatus } from '../theme/statusColors';
+import { resolveStatus } from '../theme/statusColors';
 
-// Order-status indicator — specs/013-blue-theme-visual-design FR-002/FR-003.
-// Reused identically across Student My Orders/Order Detail, Staff Incoming
-// Orders, and any admin order view.
-//
-// Deliberately a colored DOT + a dark, always-legible text label, rather
-// than a solid-colored pill with white text — this sidesteps needing a
-// separate per-status contrast check for arbitrary status colors (e.g.
-// status-pending's amber would not reliably pass AA with a white label),
-// while still conveying status via color AND text, never color alone.
-export function StatusBadge({ status }: { status: OrderStatus }) {
-  const { color, label } = statusColors[status];
+/**
+ * Order-status indicator — specs/017-ui-refresh FR-004.
+ *
+ * A soft-tinted pill carrying a 7px dot AND its text label. Status is never
+ * conveyed by colour alone. Each status draws its {soft, strong, dot} from
+ * the shared accent families, so a badge can never drift from an icon tile
+ * or product tint of the same family (research R4).
+ *
+ * Accepts any string: a status outside the four designed values renders in
+ * the neutral family with its raw value as the label rather than a blank
+ * badge (contract G6). The order lifecycle defines `cancelled`, which no
+ * code path currently sets.
+ */
+export function StatusBadge({ status }: { status: string }) {
+  const { soft, strong, dot, label } = resolveStatus(status);
 
   return (
-    <View className="flex-row items-center bg-surface border border-border rounded-pill px-3 py-1 self-start">
-      <View style={{ backgroundColor: color }} className="w-2 h-2 rounded-full mr-2" />
-      <Text className="text-caption font-semibold text-text-primary">{label}</Text>
+    <View
+      style={{ backgroundColor: soft }}
+      className="flex-row items-center rounded-pill px-sm py-xs self-start"
+    >
+      <View style={{ backgroundColor: dot }} className="w-sm h-sm rounded-pill mr-xs" />
+      <Text style={{ color: strong }} className="text-eyebrow">
+        {label}
+      </Text>
     </View>
   );
 }

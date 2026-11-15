@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { DrawerActions } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { Icon } from '../../components/Icon';
 import { EmptyState } from '../../components/EmptyState';
 import { StatusBadge } from '../../components/StatusBadge';
-import { CategoryChip } from '../../components/CategoryChip';
 import { createTypedClient } from '../../api/client';
 import { formatRupees } from '../../theme/money';
+import { colors, radius } from '../../theme/tokens';
 import type { OrderStatus } from '../../theme/statusColors';
 import type { StudentStackParamList } from '../../navigation/StudentNavigator';
 import type { paths } from '../../api/generated/008-my-orders-history-upcoming';
@@ -24,6 +26,20 @@ type OrdersView = 'upcoming' | 'history';
  * research.md §1: one endpoint filtered by a query param, not two routes).
  * Both views sort most-recently-placed-first, already the server's default.
  */
+/** Compact order time — "Today, 1:43 PM" / "10 Nov, 1:43 PM", never a full
+ * locale string with seconds and a 4-digit year (which overflowed the card
+ * header and shoved the status badge off-screen). */
+function formatOrderTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const today = new Date();
+  if (d.toDateString() === today.toDateString()) return `Today, ${time}`;
+  const yest = new Date(today.getTime() - 86_400_000);
+  if (d.toDateString() === yest.toDateString()) return `Yesterday, ${time}`;
+  return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}, ${time}`;
+}
+
 export function MyOrdersScreen({ navigation }: Props) {
   const [view, setView] = useState<OrdersView>('upcoming');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -44,41 +60,118 @@ export function MyOrdersScreen({ navigation }: Props) {
   }, [navigation, load, view]);
 
   return (
-    <Screen title="My Orders" specRef="UI Design §4.13">
-      <View className="flex-row mb-3">
-        <CategoryChip label="Upcoming" selected={view === 'upcoming'} onPress={() => setView('upcoming')} />
-        <CategoryChip label="History" selected={view === 'history'} onPress={() => setView('history')} />
-      </View>
-
-      {loading ? (
-        <ActivityIndicator />
-      ) : orders.length === 0 ? (
-        <EmptyState
-          icon="🧾"
-          title={view === 'upcoming' ? 'No upcoming orders' : 'No past orders'}
-          subtitle={
-            view === 'upcoming'
-              ? "Orders you're waiting on will show up here."
-              : 'Delivered and failed-payment orders will show up here.'
-          }
-        />
-      ) : (
-        orders.map((order) => (
+    <Screen title="My Orders" scroll={false}>
+      <View className="flex-1 gap-md">
+        <View className="flex-row items-center gap-sm">
           <Pressable
-            key={order.id}
-            onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.getParent()?.dispatch(DrawerActions.openDrawer()))}
             accessibilityRole="button"
-            className="bg-surface border border-border rounded-md p-4 mb-3 active:opacity-80"
+            accessibilityLabel="Back"
+            style={{ borderWidth: 1, borderColor: colors.borderSoft }}
+            className="w-touch h-touch rounded-pill bg-surface items-center justify-center"
           >
-            <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-h2 text-text-primary">{order.id.slice(0, 8).toUpperCase()}</Text>
-              <StatusBadge status={order.status} />
-            </View>
-            <Text className="text-caption text-text-secondary">{new Date(order.placed_at).toLocaleString()}</Text>
-            <Text className="text-price text-text-primary mt-1">{formatRupees(order.total_amount)}</Text>
+            <Icon name="chevronLeft" size={20} color={colors.espresso} />
           </Pressable>
-        ))
-      )}
+          <Text className="flex-1 text-title text-text-primary">My orders</Text>
+        </View>
+
+        {/* Segmented control — the artboard's pill-in-a-trough, not two
+            loose chips. The count sits on the active tab. */}
+        <View style={{ backgroundColor: colors.borderSoft }} className="flex-row rounded-pill p-xs">
+          {(['upcoming', 'history'] as const).map((tab) => {
+            const active = view === tab;
+            return (
+              <Pressable
+                key={tab}
+                onPress={() => setView(tab)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                style={{ backgroundColor: active ? colors.espresso : 'transparent' }}
+                className="flex-1 h-touch rounded-pill items-center justify-center"
+              >
+                <Text className={active ? 'text-body-bold text-surface' : 'text-body text-text-body'}>
+                  {tab === 'upcoming' ? 'Upcoming' : 'History'}
+                  {active && orders.length > 0 ? ` · ${orders.length}` : ''}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {loading ? (
+          <ActivityIndicator />
+        ) : orders.length === 0 ? (
+          <EmptyState
+            icon="🧾"
+            title={view === 'upcoming' ? 'No upcoming orders' : 'No past orders'}
+            subtitle={
+              view === 'upcoming'
+                ? "Orders you're waiting on will show up here."
+                : 'Delivered and failed-payment orders will show up here.'
+            }
+          />
+        ) : (
+          <View className="gap-sm">
+            {orders.map((order) => {
+              // A placed order is the one the diner is actively waiting on,
+              // so the artboard gives it the dark treatment and leaves the
+              // rest on white.
+              const awaiting = order.status === 'order_placed';
+              const resumable = order.status === 'payment_pending' || order.status === 'payment_failed';
+              return (
+                <Pressable
+                  key={order.id}
+                  onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
+                  accessibilityRole="button"
+                  style={{
+                    backgroundColor: awaiting ? colors.espresso : colors.surface,
+                    borderRadius: radius['5xl'],
+                    borderWidth: awaiting ? 0 : 1,
+                    borderColor: colors.border,
+                  }}
+                  className="p-md gap-sm active:opacity-80"
+                >
+                  <View className="flex-row items-center gap-sm">
+                    {/* flex-1 + ellipsis so a long reference/time never pushes
+                        the status badge off the right edge; the badge keeps its
+                        natural width. */}
+                    <Text
+                      className={`flex-1 text-label ${awaiting ? 'text-text-on-dark' : 'text-text-body'}`}
+                      numberOfLines={1}
+                    >
+                      #{order.id.slice(0, 8).toUpperCase()} · {formatOrderTime(order.placed_at)}
+                    </Text>
+                    <StatusBadge status={order.status} />
+                  </View>
+
+                  <View className="flex-row items-center justify-between">
+                    <Text className={`text-subtitle ${awaiting ? 'text-surface' : 'text-text-primary'}`}>
+                      {formatRupees(order.total_amount)}
+                    </Text>
+                    {resumable ? <Text className="text-body-bold text-link">Resume payment →</Text> : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
+        {/* The artboard shows each card's item list and, for a placed order,
+            the pickup code inline. GET /student/orders returns only
+            {id, status, total_amount, placed_at} — items and otp are on the
+            DETAIL endpoint. Rendering them here would mean one extra request
+            per row, which FR-032 forbids, so the card stops at the total and
+            the detail screen carries the rest. */}
+        {!loading && orders.length > 0 && view === 'upcoming' ? (
+          <View
+            style={{ borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.borderDashed }}
+            className="items-center gap-xs p-md rounded-5xl"
+          >
+            <Text className="text-label-lg text-text-body">Delivered and failed orders live in History</Text>
+            <Text className="text-caption text-text-secondary">Most recent first</Text>
+          </View>
+        ) : null}
+      </View>
     </Screen>
   );
 }

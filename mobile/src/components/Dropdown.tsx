@@ -45,7 +45,7 @@ export function Dropdown<T extends string>({
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable className="flex-1 bg-black/40 justify-center px-8" onPress={() => setOpen(false)}>
+        <Pressable className="flex-1 bg-scrim justify-center px-lg" onPress={() => setOpen(false)}>
           <View className="bg-surface rounded-lg overflow-hidden">
             {options.map((option, index) => (
               <Pressable

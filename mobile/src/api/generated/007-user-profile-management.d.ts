@@ -37,7 +37,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Update the caller's own Email (all roles) and Department (Student only). All-or-nothing (FR-007) — Name, Username, Category are never accepted here regardless of role. */
+        /** Update the caller's own Name and Email (all roles) and Department (Student only). All-or-nothing (FR-007) — Username and Category are never accepted here regardless of role. */
         patch: {
             parameters: {
                 query?: never;
@@ -146,6 +146,8 @@ export interface components {
         };
         /** @description Any subset of these fields; department is rejected for non-Student roles */
         ProfileUpdateRequest: {
+            /** @description The caller's own display name. Accepted for every role. Username and Category remain read-only and are rejected outright. */
+            name?: string;
             /** Format: email */
             email?: string;
             /**

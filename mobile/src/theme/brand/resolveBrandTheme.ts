@@ -69,20 +69,25 @@ export function resolveBrandTheme(
     return { tokens: defaultTokens, rejectedOverride: false };
   }
 
-  // colors.primary is used two ways (contracts/design-tokens.md): as a
-  // foreground (links, active nav/tab, directly on the screen's light
-  // background/surface), and as a button fill with a white label on top
-  // (PrimaryButton). Both usages must independently clear WCAG AA.
-  const legibleAsForeground = meetsAAContrast(config.accentColor, [
-    defaultColors.background,
-    defaultColors.surface,
-  ]);
-  const legibleAsButtonFill = meetsAAContrast('#FFFFFF', [config.accentColor]);
-  const accentPasses = legibleAsForeground && legibleAsButtonFill;
+  // FR-010 / research R8: the gate checks EXACTLY ONE pairing — espresso
+  // text on the brand fill.
+  //
+  // The previous revision also required the brand to be legible AS a
+  // foreground on the ground/surface. Those two constraints are
+  // mathematically incompatible: carrying espresso text needs
+  // L(brand) >= 0.2403, reading on cream needs L(brand) <= 0.1717, so the
+  // feasible set is EMPTY — no colour in sRGB would pass, and every tenant
+  // override would silently fall back to the default while the gate's own
+  // test still passed.
+  //
+  // Dropping the foreground leg is safe because the redesign never uses the
+  // brand colour as text: links use colors.link (#B23C0E, 5.63:1 on cream)
+  // and controls use espresso. The brand appears only as a FILL.
+  const accentPasses = meetsAAContrast(defaultColors.espresso, [config.accentColor]);
 
   if (!accentPasses) {
     onWarn(
-      `resolveBrandTheme: accentColor "${config.accentColor}" for company ${config.companyId} fails WCAG 2.1 AA contrast — falling back to the default primary color (${defaultColors.primary}). Logo/app name overrides still applied.`,
+      `resolveBrandTheme: accentColor "${config.accentColor}" for company ${config.companyId} fails WCAG 2.1 AA contrast — falling back to the default brand colour (${defaultColors.primary}). Logo/app name overrides still applied.`,
     );
     return {
       tokens: defaultTokens,

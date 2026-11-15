@@ -1,11 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { RowActionButton } from '../../components/RowActionButton';
+import { StatusBadge } from '../../components/StatusBadge';
+import { SectionLabel } from '../../components/AdminList';
+import { AdminFab, AdminPageHeader, AdminSearchBar } from '../../components/AdminPageHeader';
+import { avatarTint } from '../../theme/accents';
 import { createTypedClient } from '../../api/client';
-import { colors } from '../../theme/tokens';
+import { colors, radius, size } from '../../theme/tokens';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/001-company-role-user-setup';
 
@@ -50,15 +54,6 @@ export function UserListScreen({ navigation }: Props) {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable onPress={() => navigation.navigate('UserCreateEdit', {})} hitSlop={8}>
-          <Text style={{ color: colors.surface, fontWeight: '700', fontSize: 15 }}>+ Add</Text>
-        </Pressable>
-      ),
-    });
-  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -96,39 +91,93 @@ export function UserListScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen title="Users" specRef="UI Design §5.4">
-      <View className="gap-3">
-        <TextInput
-          className="border border-border rounded-lg px-3 py-2 text-text-primary"
-          placeholder="Search by name or username"
-          autoCapitalize="none"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+    <Screen
+      surface="admin"
+      title="Users"
+      specRef="UI Design §5.4"
+      scroll={false}
+      header={
+        <AdminPageHeader
+          title="Users"
+          subtitle="Staff, students and campus users"
+          onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.getParent()?.navigate('Dashboard'))}
+        >
+          <AdminSearchBar>
+            <TextInput
+              accessibilityLabel="Search by name or username"
+              style={{
+                height: size.field,
+                borderRadius: radius.xl,
+                backgroundColor: colors.surface,
+                paddingLeft: 44,
+                paddingRight: 16,
+                color: colors.espresso,
+              }}
+              className="text-body"
+              placeholder="Search by name or username"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </AdminSearchBar>
+        </AdminPageHeader>
+      }
+    >
+      {errorMessage ? <Text className="text-body text-red-strong pb-sm">{errorMessage}</Text> : null}
 
-        {errorMessage ? <Text className="text-body text-red-600">{errorMessage}</Text> : null}
-
-        {loading ? (
-          <ActivityIndicator />
-        ) : filteredUsers.length === 0 ? (
-          <Text className="text-body text-text-secondary text-center mt-8">
-            {users.length === 0 ? 'No users yet. Tap + Add to create one.' : 'No users match your search.'}
-          </Text>
-        ) : (
-          filteredUsers.map((user) => (
-            <View key={user.id} className="border border-border rounded-lg p-4 bg-surface">
-              <View className="flex-row items-start justify-between gap-2">
-                <Text className="text-body-bold text-text-primary flex-1" numberOfLines={1}>
-                  {user.name}
-                </Text>
-                <View className={`rounded-pill px-2 py-0.5 ${user.status === 'active' ? 'bg-secondary' : 'bg-border'}`}>
-                  <Text className="text-caption text-surface">{user.status}</Text>
+      {loading ? (
+        <ActivityIndicator />
+      ) : (
+        <FlatList
+          className="flex-1"
+          contentContainerStyle={{ gap: 10, paddingBottom: 110 }}
+          data={filteredUsers}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            filteredUsers.length > 0 ? <SectionLabel>{`${filteredUsers.length} users`}</SectionLabel> : null
+          }
+          ListEmptyComponent={
+            <Text className="text-body text-text-secondary text-center mt-8">
+              {users.length === 0 ? 'No users yet. Tap Add user to create one.' : 'No users match your search.'}
+            </Text>
+          }
+          renderItem={({ item: user }) => {
+            const avatar = avatarTint(user.id);
+            return (
+              /* One row, per the artboard: circular initial avatar, then name
+                 + status pill над username · role, then edit and delete. The
+                 actions used to sit on a second line below the row. */
+              <View
+                style={{ borderRadius: radius['3xl'], borderWidth: 1, borderColor: colors.borderCard }}
+                className="flex-row items-center gap-sm bg-surface p-sm"
+              >
+                <View
+                  style={{
+                    width: size.touch,
+                    height: size.touch,
+                    borderRadius: size.touch / 2,
+                    backgroundColor: avatar.backgroundColor,
+                  }}
+                  className="items-center justify-center"
+                >
+                  <Text style={{ color: avatar.color }} className="text-subtitle-sm">
+                    {user.name.trim().charAt(0).toUpperCase()}
+                  </Text>
                 </View>
-              </View>
-              <Text className="text-body text-text-secondary mt-1">
-                {user.username} · {user.role}
-              </Text>
-              <View className="flex-row justify-end gap-2 mt-2">
+
+                <View className="flex-1 gap-glyph">
+                  <View className="flex-row items-center gap-xs">
+                    <Text className="flex-1 text-body-bold text-text-primary" numberOfLines={1}>
+                      {user.name}
+                    </Text>
+                    <StatusBadge status={user.status === 'active' ? 'active' : 'inactive'} />
+                  </View>
+                  <Text className="text-caption text-text-secondary" numberOfLines={1}>
+                    {user.username} · {user.role}
+                  </Text>
+                </View>
+
                 <RowActionButton
                   variant="edit"
                   label={`Edit ${user.name}`}
@@ -141,10 +190,12 @@ export function UserListScreen({ navigation }: Props) {
                   onPress={() => confirmDelete(user)}
                 />
               </View>
-            </View>
-          ))
-        )}
-      </View>
+            );
+          }}
+        />
+      )}
+
+      <AdminFab label="Add user" onPress={() => navigation.navigate('UserCreateEdit', {})} />
     </Screen>
   );
 }
