@@ -146,6 +146,11 @@ const typography = {
   heroLg: { fontFamily: DISPLAY, fontSize: 48, lineHeight: 46, letterSpacing: -2 },
   hero: { fontFamily: DISPLAY, fontSize: 40, lineHeight: 41, letterSpacing: -1.5 },
   display: { fontFamily: DISPLAY, fontSize: 34, lineHeight: 38, letterSpacing: -1 },
+  // The pickup-OTP digit on the 'Order placed + pickup OTP' artboard —
+  // Bricolage 800 at 36px inside a 64px cell. Tracking is 0, unlike the
+  // rest of the display family: each cell holds ONE glyph, so negative
+  // tracking only shifts it off-centre inside its own box.
+  displayMd: { fontFamily: DISPLAY, fontSize: 36, lineHeight: 40, letterSpacing: 0 },
   // The admin greeting headline - 32px/34/-1 on the Company Admin -
   // Dashboard artboard, between `display` (34) and `title` (28).
   // The canteen name on Contact us - Bricolage 800 at 30/32/-1.
@@ -209,7 +214,16 @@ const legacyTypographyAliases = {
 };
 
 /** @type {Record<string, number>} */
-const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+// `cell` (6) is semantic, not a scale step — the gap between the segmented
+// cells of a code display (the pickup OTP row on 'Order placed + pickup
+// OTP'), which the canvas draws at 6, between xs (4) and sm (8). Named by
+// role so the 4/8/16/24/32 scale stays evenly spaced, the same way
+// `radius.card` (26) is named.
+//
+// NOTE: this map and `size` below are merged into ONE Tailwind spacing
+// scale, with `size` applied second — a key added here must not collide
+// with a key there, or it is silently overwritten.
+const spacing = { xs: 4, cell: 6, sm: 8, md: 16, lg: 24, xl: 32 };
 
 /**
  * Control heights (FR-015, FR-016). Named rather than written inline so a

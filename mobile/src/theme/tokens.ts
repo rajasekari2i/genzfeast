@@ -117,14 +117,14 @@ export interface TypographyStyle {
 }
 
 export type TypographyName =
-  | 'heroLg' | 'hero' | 'display' | 'displaySm' | 'displayXs' | 'wordmark' | 'wordmarkSm'
+  | 'heroLg' | 'hero' | 'display' | 'displayMd' | 'displaySm' | 'displayXs' | 'wordmark' | 'wordmarkSm'
   | 'title' | 'titleSm'
   | 'titleMd' | 'subtitle' | 'subtitleSm'
   | 'price' | 'bodyLg' | 'body' | 'bodyBold'
   | 'action' | 'bodySemi' | 'labelBold' | 'labelLg' | 'label' | 'tag' | 'micro'
   | 'eyebrow' | 'caption' | 'captionSm';
 
-export type SpacingName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type SpacingName = 'xs' | 'cell' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Control heights. `touch` (44) is the accessibility floor — FR-015. */
 export type SizeName = 'tile' | 'touch' | 'field' | 'control';
