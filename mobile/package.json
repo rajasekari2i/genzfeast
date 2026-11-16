@@ -45,6 +45,9 @@
   "scripts": {
     "android": "react-native run-android",
     "api:generate": "bash scripts/generate-api-types.sh",
+    "build:android:bundle": "cd android && ENVFILE=.env.production ./gradlew bundleRelease",
+    "build:android:release": "cd android && ENVFILE=.env.production ./gradlew assembleRelease",
+    "clean:android": "cd android && ./gradlew clean",
     "fonts:link": "react-native-asset",
     "fonts:verify": "node scripts/verify-fonts.js",
     "ios": "react-native run-ios",
