@@ -27,7 +27,7 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ToggleSoldoutDto } from './dto/toggle-soldout.dto';
-import type { ProductResponse } from './products.mapper';
+import type { ProductListItemResponse, ProductResponse } from './products.mapper';
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png'];
@@ -44,7 +44,7 @@ export class ProductsController {
   list(
     @CurrentTenantContext() ctx: TenantContext,
     @Query() query: PaginationQueryDto,
-  ): Promise<PaginatedResult<ProductResponse>> {
+  ): Promise<PaginatedResult<ProductListItemResponse>> {
     return this.productsService.list(ctx, query);
   }
 

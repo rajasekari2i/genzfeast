@@ -314,9 +314,16 @@ export interface components {
             /** @description Not in this endpoint's original scope — the mobile Create/Edit form now shows this toggle directly, in addition to the dedicated PATCH .../soldout endpoint. */
             is_soldout?: boolean;
         };
+        ProductListItem: components["schemas"]["Product"] & {
+            /**
+             * @description Units of this product consumed by today's orders — SUM of the quantity across every order_placed/delivered order placed since midnight Asia/Kolkata. Shown beside the sold-out toggle so the canteen can see how much of a fixed daily batch is gone. Excludes payment_pending/payment_failed orders. List view only: the single-product responses do not compute it.
+             * @example 47
+             */
+            ordered_today?: number;
+        };
         /** @description Server-side pagination (10 per page) — the mobile list screen fetches the next page on scroll. */
         PaginatedProductsResponse: {
-            items?: components["schemas"]["Product"][];
+            items?: components["schemas"]["ProductListItem"][];
             page?: number;
             limit?: number;
             total?: number;
