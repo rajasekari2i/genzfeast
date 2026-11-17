@@ -13,6 +13,14 @@ const config = getDefaultConfig(__dirname);
 // Not using metro-config's own exclusionList helper: its subpath is not
 // listed in that package's `exports` in this version, so requiring it
 // throws ERR_PACKAGE_PATH_NOT_EXPORTED.
-config.resolver.blockList = /\/node_modules\/[^/]+\/android\/build\/.*/;
+//
+// Matched against the directory path itself (metro-file-map filters the
+// crawl with `filterDir`), so the `(\/|$)` tail is load-bearing: without
+// it the `build` directory is still watched, only its children are
+// skipped. Deliberately not anchored to `node_modules/<pkg>/` — a
+// `[^/]+` package segment never matches a SCOPED package
+// (`@react-native-clipboard/clipboard` contains a slash), which let that
+// package's intermediates through and blew the watcher limit anyway.
+config.resolver.blockList = /\/android\/(build|\.gradle|\.cxx)(\/|$)/;
 
 module.exports = withNativeWind(config, { input: './global.css' });
