@@ -78,11 +78,6 @@ export function CartScreen({ navigation }: Props) {
       const configId = getRazorpayConfigId();
 
       if (gatewayRef && keyId) {
-        // TEMP DIAGNOSTIC — remove with the catch-block log below.
-        console.log('[RZP] opening checkout:', JSON.stringify({
-          key: keyId, amount: data.total_amount ?? totalInPaise,
-          order_id: gatewayRef, config_id: configId, cart_total: totalInPaise,
-        }));
         try {
           await RazorpayCheckout.open({
             key: keyId,
@@ -106,13 +101,10 @@ export function CartScreen({ navigation }: Props) {
             },
             ...(configId ? { config_id: configId } : {}),
           });
-        } catch (e) {
+        } catch {
           // User cancelled or the SDK reported a failure — irrelevant to
           // what actually happened at the gateway (FR-011): the order's
           // real status only ever comes from the backend webhook.
-          // TEMP DIAGNOSTIC: surface the SDK's own error, which this empty
-          // catch was discarding — remove once the checkout failure is fixed.
-          console.log('[RZP] cart checkout failed:', JSON.stringify(e));
         }
       } else {
         Alert.alert('Payment not configured', 'Razorpay is not set up on this build yet. Showing your order as-is.');

@@ -3,12 +3,12 @@ import { Pressable, Text, View } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { colors, radius, size } from '../theme/tokens';
 import { Icon } from './Icon';
-import { tile } from '../theme/accents';
 
 /**
  * The paid order's pickup code — the hero of section 08 ("Order placed +
- * pickup OTP"). An espresso card with a header row (label + Copy), six SUN
- * cells at display size, and a footer note.
+ * pickup OTP"). An espresso card with a header row (label + Copy), six
+ * ACCENT (#FFC857) cells — 64 high, 6 apart, one 36px display glyph each —
+ * and a footer note.
  *
  * Read-only by design. The code is stored in plaintext precisely so the diner
  * can re-read it until pickup, and it is NEVER rendered on a staff screen —
@@ -24,7 +24,6 @@ export function OtpDisplay({
   footer?: string;
 }) {
   const digits = code.split('');
-  const sun = tile('sun');
 
   return (
     <View style={{ backgroundColor: colors.espresso, borderRadius: radius['6xl'] }} className="p-md gap-sm">
@@ -42,14 +41,14 @@ export function OtpDisplay({
         </Pressable>
       </View>
 
-      <View className="flex-row gap-glyph" accessibilityLabel={`Pickup code ${digits.join(' ')}`}>
+      <View className="flex-row gap-cell" accessibilityLabel={`Pickup code ${digits.join(' ')}`}>
         {digits.map((d, i) => (
           <View
             key={`${d}-${i}`}
-            style={{ height: 64, borderRadius: radius.lg, backgroundColor: sun.backgroundColor }}
+            style={{ height: 64, borderRadius: radius.lg, backgroundColor: colors.accent }}
             className="flex-1 items-center justify-center"
           >
-            <Text className="text-hero-lg text-espresso">{d}</Text>
+            <Text className="text-display-md text-espresso">{d}</Text>
           </View>
         ))}
       </View>

@@ -55,8 +55,11 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files — every concrete env file is per-machine or
+# per-environment and carries real keys; only the template is tracked.
 .env*.local
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo

@@ -28,6 +28,8 @@ type Product = {
   is_veg: boolean;
   is_soldout: boolean;
   image_url: string | null;
+  /** Units consumed by today's orders — see the row's "ordered today" line. */
+  ordered_today: number;
 };
 
 /**
@@ -49,6 +51,12 @@ export function ProductListScreen({ navigation }: Props) {
   const [hasMore, setHasMore] = useState(false);
   const [isCompanyAdmin, setIsCompanyAdmin] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /**
+   * Separate from `loading` on purpose: a manual refresh must leave the list
+   * on screen (the whole point is comparing the counts before and after), so
+   * it spins the header control instead of swapping the list for a spinner.
+   */
+  const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   /** Shown in the header, straight from the paginated response's `total`. */
@@ -58,9 +66,9 @@ export function ProductListScreen({ navigation }: Props) {
   const pageRef = useRef(1);
   const searchRef = useRef('');
 
-  const loadPage = useCallback(async (page: number, search: string, append: boolean) => {
+  const loadPage = useCallback(async (page: number, search: string, append: boolean, silent = false) => {
     if (append) setLoadingMore(true);
-    else setLoading(true);
+    else if (!silent) setLoading(true);
     setErrorMessage(null);
 
     const { data, error } = await client.GET('/tenant/products', {
@@ -69,15 +77,32 @@ export function ProductListScreen({ navigation }: Props) {
     if (error) {
       setErrorMessage((error as { message?: string })?.message ?? 'Could not load products.');
     } else if (data) {
-      const items = (data.items ?? []).filter((p): p is Product => Boolean(p.id && p.name)) as Product[];
+      // `ordered_today` is optional on the wire (the contract marks it so),
+      // but the row always renders a number — an older API that does not
+      // send it reads as 0 rather than blanking the line.
+      const items = (data.items ?? [])
+        .filter((p) => Boolean(p.id && p.name))
+        .map((p) => ({ ...p, ordered_today: p.ordered_today ?? 0 })) as Product[];
       setProducts((prev) => (append ? [...prev, ...items] : items));
       setHasMore(page * (data.limit ?? PAGE_LIMIT) < (data.total ?? 0));
       setTotal(data.total ?? undefined);
       pageRef.current = page;
     }
     if (append) setLoadingMore(false);
-    else setLoading(false);
+    else if (!silent) setLoading(false);
   }, []);
+
+  /**
+   * The header's refresh control. Today's counts move while this screen is
+   * open — an order placed a minute ago is exactly what the person watching
+   * a 50-biryani batch needs to see — and re-entering the screen just to
+   * re-trigger the focus fetch is a silly way to ask for that.
+   */
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadPage(1, searchRef.current, false, true);
+    setRefreshing(false);
+  }, [loadPage]);
 
   useEffect(() => {
     (async () => {
@@ -169,6 +194,31 @@ export function ProductListScreen({ navigation }: Props) {
               navigation.getParent()?.navigate('Dashboard');
             }
           }}
+          /* Same 44px navyTint control the Staff · Incoming orders header
+             carries, in AdminPageHeader's existing `action` slot — the
+             counts below move during service, so there has to be a way to
+             re-read them without leaving and re-entering the screen. */
+          action={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Refresh products and today's counts"
+              onPress={() => void handleRefresh()}
+              disabled={refreshing}
+              style={{
+                width: size.touch,
+                height: size.touch,
+                borderRadius: size.touch / 2,
+                backgroundColor: colors.navyTint,
+              }}
+              className="items-center justify-center active:opacity-70"
+            >
+              {refreshing ? (
+                <ActivityIndicator color={colors.surface} />
+              ) : (
+                <Icon name="refresh" size={20} color={colors.surface} />
+              )}
+            </Pressable>
+          }
         >
           <AdminSearchBar>
             <TextInput
@@ -272,6 +322,16 @@ export function ProductListScreen({ navigation }: Props) {
                   </Text>
                 </View>
                 <Text className="text-label-lg text-text-body">{formatRupees(product.price)}</Text>
+                {/* The number the sold-out toggle beside it is decided on: a
+                    canteen cooks a fixed batch (50-60 biryani), and this is
+                    how much of today's batch is already spoken for. Counts
+                    paid orders only, and resets at midnight IST — the
+                    toggle itself does NOT auto-reset (deferred past V1), so
+                    this line is the whole signal for now. */}
+                <Text className="text-caption text-text-secondary">
+                  <Text className="text-label-bold text-text-primary">{product.ordered_today}</Text> ordered
+                  today
+                </Text>
               </View>
               {/* FR-019: the sold-out control. State is conveyed by the
                   switch POSITION and by its label, never colour alone —
