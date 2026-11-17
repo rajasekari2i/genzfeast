@@ -19,6 +19,23 @@ type Props = NativeStackScreenProps<TenantAdminStaffStackParamList, 'Dashboard'>
 type QuickLinkRoute = 'ProductList' | 'CategoryList' | 'DepartmentList' | 'UserList' | 'FeedbackList';
 
 /**
+ * Measurements taken off the "Company Admin · Dashboard" artboard that fall
+ * BETWEEN steps of the spacing scale, so they are written here rather than
+ * rounded to the nearest token — the same treatment AdminHeader gives its
+ * own 14/20/26 padding. Rounding them is what made this block read as
+ * "close to, but not, the design".
+ *
+ *   .manage      padding: 22px 20px;  gap: 12px
+ *   .hero  (a)   border-radius: 26px; padding: 20px; gap: 16px
+ *   .grid  (div) grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px
+ *   .card  (a)   border-radius: 24px; padding: 18px; gap: 22px; border: 1px #E8E3DC
+ */
+const BLOCK_GAP = 12;
+const HERO_PADDING = 20;
+const CARD_PADDING = 18;
+const CARD_GAP = 22;
+
+/**
  * The 2x2 grid, in the artboard's own order. Each entry's accent family is
  * the one the artboard uses for that tile — blue #E4ECF7/#183153 for Users,
  * sun #FFF1D6/#8A5300 for Feedback, violet #EDE7FB/#4C2E91 for Categories,
@@ -85,7 +102,7 @@ export function DashboardScreen({ navigation }: Props) {
         </AdminHeader>
       }
     >
-      <View className="gap-md">
+      <View style={{ gap: BLOCK_GAP }}>
         <SectionLabel>Manage</SectionLabel>
 
         {/* Transcribed from the "Company Admin · Dashboard" artboard in
@@ -103,8 +120,8 @@ export function DashboardScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('ProductList')}
           accessibilityRole="button"
           accessibilityLabel="Products"
-          style={{ backgroundColor: colors.primary, borderRadius: radius.card }}
-          className="flex-row items-center gap-md p-md active:opacity-80"
+          style={{ backgroundColor: colors.primary, borderRadius: radius.card, padding: HERO_PADDING }}
+          className="flex-row items-center gap-md active:opacity-80"
         >
           <View
             style={{ borderRadius: radius['2xl'] }}
@@ -119,7 +136,12 @@ export function DashboardScreen({ navigation }: Props) {
           <Icon name="chevronRight" size={22} color={colors.espresso} />
         </Pressable>
 
-        <View className="flex-row flex-wrap justify-between gap-y-sm">
+        {/* `width: 48%` + justify-between left the column gap floating at 4%
+            of the row (~14px) and the row gap at 8px; the artboard's grid
+            uses a flat 12px for both. flexBasis under 50% minus the gap with
+            flexGrow:1 reproduces `repeat(2, minmax(0, 1fr))` — the two cards
+            on a row always divide the same leftover width equally. */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: BLOCK_GAP }}>
           {QUICK_LINKS.map((card) => (
             <Pressable
               key={card.label}
@@ -127,12 +149,15 @@ export function DashboardScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel={card.label}
               style={{
-                width: '48%',
+                flexGrow: 1,
+                flexBasis: '45%',
                 borderRadius: radius['5xl'],
                 borderWidth: 1,
                 borderColor: colors.borderCard,
+                padding: CARD_PADDING,
+                gap: CARD_GAP,
               }}
-              className="bg-surface p-sm gap-lg active:opacity-80"
+              className="bg-surface active:opacity-80"
             >
               <IconTile icon={card.icon} accent={card.accent} size="md" />
               <View className="gap-glyph">

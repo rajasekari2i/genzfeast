@@ -214,16 +214,26 @@ const legacyTypographyAliases = {
 };
 
 /** @type {Record<string, number>} */
-// `cell` (6) is semantic, not a scale step — the gap between the segmented
-// cells of a code display (the pickup OTP row on 'Order placed + pickup
-// OTP'), which the canvas draws at 6, between xs (4) and sm (8). Named by
-// role so the 4/8/16/24/32 scale stays evenly spaced, the same way
-// `radius.card` (26) is named.
+// `glyph` (2) and `cell` (6) are semantic, not scale steps.
+//
+// `cell` is the gap between the segmented cells of a code display (the
+// pickup OTP row on 'Order placed + pickup OTP'), which the canvas draws at
+// 6, between xs (4) and sm (8).
+//
+// `glyph` is the artboards' tight title/subtitle stack — every two-line
+// label block on the canvas (`gap: 2px`) uses it. It was MISSING from this
+// map while 17 call sites already wrote `gap-glyph` / `py-glyph`; because
+// NativeWind drops an unknown class silently those all rendered at gap 0,
+// exactly the failure mode the tailwind.config.js header warns about. Note
+// `radius.glyph` (3) is a different thing — the dietary mark's corner.
+//
+// Both are named by role so the 4/8/16/24/32 scale stays evenly spaced, the
+// same way `radius.card` (26) is named.
 //
 // NOTE: this map and `size` below are merged into ONE Tailwind spacing
 // scale, with `size` applied second — a key added here must not collide
 // with a key there, or it is silently overwritten.
-const spacing = { xs: 4, cell: 6, sm: 8, md: 16, lg: 24, xl: 32 };
+const spacing = { glyph: 2, xs: 4, cell: 6, sm: 8, md: 16, lg: 24, xl: 32 };
 
 /**
  * Control heights (FR-015, FR-016). Named rather than written inline so a

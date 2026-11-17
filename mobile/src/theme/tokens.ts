@@ -124,7 +124,7 @@ export type TypographyName =
   | 'action' | 'bodySemi' | 'labelBold' | 'labelLg' | 'label' | 'tag' | 'micro'
   | 'eyebrow' | 'caption' | 'captionSm';
 
-export type SpacingName = 'xs' | 'cell' | 'sm' | 'md' | 'lg' | 'xl';
+export type SpacingName = 'glyph' | 'xs' | 'cell' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Control heights. `touch` (44) is the accessibility floor — FR-015. */
 export type SizeName = 'tile' | 'touch' | 'field' | 'control';
