@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsString, IsUUID, Matches, MinLength } from 'class-validator';
 
 /**
  * System Admin's cross-tenant equivalent of CreateTenantUserDto — the same
@@ -13,9 +13,9 @@ export class CreateAdminUserDto {
   @MinLength(1)
   name!: string;
 
-  /** Mobile number, per the tenant equivalent's own field description. */
+  /** Mobile number — see CreateTenantUserDto for why the shape is enforced. */
   @IsString()
-  @MinLength(1)
+  @Matches(/^\d{10}$/, { message: 'username must be a 10-digit mobile number' })
   username!: string;
 
   @IsString()

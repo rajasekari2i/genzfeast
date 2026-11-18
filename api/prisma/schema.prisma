@@ -320,6 +320,11 @@ model Order {
   // used to correlate the webhook back to this row (research.md §4).
   paymentGatewayRef String?   @map("payment_gateway_ref")
   items             Json
+  // The flat handling charge applied at placement, in paise. Stored rather
+  // than re-derived from config: the config value can change, and an
+  // order's receipt must keep showing what was actually charged. Without
+  // it `total_amount` would no longer reconcile with the `items` snapshot.
+  processingFee     Int       @default(0) @map("processing_fee")
   totalAmount       Int       @map("total_amount")
   // Nullable — generated once, at the payment_pending -> order_placed
   // transition (FR-012); plaintext, not hashed (research.md §2 in specs/005,

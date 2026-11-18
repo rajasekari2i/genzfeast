@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { TenantContext, TenantPrismaService } from '../common/prisma/tenant-prisma.service';
 import { RazorpayService } from '../payments/razorpay.service';
 import { PlaceOrderRequestDto } from './dto/place-order.dto';
@@ -20,7 +21,9 @@ const UNRESOLVED_STATUSES = ['payment_pending', 'payment_failed'];
 /** specs/008-my-orders-history-upcoming research.md §1/§4 — a query-param filter, not separate endpoints. */
 export type OrdersView = 'upcoming' | 'history';
 const VIEW_STATUS_FILTERS: Record<OrdersView, string[]> = {
-  upcoming: ['payment_pending', 'order_placed'],
+  // order_ready belongs here, not in history: the food is waiting on the
+  // counter, which is the most "upcoming" an order ever gets.
+  upcoming: ['payment_pending', 'order_placed', 'order_ready'],
   // 'cancelled' included for schema completeness — no flow in this
   // platform ever produces it in V1 (research.md §4), so it never actually
   // matches a row; kept so a future cancellation feature needs no edit here.
@@ -50,6 +53,7 @@ export class StudentOrdersService {
   constructor(
     private readonly tenantPrisma: TenantPrismaService,
     private readonly razorpayService: RazorpayService,
+    private readonly configService: ConfigService,
   ) {}
 
   /** FR-001/FR-002: every non-removed product, sold-out ones included and clearly flagged. */
@@ -148,9 +152,18 @@ export class StudentOrdersService {
         line_total: product.price * item.quantity,
       };
     });
-    const totalAmount = items.reduce((sum, item) => sum + item.line_total, 0);
+    const itemsTotal = items.reduce((sum, item) => sum + item.line_total, 0);
+    // Read from server config, never from the request — same rule as the
+    // product prices re-read above. The mobile build renders its own copy
+    // of this number for the cart line, but this is the one that is
+    // charged, and it is what gets stored on the order.
+    const processingFee = this.configService.get<number>('ORDER_PROCESSING_FEE_PAISE') ?? 0;
+    const totalAmount = itemsTotal + processingFee;
 
     const orderId = randomUUID();
+    // Razorpay is told the total INCLUDING the fee — the gateway must
+    // collect what the order says it costs, or the webhook's amount
+    // reconciliation would reject its own order.
     const gatewayOrder = await this.razorpayService.createOrder(totalAmount, orderId);
 
     const created = await this.tenantPrisma.runInTenantContext(ctx, async (tx) => {
@@ -160,6 +173,7 @@ export class StudentOrdersService {
           companyId: ctx.companyId as string,
           userId: ctx.userId as string,
           items: items as unknown as Prisma.InputJsonValue,
+          processingFee,
           totalAmount,
           paymentGatewayRef: gatewayOrder.gatewayRef,
           createdBy: ctx.userId,

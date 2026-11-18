@@ -81,6 +81,101 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenant/staff/orders/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Handed-over orders, newest first, for the staff History screen
+         * @description Orders that have actually been delivered — the ones that leave the queue the moment the pickup code is accepted. Ordered by delivered_at descending, NOT placed_at: the screen groups by the day the handover happened, and an order placed late one night and collected next morning belongs to the morning. Excludes payment_failed and cancelled — those never reached the counter, and mixing them in would make a day's handover count useless at a glance. Server-side paginated because this list only ever grows; the client fetches the next page on scroll. Day grouping (Today / Yesterday / weekday) is the client's job: a day's orders can straddle a page boundary, so the headers have to come from the accumulated list. NOTE for implementers: this path must be routed BEFORE /tenant/staff/orders/{orderId}, or "history" is parsed as an order id.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of delivered orders */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PaginatedOrderHistory"];
+                    };
+                };
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/staff/orders/{orderId}/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a paid order as ready for pickup and notify the diner
+         * @description order_placed -> order_ready, for when the food is on the counter. Pushes "Order Ready for Pickup!" (FCM) to the user who placed the order. Readiness is a MANDATORY step: /verify refuses an order that is still order_placed, so an order cannot be handed over before it has been marked ready. Takes no body and no secret — unlike /verify it cannot hand food to the wrong person, which is why it is safe to expose directly on the staff list row. The push is best-effort and dispatched after the status change commits: a failed notification never rolls the status back, and is recorded as order_ready_notification_failed in order_audit_logs.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    orderId: components["parameters"]["OrderId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Order is now order_ready; the diner has been notified (best-effort) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MarkReadySuccess"];
+                    };
+                };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description Order is already marked ready, or has already been delivered */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant/staff/orders/{orderId}/verify": {
         parameters: {
             query?: never;
@@ -129,7 +224,7 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
-                /** @description Code did not match — no status change, retry allowed (FR-007) */
+                /** @description Either the code did not match (no status change, retry allowed — FR-007), or the order has not been marked ready yet. Readiness is mandatory, so an order_placed order is refused here with "Mark the order ready before handing it over" rather than being reported as not found. */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -161,6 +256,11 @@ export interface components {
             total_amount?: number;
             /** Format: date-time */
             placed_at?: string;
+            /**
+             * @description order_placed = still being prepared, the staff row shows a "Ready" control. order_ready = on the counter, handover allowed.
+             * @enum {string}
+             */
+            status?: "order_placed" | "order_ready";
         };
         /** @description Never includes the pickup code (FR-009) */
         OrderDetail: {
@@ -175,6 +275,36 @@ export interface components {
             total_amount?: number;
             /** Format: date-time */
             placed_at?: string;
+            /** @enum {string} */
+            status?: "order_placed" | "order_ready";
+        };
+        /** @description A handed-over order. Never includes the pickup code (FR-009). */
+        OrderHistoryItem: {
+            /** Format: uuid */
+            id?: string;
+            reference?: string;
+            item_count?: number;
+            /** @description Whole-number amount in the smallest currency unit */
+            total_amount?: number;
+            /** Format: date-time */
+            placed_at?: string;
+            /**
+             * Format: date-time
+             * @description When the handover happened — what the screen groups by. Nullable because an order delivered before this column existed has none; clients fall back to placed_at rather than dropping the row.
+             */
+            delivered_at?: string | null;
+        };
+        PaginatedOrderHistory: {
+            items?: components["schemas"]["OrderHistoryItem"][];
+            page?: number;
+            limit?: number;
+            total?: number;
+        };
+        MarkReadySuccess: {
+            /** Format: uuid */
+            order_id?: string;
+            /** @enum {string} */
+            status?: "order_ready";
         };
         VerifySuccess: {
             /** Format: uuid */
@@ -196,7 +326,7 @@ export interface components {
             };
             content?: never;
         };
-        /** @description Order does not exist, belongs to a different company, or is not currently in the order_placed state */
+        /** @description Order does not exist, belongs to a different company, or is not in a live state (order_placed / order_ready) */
         NotFound: {
             headers: {
                 [name: string]: unknown;

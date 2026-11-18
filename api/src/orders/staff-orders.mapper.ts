@@ -13,6 +13,8 @@ export interface StaffOrderSummaryResponse {
   item_count: number;
   total_amount: number;
   placed_at: string;
+  /** order_placed (needs marking ready) or order_ready (handover allowed). */
+  status: string;
 }
 
 /** Wire shape of specs/005 contracts/openapi.yaml's OrderDetail schema — never includes the pickup code (FR-009). */
@@ -22,6 +24,22 @@ export interface StaffOrderDetailResponse {
   items: StaffOrderItem[];
   total_amount: number;
   placed_at: string;
+  /** order_placed (needs marking ready) or order_ready (handover allowed). */
+  status: string;
+}
+
+/**
+ * Wire shape of a handed-over order on the staff History screen. Carries
+ * `delivered_at` — the queue's own rows never need it, since nothing in
+ * the queue has been delivered yet — and it is what the screen groups by.
+ */
+export interface StaffOrderHistoryResponse {
+  id: string;
+  reference: string;
+  item_count: number;
+  total_amount: number;
+  placed_at: string;
+  delivered_at: string | null;
 }
 
 /**
@@ -55,6 +73,7 @@ export function toStaffOrderSummaryResponse(order: Order): StaffOrderSummaryResp
     item_count: toStaffOrderItems(order.items).reduce((sum, item) => sum + item.quantity, 0),
     total_amount: order.totalAmount,
     placed_at: order.createdAt.toISOString(),
+    status: order.status,
   };
 }
 
@@ -65,5 +84,20 @@ export function toStaffOrderDetailResponse(order: Order): StaffOrderDetailRespon
     items: toStaffOrderItems(order.items),
     total_amount: order.totalAmount,
     placed_at: order.createdAt.toISOString(),
+    status: order.status,
+  };
+}
+
+export function toStaffOrderHistoryResponse(order: Order): StaffOrderHistoryResponse {
+  return {
+    id: order.id,
+    reference: toReference(order.id),
+    item_count: toStaffOrderItems(order.items).reduce((sum, item) => sum + item.quantity, 0),
+    total_amount: order.totalAmount,
+    placed_at: order.createdAt.toISOString(),
+    // Nullable in the schema, so not assumed: an order delivered before
+    // this column existed would have none, and the screen falls back to
+    // placed_at for grouping rather than dropping the row.
+    delivered_at: order.deliveredAt?.toISOString() ?? null,
   };
 }

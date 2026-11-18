@@ -19,6 +19,7 @@ import { accents, type AccentName, type AccentPair } from './tokens';
 export type OrderStatus =
   | 'payment_pending'
   | 'order_placed'
+  | 'order_ready'
   | 'payment_failed'
   | 'delivered';
 
@@ -37,6 +38,9 @@ export interface StatusColorEntry {
 const STATUS_ACCENT: Record<OrderStatus, { accent: AccentName; label: string }> = {
   payment_pending: { accent: 'sun', label: 'Payment Pending' },
   order_placed: { accent: 'tangerine', label: 'Order Placed' },
+  // `violet`, not `mint`: mint is Delivered, and a diner glancing at the
+  // badge must not read "ready to collect" as "already collected".
+  order_ready: { accent: 'violet', label: 'Ready for Pickup' },
   payment_failed: { accent: 'red', label: 'Payment Failed' },
   delivered: { accent: 'mint', label: 'Delivered' },
 };
@@ -54,6 +58,7 @@ function entry(pair: AccentPair, label: string): StatusColorEntry {
 export const statusColors: Record<OrderStatus, StatusColorEntry> = {
   payment_pending: entry(accents.sun, STATUS_ACCENT.payment_pending.label),
   order_placed: entry(accents.tangerine, STATUS_ACCENT.order_placed.label),
+  order_ready: entry(accents.violet, STATUS_ACCENT.order_ready.label),
   payment_failed: entry(accents.red, STATUS_ACCENT.payment_failed.label),
   delivered: entry(accents.mint, STATUS_ACCENT.delivered.label),
 };

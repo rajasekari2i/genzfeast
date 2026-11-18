@@ -114,7 +114,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             /** @enum {string} */
-            status?: "payment_pending" | "order_placed" | "payment_failed" | "delivered";
+            status?: "payment_pending" | "order_placed" | "order_ready" | "payment_failed" | "delivered";
             total_amount?: number;
             /** Format: date-time */
             placed_at?: string;

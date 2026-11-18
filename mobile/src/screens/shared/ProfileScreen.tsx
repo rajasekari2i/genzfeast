@@ -7,7 +7,6 @@ import { Icon } from '../../components/Icon';
 import { InfoCard, InfoRow } from '../../components/InfoCard';
 import { radius, colors } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
-import { roleLabel } from '../../config/roleLabels';
 import { useAuth } from '../../auth/AuthContext';
 import type { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 import type { paths } from '../../api/generated/007-user-profile-management';
@@ -126,15 +125,12 @@ export function ProfileScreen({ navigation }: Props) {
               {profile.name.trim().charAt(0).toUpperCase()}
             </Text>
           </View>
+          {/* The artboard draws a role badge under the name. Deliberately
+              not rendered: a role is internal authorisation, and the app
+              now shows one nowhere — this was the last place it appeared
+              to a user. The name stands alone. */}
           <View className="flex-1 gap-xs items-start">
             <Text className="text-title-sm text-espresso">{profile.name}</Text>
-            {/* The ROLE badge is correct here. FR-027 bars the role from
-                SIDE MENUS, where it read as debug output; on the profile
-                it is information about the account the user is viewing,
-                and the artboard shows it. */}
-            <View className="bg-espresso rounded-pill px-sm py-glyph">
-              <Text className="text-tag text-surface">{roleLabel(profile.role)}</Text>
-            </View>
           </View>
         </View>
 

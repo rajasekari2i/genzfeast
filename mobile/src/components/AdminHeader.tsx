@@ -12,8 +12,13 @@ import { colors, radius, size, typography } from '../theme/tokens';
  *     row 1 (gap 10): 44px circular menu button on #23426B
  *                     · 32px logo, radius 9
  *                     · wordmark Bricolage 800 20px/-0.5, "Feast" in brand
- *                     · role tag Inter 600 12px #BCCBE0
  *                     · 44px circular avatar on brand, espresso initial
+ *
+ * The artboard draws a role tag ("ADMIN") after the wordmark. It is
+ * deliberately NOT rendered: a role is internal authorisation, and the
+ * person holding the phone already knows who they are. Removed for
+ * production rather than kept as a prop nobody passes — a dormant prop
+ * invites it back.
  *     row 2 (gap 6):  per-screen content (`children`)
  *
  * This replaces React Navigation's stock stack header on these screens —
@@ -28,13 +33,10 @@ import { colors, radius, size, typography } from '../theme/tokens';
  * third bar — that asymmetry is part of the mark, not an accident.
  */
 export function AdminHeader({
-  role,
   initial,
   onOpenMenu,
   children,
 }: {
-  /** The tag beside the wordmark. Never the user's role *name* — see FR-027. */
-  role: 'ADMIN' | 'STAFF';
   /** Single letter shown in the avatar circle. */
   initial: string;
   onOpenMenu: () => void;
@@ -87,7 +89,6 @@ export function AdminHeader({
           <Text style={{ ...typography.wordmarkSm, color: colors.surface }}>
             Genz<Text style={{ color: colors.primary }}>Feast</Text>
           </Text>
-          <Text style={{ ...typography.tag, color: colors.navyMuted }}>{role}</Text>
         </View>
 
         <View

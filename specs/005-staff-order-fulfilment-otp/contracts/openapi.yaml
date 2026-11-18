@@ -58,6 +58,71 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /tenant/staff/orders/history:
+    get:
+      tags: [StaffOrders]
+      summary: Handed-over orders, newest first, for the staff History screen
+      description: >
+        Orders that have actually been delivered — the ones that leave the
+        queue the moment the pickup code is accepted. Ordered by
+        delivered_at descending, NOT placed_at: the screen groups by the day
+        the handover happened, and an order placed late one night and
+        collected next morning belongs to the morning.
+        Excludes payment_failed and cancelled — those never reached the
+        counter, and mixing them in would make a day's handover count
+        useless at a glance.
+        Server-side paginated because this list only ever grows; the client
+        fetches the next page on scroll. Day grouping (Today / Yesterday /
+        weekday) is the client's job: a day's orders can straddle a page
+        boundary, so the headers have to come from the accumulated list.
+        NOTE for implementers: this path must be routed BEFORE
+        /tenant/staff/orders/{orderId}, or "history" is parsed as an order id.
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        "200":
+          description: A page of delivered orders
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginatedOrderHistory" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tenant/staff/orders/{orderId}/ready:
+    post:
+      tags: [StaffOrders]
+      summary: Mark a paid order as ready for pickup and notify the diner
+      description: >
+        order_placed -> order_ready, for when the food is on the counter.
+        Pushes "Order Ready for Pickup!" (FCM) to the user who placed the
+        order. Readiness is a MANDATORY step: /verify refuses an order that
+        is still order_placed, so an order cannot be handed over before it
+        has been marked ready. Takes no body and no secret — unlike /verify
+        it cannot hand food to the wrong person, which is why it is safe to
+        expose directly on the staff list row.
+        The push is best-effort and dispatched after the status change
+        commits: a failed notification never rolls the status back, and is
+        recorded as order_ready_notification_failed in order_audit_logs.
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order is now order_ready; the diner has been notified (best-effort)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarkReadySuccess" }
+        "409":
+          description: Order is already marked ready, or has already been delivered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /tenant/staff/orders/{orderId}/verify:
     post:
       tags: [StaffOrders]
@@ -80,7 +145,12 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/VerifySuccess" }
         "422":
-          description: Code did not match — no status change, retry allowed (FR-007)
+          description: >
+            Either the code did not match (no status change, retry allowed —
+            FR-007), or the order has not been marked ready yet. Readiness
+            is mandatory, so an order_placed order is refused here with
+            "Mark the order ready before handing it over" rather than being
+            reported as not found.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
@@ -110,7 +180,7 @@ components:
     Forbidden:
       description: Caller is not Staff for this order's company
     NotFound:
-      description: Order does not exist, belongs to a different company, or is not currently in the order_placed state
+      description: Order does not exist, belongs to a different company, or is not in a live state (order_placed / order_ready)
 
   schemas:
     OrderSummary:
@@ -122,6 +192,12 @@ components:
         item_count: { type: integer }
         total_amount: { type: integer, description: "Whole-number amount in the smallest currency unit" }
         placed_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [order_placed, order_ready]
+          description: >
+            order_placed = still being prepared, the staff row shows a
+            "Ready" control. order_ready = on the counter, handover allowed.
 
     OrderDetail:
       type: object
@@ -139,6 +215,43 @@ components:
               price: { type: integer }
         total_amount: { type: integer }
         placed_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [order_placed, order_ready]
+
+    OrderHistoryItem:
+      type: object
+      description: A handed-over order. Never includes the pickup code (FR-009).
+      properties:
+        id: { type: string, format: uuid }
+        reference: { type: string }
+        item_count: { type: integer }
+        total_amount: { type: integer, description: "Whole-number amount in the smallest currency unit" }
+        placed_at: { type: string, format: date-time }
+        delivered_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            When the handover happened — what the screen groups by. Nullable
+            because an order delivered before this column existed has none;
+            clients fall back to placed_at rather than dropping the row.
+
+    PaginatedOrderHistory:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderHistoryItem" }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    MarkReadySuccess:
+      type: object
+      properties:
+        order_id: { type: string, format: uuid }
+        status: { type: string, enum: [order_ready] }
 
     VerifySuccess:
       type: object

@@ -7,9 +7,8 @@ import { AdminPageHeader } from '../../components/AdminPageHeader';
 import { Icon } from '../../components/Icon';
 import { EmptyState } from '../../components/EmptyState';
 import { colors, radius, size } from '../../theme/tokens';
-import { createTypedClient, getCurrentUser } from '../../api/client';
+import { createTypedClient } from '../../api/client';
 import { getTenantDisplayName } from '../../config/tenant';
-import { roleLabel } from '../../config/roleLabels';
 import { formatRupees } from '../../theme/money';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/005-staff-order-fulfilment-otp';
@@ -24,6 +23,7 @@ type OrderSummary = {
   item_count: number;
   total_amount: number;
   placed_at: string;
+  status: 'order_placed' | 'order_ready';
 };
 
 /**
@@ -45,15 +45,11 @@ function toCodeRows(reference: string): string[] {
 /** UI Design §5.6 — order id, item count, total, time placed, tap to open (specs/005). */
 export function IncomingOrdersScreen({ navigation }: Props) {
   const canteen = getTenantDisplayName();
-  /**
-   * The header used to hardcode "Staff". Company Admin reaches this same
-   * screen now (they fulfil orders when staff are away), and telling an
-   * admin they are Staff is just wrong — so the tag follows the session.
-   */
-  const [role, setRole] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  /** The order whose "Ready" tap is in flight — disables just that row's button. */
+  const [markingId, setMarkingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,17 +57,36 @@ export function IncomingOrdersScreen({ navigation }: Props) {
     if (error) {
       setErrorMessage('Could not load incoming orders.');
     } else {
-      setOrders((data ?? []).filter((o): o is OrderSummary => Boolean(o.id && o.reference)));
+      // `status` is optional on the wire; an order from an older API with no
+      // status is treated as not-yet-ready, which is the safe default — it
+      // shows the Ready control rather than silently offering handover.
+      setOrders(
+        (data ?? [])
+          .filter((o) => Boolean(o.id && o.reference))
+          .map((o) => ({ ...o, status: o.status ?? 'order_placed' })) as OrderSummary[],
+      );
     }
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      const user = await getCurrentUser();
-      setRole(user?.role ?? null);
-    })();
-  }, []);
+  /**
+   * order_placed -> order_ready, which also pushes "Order Ready for Pickup!"
+   * to the diner. Reloads rather than patching state locally: the row's
+   * whole control set changes with the status, and the list is small.
+   */
+  async function handleMarkReady(order: OrderSummary) {
+    setMarkingId(order.id);
+    setErrorMessage(null);
+    const { error } = await client.POST('/tenant/staff/orders/{orderId}/ready', {
+      params: { path: { orderId: order.id } },
+    });
+    if (error) {
+      setErrorMessage((error as { message?: string })?.message ?? 'Could not mark the order ready.');
+    } else {
+      await load();
+    }
+    setMarkingId(null);
+  }
 
   useEffect(() => {
     load();
@@ -92,7 +107,11 @@ export function IncomingOrdersScreen({ navigation }: Props) {
       header={
         <AdminPageHeader
           title={'Incoming\norders'}
-          meta={[canteen, role ? roleLabel(role) : null].filter(Boolean).join(' · ')}
+          /* Canteen only. The artboard draws "<canteen> · Staff", but a
+             role is internal authorisation and is shown nowhere in the app
+             now — which also settles who this screen belongs to, since
+             Company Admin reaches it too. */
+          meta={canteen ?? ''}
           /* A drawer ROOT — there is nothing to go back to, so the control is
              a hamburger, per the artboard. */
           onMenu={() => navigation.dispatch(DrawerActions.openDrawer())}
@@ -143,8 +162,17 @@ export function IncomingOrdersScreen({ navigation }: Props) {
             /* Oldest first — first-in-first-served at the counter. The code
                tile leads the row because that is what staff match against the
                diner's screen; the reference used to be plain text. */
+            /* Tappable only once ready. Readiness is mandatory, so opening
+               the handover screen for an order still being cooked would
+               lead straight to a refused code — the row offers the one
+               action that is actually available instead. */
             <Pressable
-              onPress={() => navigation.navigate('OrderFulfilment', { orderId: order.id })}
+              onPress={
+                order.status === 'order_ready'
+                  ? () => navigation.navigate('OrderFulfilment', { orderId: order.id })
+                  : undefined
+              }
+              disabled={order.status !== 'order_ready'}
               accessibilityRole="button"
               style={{ borderRadius: radius['5xl'], borderWidth: 1, borderColor: colors.borderCard }}
               className="bg-surface p-md flex-row items-center gap-md active:opacity-80"
@@ -189,9 +217,42 @@ export function IncomingOrdersScreen({ navigation }: Props) {
                 </View>
               </View>
 
+              {/* The artboard's right column is total + chevron. While an
+                  order is still being cooked the chevron is replaced by the
+                  Ready control: the card is not tappable then, so a chevron
+                  would promise a destination that refuses to act. Card
+                  height is unchanged either way — the control is sized to
+                  the chevron's own row. */}
               <View className="items-end gap-cell">
                 <Text className="text-action text-text-primary">{formatRupees(order.total_amount)}</Text>
-                <Icon name="chevronRight" size={18} color={colors.espresso} />
+                {order.status === 'order_ready' ? (
+                  <Icon name="chevronRight" size={18} color={colors.espresso} />
+                ) : (
+                  <Pressable
+                    onPress={() => void handleMarkReady(order)}
+                    disabled={markingId === order.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mark order ${order.reference} ready for pickup`}
+                    /* No explicit height: padding sizes it. The nearest size
+                       token is `tile` (40), which would push the right
+                       column past the 64px code tile and grow every card —
+                       and there is no 32-ish token to reach for. Padded,
+                       it lands near 26px, so the card's height still comes
+                       from the tile exactly as drawn. */
+                    style={{
+                      borderRadius: radius.pill,
+                      backgroundColor: colors.primary,
+                      opacity: markingId === order.id ? 0.6 : 1,
+                    }}
+                    className="px-sm py-xs items-center justify-center active:opacity-70"
+                  >
+                    {markingId === order.id ? (
+                      <ActivityIndicator size="small" color={colors.espresso} />
+                    ) : (
+                      <Text className="text-label-bold text-espresso">Ready</Text>
+                    )}
+                  </Pressable>
+                )}
               </View>
             </Pressable>
           )}

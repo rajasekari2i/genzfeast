@@ -87,6 +87,32 @@ export class FcmNotificationAdapter extends NotificationPort {
    * what the mobile tap-handler reads to deep-link to that order's detail
    * (research.md §6); the pickup code rides in the visible body text.
    */
+  async sendOrderConfirmedNotification(userId: string, orderId: string, otp: string): Promise<{ sent: boolean }> {
+    const tokens = await this.devicesService.listTokensForUser(userId);
+    if (tokens.length === 0) {
+      this.logger.warn(
+        `No registered devices for user ${userId} — order-confirmed push not delivered (order ${orderId})`,
+      );
+      return { sent: false };
+    }
+
+    // Says "confirmed", not "ready": at this point payment has cleared but
+    // the kitchen has not started. `data.type` is distinct too, so the
+    // mobile tap-handler can tell the two apart.
+    const { successCount } = await this.sendMulticast(userId, tokens, {
+      tokens,
+      notification: {
+        title: 'Order confirmed',
+        body: `We'll tell you when it's ready. Your pickup code: ${otp}`,
+      },
+      data: { type: 'order_confirmed', order_id: orderId },
+      android: { priority: 'high' },
+    });
+
+    return { sent: successCount > 0 };
+  }
+
+  /** Fired by STAFF marking the order ready — the food is actually on the counter now. */
   async sendOrderReadyNotification(userId: string, orderId: string, otp: string): Promise<{ sent: boolean }> {
     const tokens = await this.devicesService.listTokensForUser(userId);
     if (tokens.length === 0) {

@@ -11,6 +11,7 @@ import { ProductListScreen } from '../screens/tenant-admin-staff/ProductListScre
 import { ProductCreateEditScreen } from '../screens/tenant-admin-staff/ProductCreateEditScreen';
 import { IncomingOrdersScreen } from '../screens/tenant-admin-staff/IncomingOrdersScreen';
 import { OrderFulfilmentScreen } from '../screens/tenant-admin-staff/OrderFulfilmentScreen';
+import { OrderHistoryScreen } from '../screens/tenant-admin-staff/OrderHistoryScreen';
 import { FeedbackListScreen } from '../screens/tenant-admin-staff/FeedbackListScreen';
 import { FeedbackDetailScreen } from '../screens/tenant-admin-staff/FeedbackDetailScreen';
 import { secondaryHeaderOptions } from '../theme/navigationHeader';
@@ -29,6 +30,7 @@ export type TenantAdminStaffStackParamList = {
   ProductCreateEdit: { productId?: string };
   IncomingOrders: undefined;
   OrderFulfilment: { orderId: string };
+  OrderHistory: undefined;
   /** specs/016-feedback-management User Story 2/3 — Company Admin only. */
   FeedbackList: undefined;
   FeedbackDetail: { feedbackId: string };
@@ -52,6 +54,7 @@ export function TenantAdminStaffNavigator({
     | 'Dashboard'
     | 'ProductList'
     | 'IncomingOrders'
+    | 'OrderHistory'
     | 'CategoryList'
     | 'DepartmentList'
     | 'UserList'
@@ -139,6 +142,12 @@ export function TenantAdminStaffNavigator({
         options={{ title: '', headerShown: false }}
       />
       <Stack.Screen name="OrderFulfilment" component={OrderFulfilmentScreen} options={{ title: '' }} />
+      {/* headerShown: false — the screen renders the navy AdminPageHeader with its own back control. */}
+      <Stack.Screen
+        name="OrderHistory"
+        component={OrderHistoryScreen}
+        options={{ title: '', headerShown: false }}
+      />
       <Stack.Screen
         name="FeedbackList"
         component={FeedbackListScreen}

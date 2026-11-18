@@ -15,11 +15,28 @@ export abstract class NotificationPort {
   abstract sendPasswordResetCode(userId: string, code: string): Promise<void>;
 
   /**
-   * specs/009 FR-004/FR-006/FR-010. Returns whether at least one device was
-   * sent to successfully, so the caller (PaymentsService's webhook handler)
-   * knows which `order_audit_logs` event to write — but never throws, since
-   * a delivery failure must never affect the webhook's own success/response
-   * (FR-006).
+   * Sent when the PAYMENT succeeds — the order now exists and is paid for,
+   * but the kitchen has not cooked it yet.
+   *
+   * Split out from sendOrderReadyNotification, which this call used to be.
+   * That message says "Order Ready for Pickup!", and firing it at payment
+   * time told the diner their food was waiting while it was still being
+   * made. Now that staff mark an order ready explicitly, "ready" can mean
+   * what it says and this one only confirms the payment.
+   *
+   * Still carries the pickup code: it is generated at this moment and the
+   * diner is accustomed to finding it in this notification.
+   *
+   * Returns whether at least one device was reached, so the caller knows
+   * which `order_audit_logs` event to write — but never throws, since a
+   * delivery failure must never affect the webhook's own response (FR-006).
+   */
+  abstract sendOrderConfirmedNotification(userId: string, orderId: string, otp: string): Promise<{ sent: boolean }>;
+
+  /**
+   * specs/009 FR-004/FR-006/FR-010. Sent when STAFF mark the order ready —
+   * the food is on the counter and the diner should come and collect it.
+   * Same never-throws contract as above.
    */
   abstract sendOrderReadyNotification(userId: string, orderId: string, otp: string): Promise<{ sent: boolean }>;
 
@@ -59,6 +76,11 @@ export class LoggingNotificationAdapter extends NotificationPort {
     // Never logs the code itself (spec.md Assumptions: "treated with the
     // same handling care as a password").
     this.logger.log(`Password-reset push suppressed (Firebase not configured) for user ${userId}`);
+  }
+
+  async sendOrderConfirmedNotification(userId: string, orderId: string): Promise<{ sent: boolean }> {
+    this.logger.log(`Order-confirmed push suppressed (Firebase not configured) for user ${userId}, order ${orderId}`);
+    return { sent: false };
   }
 
   async sendOrderReadyNotification(userId: string, orderId: string): Promise<{ sent: boolean }> {

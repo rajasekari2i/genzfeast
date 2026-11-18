@@ -209,13 +209,37 @@ components:
       type: object
       properties:
         id: { type: string, format: uuid }
-        status: { type: string, enum: [payment_pending, order_placed, payment_failed, delivered] }
+        # order_ready sits between order_placed and delivered: staff have
+        # marked the food ready and pushed "Order Ready for Pickup!" to the
+        # diner, who has not collected it yet. It counts as `upcoming` in
+        # My Orders, and the pickup code stays visible through it.
+        status:
+          type: string
+          enum: [payment_pending, order_placed, order_ready, payment_failed, delivered]
         total_amount: { type: integer }
         placed_at: { type: string, format: date-time }
 
     OrderDetail:
       allOf:
         - $ref: "#/components/schemas/Order"
+        - type: object
+          properties:
+            processing_fee:
+              type: integer
+              example: 500
+              description: >
+                Flat handling charge applied to THIS order, in paise, read
+                from the stored column rather than current config (which may
+                have changed since placement). total_amount =
+                items_total + processing_fee. Always sent, including as 0,
+                so a client never has to guess whether a missing field means
+                "no fee" or "older API". Configured server-side by
+                ORDER_PROCESSING_FEE_PAISE; the server applies it when
+                building the order, the same way it re-reads product prices
+                instead of trusting the client.
+            items_total:
+              type: integer
+              description: Sum of the items' line_total — total_amount minus processing_fee.
         - type: object
           properties:
             items:

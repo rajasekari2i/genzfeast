@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength, ValidateIf } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, IsUUID, Matches, MinLength, ValidateIf } from 'class-validator';
 
 /**
  * Matches contracts/openapi.yaml's TenantUserCreateRequest (specs/001
@@ -17,9 +17,18 @@ export class CreateTenantUserDto {
   @MinLength(1)
   name!: string;
 
-  /** Mobile number, per the contract's own field description. */
+  /**
+   * Mobile number, per the contract's own field description — and it is
+   * genuinely used as one: it is the login identifier AND the number
+   * MSG91 sends a password-reset OTP to. A user saved with a non-numeric
+   * or short "username" can never receive that SMS, so the shape is
+   * enforced here rather than left to the caller.
+   *
+   * Same rule as RegisterStudentDto, where a student setting their own
+   * username has always been held to it.
+   */
   @IsString()
-  @MinLength(1)
+  @Matches(/^\d{10}$/, { message: 'username must be a 10-digit mobile number' })
   username!: string;
 
   /** A temporary password the new user is expected to change (out of this feature's scope). */

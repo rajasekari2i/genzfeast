@@ -37,3 +37,26 @@ export function getRazorpayConfigId(): string | undefined {
 export function getTenantDisplayName(): string | undefined {
   return Config.APP_DISPLAY_NAME || undefined;
 }
+
+/**
+ * The flat processing fee shown in the cart, in paise — the client-side
+ * counterpart to api/.env's ORDER_PROCESSING_FEE_PAISE.
+ *
+ * DISPLAY ONLY. The server adds the fee itself when it builds the order and
+ * is the sole authority on what the diner is charged, exactly as it is for
+ * product prices. This copy exists so the cart can show the line before an
+ * order exists to read it from.
+ *
+ * That makes the two values capable of disagreeing: this one is baked into
+ * the APK at build time, so changing the server's fee does not change what
+ * an already-installed app displays until it is rebuilt (the COMPANY_ID
+ * trap). CartScreen therefore treats the server's total as truth the moment
+ * it has one, and the order's own `processing_fee` — not this value — is
+ * what the receipt renders.
+ *
+ * Unset or unparseable reads as 0, which hides the line entirely.
+ */
+export function getProcessingFeePaise(): number {
+  const parsed = Number.parseInt(Config.PROCESSING_FEE_PAISE ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}

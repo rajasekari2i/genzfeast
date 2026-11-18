@@ -28,9 +28,10 @@ const DAY_BOUNDARY_TZ = 'Asia/Kolkata';
  * excluded on purpose: an abandoned checkout has not eaten a biryani, and
  * counting it would push a product to sold-out while food is still on the
  * counter. `delivered` stays IN the count — the item left the kitchen, so
- * it is gone whether or not it has been handed over yet.
+ * it is gone whether or not it has been handed over yet, and so does
+ * `order_ready`, which is just `order_placed` further along the counter.
  */
-const STOCK_CONSUMING_STATUSES = ['order_placed', 'delivered'];
+const STOCK_CONSUMING_STATUSES = ['order_placed', 'order_ready', 'delivered'];
 
 /**
  * specs/004-company-admin-product-crud. Every method is scoped to

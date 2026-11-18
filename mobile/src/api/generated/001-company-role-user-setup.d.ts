@@ -1363,7 +1363,10 @@ export interface components {
         };
         AdminUserCreateRequest: {
             name: string;
-            /** @description Mobile number */
+            /**
+             * @description Mobile number — exactly 10 digits. Enforced, not merely documented: this is the login identifier AND the number MSG91 delivers a password-reset OTP to, so a non-numeric value produces an account that can never recover its password. Same rule as StudentRegisterRequest, which has always held self-registering students to it.
+             * @example 9876543210
+             */
             username: string;
             /**
              * Format: password
@@ -1376,7 +1379,10 @@ export interface components {
         /** @description `role` revised (company_admin dropped from this screen on explicit request; student/teaching/non_teaching added). `category_id` is required exactly when role is 'student' (mirrors StudentRegisterRequest's own requirement); `department_id` stays optional and is ignored for every other role. */
         TenantUserCreateRequest: {
             name: string;
-            /** @description Mobile number */
+            /**
+             * @description Mobile number — exactly 10 digits. Enforced, not merely documented: this is the login identifier AND the number MSG91 delivers a password-reset OTP to, so a non-numeric value produces an account that can never recover its password. Same rule as StudentRegisterRequest, which has always held self-registering students to it.
+             * @example 9876543210
+             */
             username: string;
             /**
              * Format: password
@@ -1400,7 +1406,10 @@ export interface components {
         /** @description PATCH semantics — every field optional, only submitted fields change. Omitting `password` keeps the existing one. */
         TenantUserUpdateRequest: {
             name?: string;
-            /** @description Mobile number */
+            /**
+             * @description Mobile number — exactly 10 digits. Enforced, not merely documented: this is the login identifier AND the number MSG91 delivers a password-reset OTP to, so a non-numeric value produces an account that can never recover its password. Same rule as StudentRegisterRequest, which has always held self-registering students to it.
+             * @example 9876543210
+             */
             username?: string;
             /** Format: password */
             password?: string;
@@ -1417,7 +1426,10 @@ export interface components {
         };
         AdminTenantUserCreateRequest: {
             name: string;
-            /** @description Mobile number */
+            /**
+             * @description Mobile number — exactly 10 digits. Enforced, not merely documented: this is the login identifier AND the number MSG91 delivers a password-reset OTP to, so a non-numeric value produces an account that can never recover its password. Same rule as StudentRegisterRequest, which has always held self-registering students to it.
+             * @example 9876543210
+             */
             username: string;
             /**
              * Format: password
@@ -1436,7 +1448,10 @@ export interface components {
         /** @description PATCH semantics — every field optional, only submitted fields change. */
         AdminTenantUserUpdateRequest: {
             name?: string;
-            /** @description Mobile number */
+            /**
+             * @description Mobile number — exactly 10 digits. Enforced, not merely documented: this is the login identifier AND the number MSG91 delivers a password-reset OTP to, so a non-numeric value produces an account that can never recover its password. Same rule as StudentRegisterRequest, which has always held self-registering students to it.
+             * @example 9876543210
+             */
             username?: string;
             /**
              * Format: password
@@ -1454,7 +1469,10 @@ export interface components {
         };
         StudentRegisterRequest: {
             name: string;
-            /** @description Mobile number */
+            /**
+             * @description Mobile number — exactly 10 digits. Enforced, not merely documented: this is the login identifier AND the number MSG91 delivers a password-reset OTP to, so a non-numeric value produces an account that can never recover its password. Same rule as StudentRegisterRequest, which has always held self-registering students to it.
+             * @example 9876543210
+             */
             username: string;
             /** Format: password */
             password: string;

@@ -90,13 +90,16 @@ export function DashboardScreen({ navigation }: Props) {
       title="Dashboard"
       header={
         <AdminHeader
-          role="ADMIN"
           initial={(adminName || 'A').trim().charAt(0).toUpperCase()}
           onOpenMenu={() => navigation.dispatch(DrawerActions.openDrawer())}
         >
-          <Text style={{ ...typography.label, color: colors.navyMuted }}>
-            {[getTenantDisplayName(), 'Company Admin'].filter(Boolean).join(' \u00B7 ')}
-          </Text>
+          {/* Canteen only. This line used to read "<canteen> · Company
+              Admin"; the role half is internal authorisation and says
+              nothing the user needs. A build with no APP_DISPLAY_NAME now
+              renders nothing here rather than a bare role. */}
+          {getTenantDisplayName() ? (
+            <Text style={{ ...typography.label, color: colors.navyMuted }}>{getTenantDisplayName()}</Text>
+          ) : null}
           <Text style={{ ...typography.displaySm, color: colors.surface }}>
             {adminName ? `Morning, ${adminName.split(' ')[0]}.` : 'Dashboard'}
             {'\n'}What's on the menu?

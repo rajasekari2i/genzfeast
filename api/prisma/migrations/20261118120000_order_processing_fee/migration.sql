@@ -1,0 +1,21 @@
+-- A flat handling charge on every order, configured by
+-- ORDER_PROCESSING_FEE_PAISE (api/.env) and applied server-side at
+-- placement.
+--
+-- CONTENTS: the ALTER TABLE mirrors what Prisma generates for the new
+-- `Order.processingFee` field; the comment block and the backfill note are
+-- hand-added. No RLS change — `orders` policies are row-scoped, not
+-- column-scoped, so a new column needs none.
+--
+-- DEFAULT 0 is load-bearing twice over: it backfills every existing order
+-- with "no fee was charged", which is true of orders placed before this
+-- feature, and it keeps the column NOT NULL without a separate backfill
+-- pass. An environment that never sets ORDER_PROCESSING_FEE_PAISE keeps
+-- charging exactly what it charged yesterday.
+--
+-- `total_amount` continues to be the amount actually charged, now
+-- items-subtotal + processing_fee. Storing the fee separately is what lets
+-- a receipt reconcile: the `items` JSONB snapshot sums to the subtotal,
+-- and the difference is this column rather than an unexplained gap.
+
+ALTER TABLE "orders" ADD COLUMN "processing_fee" INTEGER NOT NULL DEFAULT 0;
