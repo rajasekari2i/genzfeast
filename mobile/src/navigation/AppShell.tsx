@@ -32,7 +32,8 @@ function StudentCartEntry() {
 function StudentMyOrdersEntry() {
   return <StudentNavigator initialRouteName="MyOrders" />;
 }
-function StaffIncomingOrdersEntry() {
+/** Shared by Staff and Company Admin — both fulfil orders (specs/005, revised). */
+function IncomingOrdersEntry() {
   return <TenantAdminStaffNavigator initialRouteName="IncomingOrders" />;
 }
 function StaffProductsEntry() {
@@ -285,7 +286,7 @@ export function AppShell() {
           {/* headerShown: false — the screen owns the navy header. */}
           <Drawer.Screen
             name="Incoming Orders"
-            component={StaffIncomingOrdersEntry}
+            component={IncomingOrdersEntry}
             options={{ headerShown: false }}
           />
           {/* UI Design §5.5 — same Product list as Company Admin's, but
@@ -318,6 +319,17 @@ export function AppShell() {
           <Drawer.Screen
             name="Products"
             component={CompanyAdminProductsEntry}
+            options={{ headerShown: false }}
+          />
+          {/* Same screen Staff get. A canteen often runs with one staff
+              account, and when that person is away nobody could hand an
+              order over — so the Company Admin is the fallback fulfiller
+              (specs/005 contract revised; RLS policy
+              `tenant_deliver_own_company_orders`). */}
+          {/* headerShown: false — the screen owns the navy header. */}
+          <Drawer.Screen
+            name="Incoming Orders"
+            component={IncomingOrdersEntry}
             options={{ headerShown: false }}
           />
           {/* The registrant-affiliation Category (Student/Teaching Staff/

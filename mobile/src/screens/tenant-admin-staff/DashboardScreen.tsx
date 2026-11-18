@@ -67,10 +67,12 @@ const QUICK_LINKS: ReadonlyArray<{
  * company_admin-facing endpoint exists yet for a Company Admin to toggle
  * their own Company's is_open (today that's System-Admin-only via
  * /admin/companies) — out of scope for a visual-only redesign.
- * No Incoming Orders link here: specs/005's own contract restricts every
- * /tenant/staff/orders* endpoint to the `staff` role specifically, not
- * company_admin — that surface is reached only via Staff's own side-menu
- * item (AppShell.tsx).
+ * No Incoming Orders CARD here, though a Company Admin can now reach that
+ * screen: specs/005 was revised to admit company_admin (so an admin can
+ * hand orders over when staff are away), but the artboard's grid is a
+ * fixed 2x2 under the Products hero, and a fifth card would break the
+ * drawn layout. The admin reaches it from the side menu, the same way
+ * Staff do (AppShell.tsx).
  */
 export function DashboardScreen({ navigation }: Props) {
   const [adminName, setAdminName] = useState<string | undefined>(undefined);

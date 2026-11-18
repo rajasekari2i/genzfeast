@@ -7,8 +7,9 @@ import { AdminPageHeader } from '../../components/AdminPageHeader';
 import { Icon } from '../../components/Icon';
 import { EmptyState } from '../../components/EmptyState';
 import { colors, radius, size } from '../../theme/tokens';
-import { createTypedClient } from '../../api/client';
+import { createTypedClient, getCurrentUser } from '../../api/client';
 import { getTenantDisplayName } from '../../config/tenant';
+import { roleLabel } from '../../config/roleLabels';
 import { formatRupees } from '../../theme/money';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/005-staff-order-fulfilment-otp';
@@ -44,6 +45,12 @@ function toCodeRows(reference: string): string[] {
 /** UI Design §5.6 — order id, item count, total, time placed, tap to open (specs/005). */
 export function IncomingOrdersScreen({ navigation }: Props) {
   const canteen = getTenantDisplayName();
+  /**
+   * The header used to hardcode "Staff". Company Admin reaches this same
+   * screen now (they fulfil orders when staff are away), and telling an
+   * admin they are Staff is just wrong — so the tag follows the session.
+   */
+  const [role, setRole] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -57,6 +64,13 @@ export function IncomingOrdersScreen({ navigation }: Props) {
       setOrders((data ?? []).filter((o): o is OrderSummary => Boolean(o.id && o.reference)));
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const user = await getCurrentUser();
+      setRole(user?.role ?? null);
+    })();
   }, []);
 
   useEffect(() => {
@@ -78,7 +92,7 @@ export function IncomingOrdersScreen({ navigation }: Props) {
       header={
         <AdminPageHeader
           title={'Incoming\norders'}
-          meta={[canteen, 'Staff'].filter(Boolean).join(' · ')}
+          meta={[canteen, role ? roleLabel(role) : null].filter(Boolean).join(' · ')}
           /* A drawer ROOT — there is nothing to go back to, so the control is
              a hamburger, per the artboard. */
           onMenu={() => navigation.dispatch(DrawerActions.openDrawer())}

@@ -7,6 +7,7 @@ import { Icon } from '../../components/Icon';
 import { InfoCard, InfoRow } from '../../components/InfoCard';
 import { radius, colors } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
+import { roleLabel } from '../../config/roleLabels';
 import { useAuth } from '../../auth/AuthContext';
 import type { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 import type { paths } from '../../api/generated/007-user-profile-management';
@@ -30,15 +31,6 @@ type Profile = {
  * Username read-only, Email + role-appropriate Category/Department/Company,
  * Edit/Change Password/Logout actions.
  */
-const ROLE_LABELS: Record<string, string> = {
-  student: 'Student',
-  company_admin: 'Company Admin',
-  company_staff: 'Staff',
-  system_admin: 'System Admin',
-  teaching: 'Teaching Staff',
-  non_teaching: 'Non-Teaching Staff',
-};
-
 export function ProfileScreen({ navigation }: Props) {
   const { signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -65,13 +57,6 @@ export function ProfileScreen({ navigation }: Props) {
       </Screen>
     );
   }
-
-  // The artboard shows a human label ("Student"), not the raw role claim
-  // ("company_admin") — that string is a permission-system value and reads
-  // as debug output. Unknown roles fall back to a title-cased form rather
-  // than disappearing, so a future role still renders something sensible.
-  const roleLabel = (r: string) =>
-    ROLE_LABELS[r] ?? r.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   // Named once so the outline, the glyph and the label cannot drift
   // apart; the artboard draws all three in the same tone.
