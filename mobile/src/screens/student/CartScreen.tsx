@@ -10,6 +10,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { createTypedClient } from '../../api/client';
 import { useCart } from '../../cart/CartContext';
 import { formatRupees } from '../../theme/money';
+import { getProcessingFeePaise } from '../../config/tenant';
 import { getRazorpayConfigId, getRazorpayKeyId } from '../../config/tenant';
 import type { StudentStackParamList } from '../../navigation/StudentNavigator';
 import type { paths } from '../../api/generated/006-student-browse-cart-checkout';
@@ -49,7 +50,16 @@ export function CartScreen({ navigation }: Props) {
   const lines = products
     .filter((p) => (quantities[p.id] ?? 0) > 0)
     .map((p) => ({ product: p, quantity: quantities[p.id] }));
-  const totalInPaise = lines.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
+  const itemsTotalInPaise = lines.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
+  /**
+   * Display-only copy of the server's ORDER_PROCESSING_FEE_PAISE. The
+   * server adds the real fee when it builds the order — `placeOrder` below
+   * already pays whatever `data.total_amount` comes back as, so a
+   * disagreement between this build and the backend changes the preview,
+   * never the charge.
+   */
+  const processingFeeInPaise = getProcessingFeePaise();
+  const totalInPaise = itemsTotalInPaise + processingFeeInPaise;
 
   async function handlePlaceOrder() {
     if (lines.length === 0) return;
@@ -253,6 +263,22 @@ export function CartScreen({ navigation }: Props) {
                 </View>
               </View>
               <View style={{ height: 1, backgroundColor: colors.border }} />
+              {/* Subtotal + fee only appear when a fee is configured. With
+                  no fee the card keeps its original single "Total amount"
+                  row, so a tenant that charges nothing sees no change. */}
+              {processingFeeInPaise > 0 ? (
+                <>
+                  <View className="flex-row items-baseline justify-between">
+                    <Text className="text-label-lg text-text-body">Item total</Text>
+                    <Text className="text-body-bold text-text-primary">{formatRupees(itemsTotalInPaise)}</Text>
+                  </View>
+                  <View className="flex-row items-baseline justify-between">
+                    <Text className="text-label-lg text-text-body">Processing fee</Text>
+                    <Text className="text-body-bold text-text-primary">{formatRupees(processingFeeInPaise)}</Text>
+                  </View>
+                  <View style={{ height: 1, backgroundColor: colors.border }} />
+                </>
+              ) : null}
               <View className="flex-row items-baseline justify-between">
                 <Text className="text-label-lg text-text-body">Total amount</Text>
                 <Text className="text-display-xs text-text-primary">{formatRupees(totalInPaise)}</Text>

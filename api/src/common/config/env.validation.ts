@@ -78,6 +78,21 @@ const envSchema = z.object({
   // check — default false so registration keeps working exactly as before
   // until MSG91/DLT is live in a given environment.
   MOBILE_VERIFICATION_REQUIRED: z.coerce.boolean().default(false),
+
+  /**
+   * Flat handling charge added to every order, in PAISE (the money
+   * convention everywhere in this codebase — never a float).
+   *
+   * Defaults to 0, which switches the feature off: the fee line is omitted
+   * and totals are unchanged, so an environment that never sets this
+   * behaves exactly as before.
+   *
+   * This value is what the diner is actually CHARGED — the server adds it
+   * when it builds the order total, the same way it re-reads product prices
+   * rather than trusting the client. The mobile build carries its own copy
+   * only to render the line before checkout.
+   */
+  ORDER_PROCESSING_FEE_PAISE: z.coerce.number().int().nonnegative().default(0),
   // Resend-cooldown for the mobile-verification send endpoint only (real
   // SMS spend per call) — no throttling infrastructure exists in this
   // codebase, so this bounds spend per number without adding any.

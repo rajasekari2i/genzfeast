@@ -26,10 +26,12 @@ const retryPaymentClient = createTypedClient<RetryPaymentPaths>();
 
 type OrderDetail = {
   id: string;
-  status: 'payment_pending' | 'order_placed' | 'payment_failed' | 'delivered';
+  status: 'payment_pending' | 'order_placed' | 'order_ready' | 'payment_failed' | 'delivered';
   total_amount: number;
   placed_at: string | null;
   items: { name: string; price: number; quantity: number; line_total: number }[];
+  /** What was charged on THIS order — not current config, which may since have changed. */
+  processing_fee: number;
   otp: string | null;
   /** specs/008 FR-008 — present only once status = delivered. */
   delivered_at: string | null;
@@ -44,6 +46,11 @@ const POLL_INTERVAL_MS = 3000;
  * Pay Again (FR-014/FR-015); `payment_pending` → polls until the webhook
  * resolves it, since confirmation is async and never driven by the client
  * redirect alone (FR-011); `delivered` → no OTP (FR-013).
+ *
+ * `order_ready` shares `order_placed`'s hero: the code has to be on screen
+ * the moment the diner walks to the counter, and that is exactly when this
+ * status is set. Only the wording changes — "Order placed!" becomes "Order
+ * ready!", since by then the push has already told them so.
  */
 export function OrderDetailScreen({ route, navigation }: Props) {
   const { orderId } = route.params;
@@ -182,6 +189,13 @@ export function OrderDetailScreen({ route, navigation }: Props) {
         <Text className="text-label text-text-body">Fulfilment</Text>
         <Text className="text-label-bold text-text-primary">Canteen Pickup</Text>
       </View>
+      {/* Same stored-fee rule as the placed-order card above. */}
+      {order.processing_fee > 0 ? (
+        <View className="flex-row justify-between">
+          <Text className="text-label text-text-body">Processing fee</Text>
+          <Text className="text-label text-text-body">{formatRupees(order.processing_fee)}</Text>
+        </View>
+      ) : null}
       <View className="flex-row items-baseline justify-between">
         <Text className="text-label-lg text-text-body">Total amount</Text>
         <Text className="text-display-xs text-text-primary">{formatRupees(order.total_amount)}</Text>
@@ -191,7 +205,8 @@ export function OrderDetailScreen({ route, navigation }: Props) {
 
   // Section 08 — a just-placed order. Whole screen on brand, the pickup code
   // as the hero, then a compact summary and "Back to home".
-  if (order.status === 'order_placed') {
+  const isReady = order.status === 'order_ready';
+  if (order.status === 'order_placed' || isReady) {
     return (
       <Screen title="Order placed" surface="brand" scroll={false}>
         <View className="flex-1 gap-md">
@@ -208,9 +223,14 @@ export function OrderDetailScreen({ route, navigation }: Props) {
             <Icon name="check" size={32} color={colors.accent} />
           </View>
           <View className="gap-xs">
-            <Text className="text-hero-lg text-espresso">Order{'\n'}placed!</Text>
+            <Text className="text-hero-lg text-espresso">
+              Order{'\n'}
+              {isReady ? 'ready!' : 'placed!'}
+            </Text>
             <Text className="text-body-lg text-espresso">
-              Payment received. Head to the counter when you're ready.
+              {isReady
+                ? "It's on the counter. Show your code to collect it."
+                : "Payment received. We'll tell you when it's ready."}
             </Text>
           </View>
 
@@ -224,7 +244,7 @@ export function OrderDetailScreen({ route, navigation }: Props) {
           >
             <View className="flex-row items-center justify-between">
               <Text className="text-label text-text-body">Order {reference}</Text>
-              <StatusBadge status="order_placed" />
+              <StatusBadge status={isReady ? 'order_ready' : 'order_placed'} />
             </View>
             {order.items.map((item, index) => (
               <View key={index} className="flex-row justify-between">
@@ -234,6 +254,14 @@ export function OrderDetailScreen({ route, navigation }: Props) {
                 <Text className="text-label text-text-body">{formatRupees(item.line_total)}</Text>
               </View>
             ))}
+            {/* Reads the order's OWN stored fee, so a receipt keeps showing
+                what was charged even after the configured fee changes. */}
+            {order.processing_fee > 0 ? (
+              <View className="flex-row justify-between">
+                <Text className="text-label text-text-body">Processing fee</Text>
+                <Text className="text-label text-text-body">{formatRupees(order.processing_fee)}</Text>
+              </View>
+            ) : null}
             <View style={{ height: 1, backgroundColor: colors.border }} />
             <View className="flex-row justify-between">
               <Text className="text-body-bold text-text-primary">Total</Text>

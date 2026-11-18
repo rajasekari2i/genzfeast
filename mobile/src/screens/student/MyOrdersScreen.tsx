@@ -115,8 +115,10 @@ export function MyOrdersScreen({ navigation }: Props) {
             {orders.map((order) => {
               // A placed order is the one the diner is actively waiting on,
               // so the artboard gives it the dark treatment and leaves the
-              // rest on white.
-              const awaiting = order.status === 'order_placed';
+              // rest on white. `order_ready` qualifies even more strongly —
+              // the food is on the counter — so it keeps the same
+              // treatment rather than dropping to a plain white row.
+              const awaiting = order.status === 'order_placed' || order.status === 'order_ready';
               const resumable = order.status === 'payment_pending' || order.status === 'payment_failed';
               return (
                 <Pressable

@@ -286,12 +286,20 @@ export interface components {
             /** Format: uuid */
             id?: string;
             /** @enum {string} */
-            status?: "payment_pending" | "order_placed" | "payment_failed" | "delivered";
+            status?: "payment_pending" | "order_placed" | "order_ready" | "payment_failed" | "delivered";
             total_amount?: number;
             /** Format: date-time */
             placed_at?: string;
         };
         OrderDetail: components["schemas"]["Order"] & {
+            /**
+             * @description Flat handling charge applied to THIS order, in paise, read from the stored column rather than current config (which may have changed since placement). total_amount = items_total + processing_fee. Always sent, including as 0, so a client never has to guess whether a missing field means "no fee" or "older API". Configured server-side by ORDER_PROCESSING_FEE_PAISE; the server applies it when building the order, the same way it re-reads product prices instead of trusting the client.
+             * @example 500
+             */
+            processing_fee?: number;
+            /** @description Sum of the items' line_total — total_amount minus processing_fee. */
+            items_total?: number;
+        } & {
             items?: {
                 name?: string;
                 price?: number;

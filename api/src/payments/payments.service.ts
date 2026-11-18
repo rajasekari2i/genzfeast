@@ -193,10 +193,15 @@ export class PaymentsService {
       return;
     }
 
+    // "Confirmed", not "ready" — payment has cleared but the kitchen has
+    // not cooked it yet. Staff announce readiness themselves now
+    // (StaffOrdersService.markReady), so this message no longer has to
+    // stand in for both events.
+    //
     // specs/009 FR-006: a delivery failure/timeout must never surface as a
     // webhook error — the code is already persisted regardless of outcome.
     const { sent } = await this.notificationPort
-      .sendOrderReadyNotification(transition.userId, transition.orderId, transition.otp)
+      .sendOrderConfirmedNotification(transition.userId, transition.orderId, transition.otp)
       .catch(() => ({ sent: false }));
 
     await this.tenantPrisma.runInTenantContext(PAYMENT_SERVICE_CONTEXT, (tx) =>
@@ -204,7 +209,7 @@ export class PaymentsService {
         data: {
           orderId: transition.orderId,
           companyId: transition.companyId,
-          eventType: sent ? 'order_ready_notification_sent' : 'order_ready_notification_failed',
+          eventType: sent ? 'order_confirmed_notification_sent' : 'order_confirmed_notification_failed',
           performedBy: null,
         },
       }),

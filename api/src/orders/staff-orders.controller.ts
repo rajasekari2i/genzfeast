@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -7,7 +19,13 @@ import { CurrentTenantContext } from '../common/decorators/current-tenant-contex
 import type { TenantContext } from '../common/prisma/tenant-prisma.service';
 import { StaffOrdersService, VerifySuccessResponse } from './staff-orders.service';
 import { VerifyOrderCodeDto } from './dto/verify-order-code.dto';
-import type { StaffOrderDetailResponse, StaffOrderSummaryResponse } from './staff-orders.mapper';
+import type {
+  StaffOrderDetailResponse,
+  StaffOrderHistoryResponse,
+  StaffOrderSummaryResponse,
+} from './staff-orders.mapper';
+import type { MarkReadyResponse } from './staff-orders.service';
+import { PaginatedResult, PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 /**
  * specs/005-staff-order-fulfilment-otp contracts/openapi.yaml —
@@ -37,12 +55,40 @@ export class StaffOrdersController {
     return this.staffOrdersService.listIncoming(ctx);
   }
 
+  /**
+   * MUST stay above @Get(':orderId'). Nest matches in declaration order, so
+   * the param route would otherwise swallow "history" and ParseUUIDPipe
+   * would reject it as a malformed id — a 400 that looks like a client bug.
+   */
+  @Get('history')
+  listHistory(
+    @CurrentTenantContext() ctx: TenantContext,
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResult<StaffOrderHistoryResponse>> {
+    return this.staffOrdersService.listHistory(ctx, query);
+  }
+
   @Get(':orderId')
   getDetail(
     @CurrentTenantContext() ctx: TenantContext,
     @Param('orderId', ParseUUIDPipe) orderId: string,
   ): Promise<StaffOrderDetailResponse> {
     return this.staffOrdersService.getDetail(ctx, orderId);
+  }
+
+  /**
+   * order_placed -> order_ready, announcing it to the diner. Separate from
+   * /verify on purpose: this one is safe to expose on the list row (it
+   * takes no secret and cannot hand food to the wrong person), while
+   * /verify consumes the pickup code.
+   */
+  @Post(':orderId/ready')
+  @HttpCode(HttpStatus.OK)
+  markReady(
+    @CurrentTenantContext() ctx: TenantContext,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ): Promise<MarkReadyResponse> {
+    return this.staffOrdersService.markReady(ctx, orderId);
   }
 
   @Post(':orderId/verify')

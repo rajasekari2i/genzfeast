@@ -36,6 +36,10 @@ function StudentMyOrdersEntry() {
 function IncomingOrdersEntry() {
   return <TenantAdminStaffNavigator initialRouteName="IncomingOrders" />;
 }
+/** Handed-over orders, grouped by day. Same audience as Incoming Orders. */
+function OrderHistoryEntry() {
+  return <TenantAdminStaffNavigator initialRouteName="OrderHistory" />;
+}
 function StaffProductsEntry() {
   return <TenantAdminStaffNavigator initialRouteName="ProductList" />;
 }
@@ -71,6 +75,9 @@ const DRAWER_ICONS: Partial<Record<string, IconName>> = {
   Users: 'users',
   'Feedback Review': 'feedbackReview',
   'Incoming Orders': 'incomingOrders',
+  // No dedicated history glyph in the set; `clock` reads as "past" and is
+  // already used for order timestamps, so it carries the same meaning here.
+  'Order History': 'clock',
   Profile: 'profile',
   'Contact Us': 'contactUs',
   Feedback: 'feedback',
@@ -289,6 +296,14 @@ export function AppShell() {
             component={IncomingOrdersEntry}
             options={{ headerShown: false }}
           />
+          {/* headerShown: false — the screen owns its navy header. Delivered
+              orders leave the Incoming queue entirely, so without this they
+              would be unreachable after handover. */}
+          <Drawer.Screen
+            name="Order History"
+            component={OrderHistoryEntry}
+            options={{ headerShown: false }}
+          />
           {/* UI Design §5.5 — same Product list as Company Admin's, but
               read/toggle-only (ProductListScreen itself checks the role). */}
           {/* headerShown: false — ProductListScreen renders the artboard's navy
@@ -330,6 +345,14 @@ export function AppShell() {
           <Drawer.Screen
             name="Incoming Orders"
             component={IncomingOrdersEntry}
+            options={{ headerShown: false }}
+          />
+          {/* headerShown: false — the screen owns its navy header. Delivered
+              orders leave the Incoming queue entirely, so without this they
+              would be unreachable after handover. */}
+          <Drawer.Screen
+            name="Order History"
+            component={OrderHistoryEntry}
             options={{ headerShown: false }}
           />
           {/* The registrant-affiliation Category (Student/Teaching Staff/
