@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, IsUUID, Matches, MinLength } from 'class-validator';
 
 /**
  * PATCH semantics (coding_standard.md §6): every field optional, only
@@ -14,10 +14,10 @@ export class UpdateAdminUserDto {
   @MinLength(1)
   name?: string;
 
-  /** Mobile number, per CreateAdminUserDto's own field description. */
+  /** Mobile number — same rule as creation; an edit is the same hole otherwise. */
   @IsOptional()
   @IsString()
-  @MinLength(1)
+  @Matches(/^\d{10}$/, { message: 'username must be a 10-digit mobile number' })
   username?: string;
 
   @IsOptional()

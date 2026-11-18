@@ -862,7 +862,17 @@ components:
       required: [name, username, password, email]
       properties:
         name: { type: string }
-        username: { type: string, description: "Mobile number" }
+        username:
+          type: string
+          pattern: '^[0-9]{10}$'
+          example: "9876543210"
+          description: >
+            Mobile number — exactly 10 digits. Enforced, not merely
+            documented: this is the login identifier AND the number MSG91
+            delivers a password-reset OTP to, so a non-numeric value
+            produces an account that can never recover its password. Same
+            rule as StudentRegisterRequest, which has always held
+            self-registering students to it.
         password: { type: string, format: password, description: "Temporary password" }
         email: { type: string, format: email }
 
@@ -877,7 +887,17 @@ components:
         optional and is ignored for every other role.
       properties:
         name: { type: string }
-        username: { type: string, description: "Mobile number" }
+        username:
+          type: string
+          pattern: '^[0-9]{10}$'
+          example: "9876543210"
+          description: >
+            Mobile number — exactly 10 digits. Enforced, not merely
+            documented: this is the login identifier AND the number MSG91
+            delivers a password-reset OTP to, so a non-numeric value
+            produces an account that can never recover its password. Same
+            rule as StudentRegisterRequest, which has always held
+            self-registering students to it.
         password: { type: string, format: password, description: "Temporary password" }
         email: { type: string, format: email }
         gender: { type: string, enum: [male, female, transgender] }
@@ -890,7 +910,17 @@ components:
       description: PATCH semantics — every field optional, only submitted fields change. Omitting `password` keeps the existing one.
       properties:
         name: { type: string }
-        username: { type: string, description: "Mobile number" }
+        username:
+          type: string
+          pattern: '^[0-9]{10}$'
+          example: "9876543210"
+          description: >
+            Mobile number — exactly 10 digits. Enforced, not merely
+            documented: this is the login identifier AND the number MSG91
+            delivers a password-reset OTP to, so a non-numeric value
+            produces an account that can never recover its password. Same
+            rule as StudentRegisterRequest, which has always held
+            self-registering students to it.
         password: { type: string, format: password }
         email: { type: string, format: email }
         gender: { type: string, enum: [male, female, transgender] }
@@ -906,7 +936,17 @@ components:
       required: [name, username, password, email, gender, role, company_id]
       properties:
         name: { type: string }
-        username: { type: string, description: "Mobile number" }
+        username:
+          type: string
+          pattern: '^[0-9]{10}$'
+          example: "9876543210"
+          description: >
+            Mobile number — exactly 10 digits. Enforced, not merely
+            documented: this is the login identifier AND the number MSG91
+            delivers a password-reset OTP to, so a non-numeric value
+            produces an account that can never recover its password. Same
+            rule as StudentRegisterRequest, which has always held
+            self-registering students to it.
         password: { type: string, format: password, description: "Temporary password" }
         email: { type: string, format: email }
         gender: { type: string, enum: [male, female, transgender] }
@@ -918,7 +958,17 @@ components:
       description: PATCH semantics — every field optional, only submitted fields change.
       properties:
         name: { type: string }
-        username: { type: string, description: "Mobile number" }
+        username:
+          type: string
+          pattern: '^[0-9]{10}$'
+          example: "9876543210"
+          description: >
+            Mobile number — exactly 10 digits. Enforced, not merely
+            documented: this is the login identifier AND the number MSG91
+            delivers a password-reset OTP to, so a non-numeric value
+            produces an account that can never recover its password. Same
+            rule as StudentRegisterRequest, which has always held
+            self-registering students to it.
         password: { type: string, format: password, description: "Omit to keep the existing password" }
         email: { type: string, format: email }
         gender: { type: string, enum: [male, female, transgender] }
@@ -930,7 +980,17 @@ components:
       required: [name, username, password, email, gender, category_id, company_id]
       properties:
         name: { type: string }
-        username: { type: string, description: "Mobile number" }
+        username:
+          type: string
+          pattern: '^[0-9]{10}$'
+          example: "9876543210"
+          description: >
+            Mobile number — exactly 10 digits. Enforced, not merely
+            documented: this is the login identifier AND the number MSG91
+            delivers a password-reset OTP to, so a non-numeric value
+            produces an account that can never recover its password. Same
+            rule as StudentRegisterRequest, which has always held
+            self-registering students to it.
         password: { type: string, format: password }
         email: { type: string, format: email }
         gender: { type: string, enum: [male, female, transgender] }

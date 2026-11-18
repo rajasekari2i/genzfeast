@@ -247,7 +247,10 @@ export interface components {
         };
         StudentRegisterRequest: {
             name: string;
-            /** @description Mobile number */
+            /**
+             * @description Mobile number — exactly 10 digits. Enforced, not merely documented: this is the login identifier AND the number MSG91 delivers a password-reset OTP to, so a non-numeric value produces an account that can never recover its password. Same rule as StudentRegisterRequest, which has always held self-registering students to it.
+             * @example 9876543210
+             */
             username: string;
             /** Format: password */
             password: string;

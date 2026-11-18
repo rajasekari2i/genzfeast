@@ -119,6 +119,15 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
       setErrorMessage(`Missing: ${missing.join(', ')}.`);
       return;
     }
+    // The username IS the mobile number: it is what the user logs in with
+    // and where MSG91 sends a password-reset OTP. Saving "abc" here
+    // produced an account that could never receive that SMS. Checked after
+    // the missing-fields pass so an empty field still reads as missing
+    // rather than as a format complaint.
+    if (!/^\d{10}$/.test(username.trim())) {
+      setErrorMessage('Username must be a 10-digit mobile number.');
+      return;
+    }
 
     setSaving(true);
     setErrorMessage(null);
@@ -189,8 +198,13 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
           placeholder="9876543210"
           keyboardType="phone-pad"
           autoCapitalize="none"
+          /* Digits only, capped at 10 — stops the invalid value being typed
+             rather than only complaining about it on save. phone-pad still
+             offers +, *, # on some keyboards, so the strip is not
+             redundant with keyboardType. */
+          maxLength={10}
           value={username}
-          onChangeText={setUsername}
+          onChangeText={(text) => setUsername(text.replace(/\D/g, ''))}
         />
         <View className="gap-xs">
           <Text className="text-label text-text-body">

@@ -246,8 +246,17 @@ export function RegisterScreen() {
       setErrorMessage('This build is not configured with a Company. Cannot register.');
       return;
     }
-    if (!name.trim() || !/^\d{10}$/.test(username.trim()) || password.length < 8 || !email.trim()) {
-      setErrorMessage('Fill in Name, a 10-digit Username, a Password (min 8 characters), and Email.');
+    if (!name.trim() || !username.trim() || password.length < 8 || !email.trim()) {
+      setErrorMessage('Fill in Name, Mobile number, a Password (min 8 characters), and Email.');
+      return;
+    }
+    // Called out separately from the catch-all above: a 9-digit number used
+    // to produce "Fill in Name, a 10-digit Username, a Password…", which
+    // names four fields and points at none of them. The mobile number is
+    // also the login identifier and the MSG91 destination, so it is worth
+    // its own message.
+    if (!/^\d{10}$/.test(username.trim())) {
+      setErrorMessage('Mobile number must be exactly 10 digits.');
       return;
     }
     if (!gender) {
@@ -342,7 +351,10 @@ export function RegisterScreen() {
                   autoCapitalize="none"
                   maxLength={10}
                   value={username}
-                  onChangeText={setUsername}
+                  /* Digits only — phone-pad still offers + * # on some
+                     keyboards, so maxLength alone does not keep the value
+                     numeric. */
+                  onChangeText={(text) => setUsername(text.replace(/\D/g, ''))}
                 />
               </View>
               {otpStatus === 'verified' ? (

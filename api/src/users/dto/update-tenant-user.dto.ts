@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, IsUUID, Matches, MinLength } from 'class-validator';
 
 /**
  * PATCH semantics (coding_standard.md §6) — every field optional, only
@@ -16,10 +16,13 @@ export class UpdateTenantUserDto {
   @MinLength(1)
   name?: string;
 
-  /** Mobile number, per CreateTenantUserDto's own field description. */
+  /**
+   * Mobile number — same rule as creation. An edit is the same hole if it
+   * is left unchecked: a valid username could be updated to junk.
+   */
   @IsOptional()
   @IsString()
-  @MinLength(1)
+  @Matches(/^\d{10}$/, { message: 'username must be a 10-digit mobile number' })
   username?: string;
 
   @IsOptional()
