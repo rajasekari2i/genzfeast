@@ -52,6 +52,29 @@ export function OrderDetailScreen({ route, navigation }: Props) {
   const [retrying, setRetrying] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  /**
+   * "Back to home", which has to handle TWO different places this screen can
+   * be showing from, because `Home` is both a DRAWER screen and a route
+   * inside this stack:
+   *
+   *   Drawer "Home"  -> [Home, Cart] -> checkout replaces -> [Home, OrderDetail]
+   *   Drawer "Cart"/"My Orders" -> [Cart|MyOrders, OrderDetail]
+   *
+   * The first is the normal checkout path: HomeScreen's cart bar navigates
+   * to `Cart` WITHIN its own stack, so the drawer never leaves "Home". Asking
+   * the drawer to navigate to "Home" from there is a no-op — it is already
+   * focused — and the nested stack keeps rendering OrderDetail, which is why
+   * the button looked dead. Unwinding this stack is what actually moves.
+   *
+   * The drawer navigate still matters for the second case, where the drawer
+   * really is parked on another entry; popToTop then just tidies the stack
+   * left behind it.
+   */
+  const goHome = useCallback(() => {
+    navigation.getParent()?.navigate('Home' as never);
+    navigation.popToTop();
+  }, [navigation]);
+
   const load = useCallback(async () => {
     const { data, error } = await orderDetailClient.GET('/student/orders/{orderId}', { params: { path: { orderId } } });
     if (!error && data) {
@@ -219,7 +242,7 @@ export function OrderDetailScreen({ route, navigation }: Props) {
           </View>
 
           <Pressable
-            onPress={() => navigation.getParent()?.navigate('Home' as never)}
+            onPress={goHome}
             accessibilityRole="button"
             style={{ height: 56, backgroundColor: colors.espresso, borderRadius: radius.pill }}
             className="mt-auto items-center justify-center"
@@ -308,7 +331,7 @@ export function OrderDetailScreen({ route, navigation }: Props) {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => navigation.getParent()?.navigate('Home' as never)}
+              onPress={goHome}
               accessibilityRole="button"
               style={{ height: 56, borderWidth: 1.5, borderColor: colors.espresso, borderRadius: radius.pill }}
               className="items-center justify-center"

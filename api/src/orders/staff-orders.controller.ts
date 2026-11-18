@@ -11,14 +11,24 @@ import type { StaffOrderDetailResponse, StaffOrderSummaryResponse } from './staf
 
 /**
  * specs/005-staff-order-fulfilment-otp contracts/openapi.yaml —
- * /tenant/staff/orders. Every route is `staff` only, per the contract's own
- * description ("restricted to the staff role") — not company_admin, unlike
- * specs/004's Products endpoints.
+ * /tenant/staff/orders.
+ *
+ * Opened to company_admin as well as company_staff, revising the contract's
+ * original "restricted to the staff role". A canteen often runs with a
+ * single staff account, and when that person is away nobody could hand an
+ * order over; the Company Admin is the account that exists at every tenant,
+ * so it is the fallback. The route PREFIX stays `/tenant/staff/orders` —
+ * renaming it would break every deployed build for a label.
+ *
+ * The matching RLS change is migration 20261118000000_admin_order_fulfilment
+ * (`tenant_deliver_own_company_orders`). Both layers are required: this
+ * decorator alone would hand an admin a screen whose "mark delivered"
+ * fails at the database, since the UPDATE policy named company_staff only.
  */
 @Controller('tenant/staff/orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(TenantContextInterceptor)
-@Roles('company_staff')
+@Roles('company_staff', 'company_admin')
 export class StaffOrdersController {
   constructor(private readonly staffOrdersService: StaffOrdersService) {}
 

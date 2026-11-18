@@ -7,8 +7,9 @@ import { AdminPageHeader } from '../../components/AdminPageHeader';
 import { Icon } from '../../components/Icon';
 import { EmptyState } from '../../components/EmptyState';
 import { colors, radius, size } from '../../theme/tokens';
-import { createTypedClient } from '../../api/client';
+import { createTypedClient, getCurrentUser } from '../../api/client';
 import { getTenantDisplayName } from '../../config/tenant';
+import { roleLabel } from '../../config/roleLabels';
 import { formatRupees } from '../../theme/money';
 import type { TenantAdminStaffStackParamList } from '../../navigation/TenantAdminStaffNavigator';
 import type { paths } from '../../api/generated/005-staff-order-fulfilment-otp';
@@ -25,9 +26,31 @@ type OrderSummary = {
   placed_at: string;
 };
 
+/**
+ * The artboard's code tile is drawn around a 4-character code (`7Q2K`), but
+ * `reference` is the order id's first 8 characters (api staff-orders.mapper
+ * `toReference`) — and the diner's own screen shows all 8, so truncating
+ * here would hand staff a shorter string than the one they are matching
+ * against. Split into 4-character rows instead: two lines of 4 at the drawn
+ * 18px/22 still measure 57px inside the 64px tile (10px `#GF` + 2 x 22),
+ * so the geometry survives intact and the whole reference stays readable.
+ *
+ * Unsplit, 8 characters at 18px overflowed the tile horizontally AND
+ * vertically — the wrapped text rendered outside the rounded square.
+ */
+function toCodeRows(reference: string): string[] {
+  return reference.match(/.{1,4}/g) ?? [reference];
+}
+
 /** UI Design §5.6 — order id, item count, total, time placed, tap to open (specs/005). */
 export function IncomingOrdersScreen({ navigation }: Props) {
   const canteen = getTenantDisplayName();
+  /**
+   * The header used to hardcode "Staff". Company Admin reaches this same
+   * screen now (they fulfil orders when staff are away), and telling an
+   * admin they are Staff is just wrong — so the tag follows the session.
+   */
+  const [role, setRole] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -41,6 +64,13 @@ export function IncomingOrdersScreen({ navigation }: Props) {
       setOrders((data ?? []).filter((o): o is OrderSummary => Boolean(o.id && o.reference)));
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const user = await getCurrentUser();
+      setRole(user?.role ?? null);
+    })();
   }, []);
 
   useEffect(() => {
@@ -62,7 +92,7 @@ export function IncomingOrdersScreen({ navigation }: Props) {
       header={
         <AdminPageHeader
           title={'Incoming\norders'}
-          meta={[canteen, 'Staff'].filter(Boolean).join(' · ')}
+          meta={[canteen, role ? roleLabel(role) : null].filter(Boolean).join(' · ')}
           /* A drawer ROOT — there is nothing to go back to, so the control is
              a hamburger, per the artboard. */
           onMenu={() => navigation.dispatch(DrawerActions.openDrawer())}
@@ -119,12 +149,25 @@ export function IncomingOrdersScreen({ navigation }: Props) {
               style={{ borderRadius: radius['5xl'], borderWidth: 1, borderColor: colors.borderCard }}
               className="bg-surface p-md flex-row items-center gap-md active:opacity-80"
             >
+              {/* overflow:hidden is a backstop, not the fix — toCodeRows keeps
+                  the text inside the square. It guarantees a longer
+                  reference can never spill over the tile's corners again. */}
               <View
-                style={{ width: 64, height: 64, borderRadius: radius['2xl'], backgroundColor: colors.espresso }}
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: radius['2xl'],
+                  backgroundColor: colors.espresso,
+                  overflow: 'hidden',
+                }}
                 className="items-center justify-center"
               >
                 <Text className="text-micro text-text-on-dark">#GF</Text>
-                <Text className="text-subtitle-sm text-surface">{order.reference}</Text>
+                {toCodeRows(order.reference).map((row) => (
+                  <Text key={row} className="text-subtitle-sm text-surface">
+                    {row}
+                  </Text>
+                ))}
               </View>
 
               <View className="flex-1 gap-glyph">
@@ -133,7 +176,11 @@ export function IncomingOrdersScreen({ navigation }: Props) {
                 </Text>
                 <View className="flex-row items-center gap-glyph">
                   <Icon name="clock" size={14} color={colors.textSecondary} />
+                  {/* The artboard reads "Placed 12:42 PM" — the bare clock time
+                      left it ambiguous whether this was placed-at or a
+                      pickup deadline. */}
                   <Text className="text-label text-text-secondary">
+                    Placed{' '}
                     {new Date(order.placed_at).toLocaleTimeString(undefined, {
                       hour: 'numeric',
                       minute: '2-digit',
@@ -142,7 +189,7 @@ export function IncomingOrdersScreen({ navigation }: Props) {
                 </View>
               </View>
 
-              <View className="items-end gap-xs">
+              <View className="items-end gap-cell">
                 <Text className="text-action text-text-primary">{formatRupees(order.total_amount)}</Text>
                 <Icon name="chevronRight" size={18} color={colors.espresso} />
               </View>

@@ -5,8 +5,16 @@ info:
   description: >
     Contract for feature 005-staff-order-fulfilment-otp. All endpoints
     require Authorization: Bearer <access_token> and are restricted to the
-    `company_staff` role for the caller's own company_id (see
-    specs/002-registration-login-jwt-auth). The `orders` resource itself is
+    `company_staff` and `company_admin` roles for the caller's own
+    company_id (see specs/002-registration-login-jwt-auth).
+    `company_admin` was added after the fact: a canteen often runs with a
+    single staff account, and when that person is away nobody could hand an
+    order over, so the Company Admin is the fallback fulfiller. The route
+    prefix stays /tenant/staff/orders — renaming it would break every
+    deployed build for a label. Enforced at both layers: @Roles on
+    StaffOrdersController and the RLS policy
+    `tenant_deliver_own_company_orders` (migration
+    20261118000000_admin_order_fulfilment). The `orders` resource itself is
     owned by a future Checkout & Payment feature — this contract only
     exposes the read/verify operations this feature is responsible for; full
     order creation/payment endpoints are intentionally absent here.
