@@ -25,8 +25,8 @@ export class CreateAdminUserDto {
   @IsEmail()
   email!: string;
 
-  @IsIn(['male', 'female', 'transgender'])
-  gender!: 'male' | 'female' | 'transgender';
+  @IsIn(['male', 'female', 'other'])
+  gender!: 'male' | 'female' | 'other';
 
   @IsIn(['company_staff', 'company_admin'])
   role!: 'company_staff' | 'company_admin';

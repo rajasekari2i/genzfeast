@@ -39,8 +39,8 @@ export class CreateTenantUserDto {
   @IsEmail()
   email!: string;
 
-  @IsIn(['male', 'female', 'transgender'])
-  gender!: 'male' | 'female' | 'transgender';
+  @IsIn(['male', 'female', 'other'])
+  gender!: 'male' | 'female' | 'other';
 
   @IsIn(['company_staff', 'student', 'teaching', 'non_teaching'])
   role!: 'company_staff' | 'student' | 'teaching' | 'non_teaching';

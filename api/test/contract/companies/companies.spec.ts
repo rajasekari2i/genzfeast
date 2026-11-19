@@ -38,6 +38,7 @@ function validCompanyPayload() {
     mobile: '9000000000',
     email: 'jane@example.com',
     address: '123 Campus Road',
+    gender: 'female',
   };
 }
 
@@ -174,6 +175,7 @@ describe('Companies contract (specs/001 quickstart.md Scenario 1)', () => {
         username: '9111111111',
         password: 'temporary123',
         email: 'alice@example.com',
+        gender: 'female',
       })
       .expect(201);
 
@@ -195,6 +197,7 @@ describe('Companies contract (specs/001 quickstart.md Scenario 1)', () => {
       username: '9111111111',
       password: 'temporary123',
       email: 'alice@example.com',
+      gender: 'female',
     };
 
     await request(app.getHttpServer())

@@ -42,7 +42,8 @@ paths:
         Create a company AND its first Company Admin (System Admin only).
         The admin is derived from the company's own contact details —
         contact_person as the name, mobile as the username, email as the
-        email — and its password is GENERATED, returned once as
+        email, and the request's own `gender` (the one body field that is not
+        a Company attribute) — and its password is GENERATED, returned once as
         `admin.temporary_password`, and never retrievable again. Both rows
         are written in one transaction, so a company is never left with no
         way to log into it. Roles are global and seeded once platform-wide,
@@ -713,6 +714,7 @@ components:
         name: { type: string }
         username: { type: string }
         email: { type: string, format: email }
+        gender: { type: string, enum: [male, female, other], nullable: true }
         temporary_password: { type: string }
 
     Company:
@@ -746,13 +748,21 @@ components:
 
     CompanyCreateRequest:
       type: object
-      required: [name, contact_person, mobile, email, address]
+      required: [name, contact_person, mobile, email, address, gender]
       properties:
         name: { type: string }
         contact_person: { type: string }
         mobile: { type: string }
         email: { type: string, format: email }
         address: { type: string }
+        gender:
+          type: string
+          enum: [male, female, other]
+          description: >
+            Not a Company attribute — `companies` stores no gender. Collected
+            here for the Company Admin this request auto-provisions from
+            contact_person/mobile/email, so that row carries the same gender
+            every other user-creation path already requires.
 
     CompanyUpdateRequest:
       type: object
@@ -850,7 +860,7 @@ components:
         name: { type: string }
         username: { type: string }
         email: { type: string, format: email }
-        gender: { type: string, enum: [male, female, transgender], nullable: true }
+        gender: { type: string, enum: [male, female, other], nullable: true }
         category_id: { type: string, format: uuid, nullable: true }
         department_id: { type: string, format: uuid, nullable: true }
         status: { type: string, enum: [active, inactive, locked] }
@@ -859,7 +869,7 @@ components:
 
     AdminUserCreateRequest:
       type: object
-      required: [name, username, password, email]
+      required: [name, username, password, email, gender]
       properties:
         name: { type: string }
         username:
@@ -875,6 +885,7 @@ components:
             self-registering students to it.
         password: { type: string, format: password, description: "Temporary password" }
         email: { type: string, format: email }
+        gender: { type: string, enum: [male, female, other] }
 
     TenantUserCreateRequest:
       type: object
@@ -900,7 +911,7 @@ components:
             self-registering students to it.
         password: { type: string, format: password, description: "Temporary password" }
         email: { type: string, format: email }
-        gender: { type: string, enum: [male, female, transgender] }
+        gender: { type: string, enum: [male, female, other] }
         role: { type: string, enum: [company_staff, student, teaching, non_teaching] }
         category_id: { type: string, format: uuid, description: "Required when role is 'student'" }
         department_id: { type: string, format: uuid }
@@ -923,7 +934,7 @@ components:
             self-registering students to it.
         password: { type: string, format: password }
         email: { type: string, format: email }
-        gender: { type: string, enum: [male, female, transgender] }
+        gender: { type: string, enum: [male, female, other] }
         role: { type: string, enum: [company_staff, student, teaching, non_teaching] }
         category_id: { type: string, format: uuid }
         department_id: { type: string, format: uuid }
@@ -949,7 +960,7 @@ components:
             self-registering students to it.
         password: { type: string, format: password, description: "Temporary password" }
         email: { type: string, format: email }
-        gender: { type: string, enum: [male, female, transgender] }
+        gender: { type: string, enum: [male, female, other] }
         role: { type: string, enum: [company_staff, company_admin] }
         company_id: { type: string, format: uuid }
 
@@ -971,7 +982,7 @@ components:
             self-registering students to it.
         password: { type: string, format: password, description: "Omit to keep the existing password" }
         email: { type: string, format: email }
-        gender: { type: string, enum: [male, female, transgender] }
+        gender: { type: string, enum: [male, female, other] }
         role: { type: string, enum: [company_staff, company_admin] }
         company_id: { type: string, format: uuid }
 
@@ -993,7 +1004,7 @@ components:
             self-registering students to it.
         password: { type: string, format: password }
         email: { type: string, format: email }
-        gender: { type: string, enum: [male, female, transgender] }
+        gender: { type: string, enum: [male, female, other] }
         category_id: { type: string, format: uuid }
         department_id: { type: string, format: uuid, nullable: true }
         company_id:

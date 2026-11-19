@@ -92,7 +92,7 @@ Staff         → POST /tenant/staff/orders/:id/verify  → match → `delivered
 ### FR-4 — Registration & Login · `auth/*`
 | # | Requirement | Status | Implementation |
 |---|---|---|---|
-| FR-4.1 | Register with Name*, Username* (10-digit mobile), Password* (min 8), Email*, **Gender***, Category*, Department (optional) | **Built (changed)** | `POST /auth/register`. `gender` (`male`/`female`/`transgender`) was **added** and is required. `company_id` comes from the build, not user input. |
+| FR-4.1 | Register with Name*, Username* (10-digit mobile), Password* (min 8), Email*, **Gender***, Category*, Department (optional) | **Built (changed)** | `POST /auth/register`. `gender` (`male`/`female`/`other`) was **added** and is required. `company_id` comes from the build, not user input. |
 | FR-4.2 | Dropdown options for the registration form must load before an account exists | **Built** | `GET /auth/register/options?company_id=…` — unauthenticated, returns that Company's Categories and Departments |
 | FR-4.3 | Returning users log in with Username + Password | **Built** | `POST /auth/login` (+ `company_id` from the build) |
 | FR-4.4 | On successful registration, land on Home — no separate login step | **Built** | Register returns a full session (`201`), same shape as login |

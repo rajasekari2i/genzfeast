@@ -34,7 +34,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a company AND its first Company Admin (System Admin only). The admin is derived from the company's own contact details — contact_person as the name, mobile as the username, email as the email — and its password is GENERATED, returned once as `admin.temporary_password`, and never retrievable again. Both rows are written in one transaction, so a company is never left with no way to log into it. Roles are global and seeded once platform-wide, not per-company. */
+        /** Create a company AND its first Company Admin (System Admin only). The admin is derived from the company's own contact details — contact_person as the name, mobile as the username, email as the email, and the request's own `gender` (the one body field that is not a Company attribute) — and its password is GENERATED, returned once as `admin.temporary_password`, and never retrievable again. Both rows are written in one transaction, so a company is never left with no way to log into it. Roles are global and seeded once platform-wide, not per-company. */
         post: {
             parameters: {
                 query?: never;
@@ -1236,6 +1236,8 @@ export interface components {
             username?: string;
             /** Format: email */
             email?: string;
+            /** @enum {string|null} */
+            gender?: "male" | "female" | "other" | null;
             temporary_password?: string;
         };
         Company: {
@@ -1265,6 +1267,11 @@ export interface components {
             /** Format: email */
             email: string;
             address: string;
+            /**
+             * @description Not a Company attribute — `companies` stores no gender. Collected here for the Company Admin this request auto-provisions from contact_person/mobile/email, so that row carries the same gender every other user-creation path already requires.
+             * @enum {string}
+             */
+            gender: "male" | "female" | "other";
         };
         CompanyUpdateRequest: {
             name?: string;
@@ -1349,7 +1356,7 @@ export interface components {
             /** Format: email */
             email?: string;
             /** @enum {string|null} */
-            gender?: "male" | "female" | "transgender" | null;
+            gender?: "male" | "female" | "other" | null;
             /** Format: uuid */
             category_id?: string | null;
             /** Format: uuid */
@@ -1375,6 +1382,8 @@ export interface components {
             password: string;
             /** Format: email */
             email: string;
+            /** @enum {string} */
+            gender: "male" | "female" | "other";
         };
         /** @description `role` revised (company_admin dropped from this screen on explicit request; student/teaching/non_teaching added). `category_id` is required exactly when role is 'student' (mirrors StudentRegisterRequest's own requirement); `department_id` stays optional and is ignored for every other role. */
         TenantUserCreateRequest: {
@@ -1392,7 +1401,7 @@ export interface components {
             /** Format: email */
             email: string;
             /** @enum {string} */
-            gender: "male" | "female" | "transgender";
+            gender: "male" | "female" | "other";
             /** @enum {string} */
             role: "company_staff" | "student" | "teaching" | "non_teaching";
             /**
@@ -1416,7 +1425,7 @@ export interface components {
             /** Format: email */
             email?: string;
             /** @enum {string} */
-            gender?: "male" | "female" | "transgender";
+            gender?: "male" | "female" | "other";
             /** @enum {string} */
             role?: "company_staff" | "student" | "teaching" | "non_teaching";
             /** Format: uuid */
@@ -1439,7 +1448,7 @@ export interface components {
             /** Format: email */
             email: string;
             /** @enum {string} */
-            gender: "male" | "female" | "transgender";
+            gender: "male" | "female" | "other";
             /** @enum {string} */
             role: "company_staff" | "company_admin";
             /** Format: uuid */
@@ -1461,7 +1470,7 @@ export interface components {
             /** Format: email */
             email?: string;
             /** @enum {string} */
-            gender?: "male" | "female" | "transgender";
+            gender?: "male" | "female" | "other";
             /** @enum {string} */
             role?: "company_staff" | "company_admin";
             /** Format: uuid */
@@ -1479,7 +1488,7 @@ export interface components {
             /** Format: email */
             email: string;
             /** @enum {string} */
-            gender: "male" | "female" | "transgender";
+            gender: "male" | "female" | "other";
             /** Format: uuid */
             category_id: string;
             /** Format: uuid */

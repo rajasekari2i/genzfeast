@@ -18,7 +18,7 @@ const client = createTypedClient<paths>();
 const GENDER_OPTIONS = [
   { label: 'Male', value: 'male' as const },
   { label: 'Female', value: 'female' as const },
-  { label: 'Transgender', value: 'transgender' as const },
+  { label: 'Other', value: 'other' as const },
 ];
 
 const ROLE_OPTIONS = [
@@ -48,7 +48,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | 'transgender' | undefined>(undefined);
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | undefined>(undefined);
   const [role, setRole] = useState<Role | undefined>(undefined);
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [departmentId, setDepartmentId] = useState<string | undefined>(undefined);
@@ -94,7 +94,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
           setName(existing.name ?? '');
           setUsername(existing.username ?? '');
           setEmail(existing.email ?? '');
-          setGender(existing.gender as 'male' | 'female' | 'transgender' | undefined);
+          setGender(existing.gender as 'male' | 'female' | 'other' | undefined);
           setRole(existing.role as Role | undefined);
           setCategoryId(existing.category_id ?? undefined);
           setDepartmentId(existing.department_id ?? undefined);
@@ -140,7 +140,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
             username: username.trim(),
             ...(password.length > 0 && { password }),
             email: email.trim(),
-            gender: gender as 'male' | 'female' | 'transgender',
+            gender: gender as 'male' | 'female' | 'other',
             role: role as Role,
             ...(role === 'student' && { category_id: categoryId, department_id: departmentId }),
           },
@@ -151,7 +151,7 @@ export function UserCreateEditScreen({ route, navigation }: Props) {
             username: username.trim(),
             password,
             email: email.trim(),
-            gender: gender as 'male' | 'female' | 'transgender',
+            gender: gender as 'male' | 'female' | 'other',
             role: role as Role,
             ...(role === 'student' && { category_id: categoryId, department_id: departmentId }),
           },
