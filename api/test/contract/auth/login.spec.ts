@@ -1,7 +1,8 @@
 /**
  * specs/002-registration-login-jwt-auth tasks.md T013 (User Story 2).
  * Covers quickstart.md's login scenarios end-to-end over real HTTP against
- * the real Supabase database (same discipline as test/contract/companies).
+ * a real Postgres database (same discipline as test/contract/companies).
+ * setup-safety-guard.ts restricts that to a local/disposable host.
  */
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';

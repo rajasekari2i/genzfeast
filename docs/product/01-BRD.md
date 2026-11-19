@@ -101,7 +101,7 @@ All of the following are implemented and working in the current codebase.
 
 ## 7. Assumptions (reconciled with the build)
 
-1. **Database is Supabase (managed PostgreSQL)**, not Firebase/Firestore. Firebase is retained for **Cloud Messaging only**. *(Confirmed in build.)*
+1. **[Changed] Database is Railway Postgres (managed PostgreSQL 18)**, not Firebase/Firestore. Originally Supabase; that project has since been deleted. Firebase is retained for **Cloud Messaging only**. *(Confirmed in build.)*
 2. **"Separate app per tenant" means a branded build from one shared codebase**, not a forked codebase. *(Confirmed in build — but see §11 Gap G4: the tenant's `COMPANY_ID` is baked in at build time via `react-native-config`, so this is a genuine per-tenant build, not a runtime tenant picker.)*
 3. **One account belongs to exactly one Company.** Username uniqueness is per-tenant, not global, so the same mobile number can hold independent accounts at two different canteens. *(Confirmed in build.)*
 4. **Payment is Razorpay, UPI-only.** The UPI restriction is applied through a Razorpay Dashboard payment-method configuration referenced by the client at checkout, not by server-side enforcement. *(Confirmed in build.)*
@@ -110,7 +110,7 @@ All of the following are implemented and working in the current codebase.
    - **Order pickup code** — 6-digit numeric, stored in plaintext (the diner must be able to re-read it), pushed via **FCM only**, always also visible in-app. Never SMS, regardless of any flag.
    - **Forgot-password code** — 6-character alphanumeric (ambiguous characters such as `0/O` and `1/I/l` excluded), stored only as a SHA-256 hash. Delivered by **SMS (MSG91) when the user's Company has `is_sms = true`**, falling back to FCM push if the SMS send fails; delivered by FCM push directly when `is_sms = false`.
    - **Mobile-verification code** — 6-digit numeric, hashed, pre-account. Same per-Company `is_sms` routing. Has **no silent fallback**: a send failure is surfaced as an error, because registration can depend on it.
-7. **Authentication is stateless JWT access tokens plus database-tracked, revocable refresh tokens** — not session cookies, not Supabase Auth, not Firebase Auth. *(Confirmed in build.)*
+7. **Authentication is stateless JWT access tokens plus database-tracked, revocable refresh tokens** — not session cookies, not Firebase Auth, not any managed auth provider. *(Confirmed in build.)*
 8. **Every mutation of a business-critical table is recorded in `audit_logs` by a database trigger**, not by application code. *(Confirmed in build, for `products`, `orders`, `payment_attempts`, and `feedback`.)*
 9. **[Changed] Product images are stored in a Railway Bucket (S3-compatible), not Supabase Storage.** The bucket is private; images are served through this API's own `GET /products/image/:key` proxy route, never a public bucket URL.
 10. **[Added] Passwords are hashed with Argon2id**, through a single shared code path used by registration, admin-created accounts, password reset, change-password, and the bootstrap seed script.
