@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsEmail, IsIn, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 /**
  * Field names are snake_case to match contracts/openapi.yaml's
@@ -27,4 +27,17 @@ export class CreateCompanyDto {
   @IsString()
   @IsNotEmpty()
   address!: string;
+
+  /**
+   * Collected for the Company Admin this request provisions, NOT for the
+   * Company itself — `companies` has no gender column and never will. It
+   * sits on the company payload because the admin is derived from the
+   * contact details rather than posted separately (see
+   * CompaniesService.create), and every other user-creation path
+   * (CreateAdminUserDto, CreateTenantUserDto, RegisterStudentDto) already
+   * requires it; leaving it out here was the one flow that wrote a user
+   * with gender NULL.
+   */
+  @IsIn(['male', 'female', 'other'])
+  gender!: 'male' | 'female' | 'other';
 }

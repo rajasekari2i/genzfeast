@@ -257,7 +257,7 @@ export interface components {
             /** Format: email */
             email: string;
             /** @enum {string} */
-            gender: "male" | "female" | "transgender";
+            gender: "male" | "female" | "other";
             /** Format: uuid */
             category_id: string;
             /** Format: uuid */

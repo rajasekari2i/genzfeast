@@ -103,7 +103,7 @@ Product-image placeholder tints rotate through `#FFE6DA`, `#FFF1D6`, `#E6F3EC`, 
 
 **Finding**: Cross-checking every form artboard against the API DTOs:
 
-- **Register** shows: Full name · Mobile number (with a "Verified" badge) · Password · "I am a…" (= `category_id`: Student / Teaching Staff / Non-Teaching Staff) · Department (optional) · Email. It does **not** show **`gender`**, which `RegisterStudentDto` requires (`male | female | transgender`).
+- **Register** shows: Full name · Mobile number (with a "Verified" badge) · Password · "I am a…" (= `category_id`: Student / Teaching Staff / Non-Teaching Staff) · Department (optional) · Email. It does **not** show **`gender`**, which `RegisterStudentDto` requires (`male | female | other`).
 - **UserForm** is complete — it carries both Gender (Female/Male/Transgender) and Role (Staff/Student/Teaching/Non-teaching).
 
 **Decision**: Per the spec's standing assumption (artboards govern appearance, the shipped app governs behaviour), the Register screen keeps its gender control and renders it in the new language, styled to match the artboard's own "I am a…" segmented-chip pattern. Implementing Register literally from the artboard would break registration.

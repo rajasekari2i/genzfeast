@@ -12,10 +12,10 @@ This is a manual/scriptable validation guide proving the feature works end-to-en
 
 ## Scenario 1 — Onboard a new tenant (User Story 1)
 
-1. As System Admin, `POST /admin/companies` with a valid body (name, contact_person, mobile, email, address).
+1. As System Admin, `POST /admin/companies` with a valid body (name, contact_person, mobile, email, address, gender — `gender` describes the Company Admin auto-provisioned from these contact details, not the Company).
    - **Expect**: `201`, response includes `id`, `is_open: true`.
    - **Verify**: querying `roles` for the new `company_id` returns exactly 3 rows (`company_admin`, `staff`, `student`) — confirms the seeding trigger (research.md §3).
-2. As System Admin, `POST /admin/companies/{companyId}/admins` with name/username/password/email.
+2. As System Admin, `POST /admin/companies/{companyId}/admins` with name/username/password/email/gender.
    - **Expect**: `201`, response `role: company_admin`, `company_id` matches the created company.
 3. Log in as the new Company Admin (auth feature, out of scope) and confirm the resulting JWT carries the correct `company_id`/`role` claims.
 4. As System Admin, `PATCH /admin/companies/{companyId}` with `{"is_open": false}`.

@@ -30,8 +30,8 @@ export class UpdateAdminUserDto {
   email?: string;
 
   @IsOptional()
-  @IsIn(['male', 'female', 'transgender'])
-  gender?: 'male' | 'female' | 'transgender';
+  @IsIn(['male', 'female', 'other'])
+  gender?: 'male' | 'female' | 'other';
 
   @IsOptional()
   @IsIn(['company_staff', 'company_admin'])

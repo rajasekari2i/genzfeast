@@ -36,7 +36,10 @@ export class CompaniesService {
    * The admin is derived from the company's own contact details —
    * `contact_person` becomes the name, `mobile` the username, `email` the
    * email — because those are exactly the person the System Admin just
-   * recorded as responsible for the canteen.
+   * recorded as responsible for the canteen. `gender` is the one request
+   * field with no company counterpart: it is collected solely so this
+   * derived user row carries the same gender every other creation path
+   * already requires.
    *
    * The password is GENERATED and returned once (FR-001a). It is never a
    * fixed default: a known credential baked into the codebase is safe only
@@ -79,9 +82,13 @@ export class CompaniesService {
           username: dto.mobile,
           passwordHash,
           email: dto.email,
+          // The one field on this request that is NOT a company attribute:
+          // `companies` has no gender column, it is collected purely for the
+          // admin row being derived here (CreateCompanyDto.gender).
+          gender: dto.gender,
           createdBy: ctx.userId,
         },
-        select: { id: true, name: true, username: true, email: true },
+        select: { id: true, name: true, username: true, email: true, gender: true },
       });
 
       return {
@@ -196,6 +203,7 @@ export class CompaniesService {
             username: dto.username,
             passwordHash,
             email: dto.email,
+            gender: dto.gender,
             createdBy: ctx.userId,
           },
           select: {

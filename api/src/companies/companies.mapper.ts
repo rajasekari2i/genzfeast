@@ -13,6 +13,8 @@ export interface ProvisionedAdmin {
   name: string;
   username: string;
   email: string;
+  /** Taken from CompanyCreateRequest.gender — a property of this admin, not of the Company. */
+  gender: string | null;
   temporary_password: string;
 }
 

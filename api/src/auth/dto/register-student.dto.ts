@@ -25,8 +25,8 @@ export class RegisterStudentDto {
   @IsEmail()
   email!: string;
 
-  @IsIn(['male', 'female', 'transgender'])
-  gender!: 'male' | 'female' | 'transgender';
+  @IsIn(['male', 'female', 'other'])
+  gender!: 'male' | 'female' | 'other';
 
   @IsUUID()
   company_id!: string;

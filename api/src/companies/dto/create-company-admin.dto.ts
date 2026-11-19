@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 /** Matches contracts/openapi.yaml's AdminUserCreateRequest. */
 export class CreateCompanyAdminDto {
@@ -18,4 +18,13 @@ export class CreateCompanyAdminDto {
 
   @IsEmail()
   email!: string;
+
+  /**
+   * Required for the same reason CreateAdminUserDto/CreateTenantUserDto
+   * require it: `users.gender` is nullable only because rows predating
+   * migration 20260908090000_user_gender exist, and every creation path
+   * going forward collects it. This endpoint was the last one that didn't.
+   */
+  @IsIn(['male', 'female', 'other'])
+  gender!: 'male' | 'female' | 'other';
 }

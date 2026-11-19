@@ -30,7 +30,7 @@ type OtpStatus = 'idle' | 'sent' | 'verified';
 const GENDER_OPTIONS = [
   { label: 'Male', value: 'male' as const },
   { label: 'Female', value: 'female' as const },
-  { label: 'Transgender', value: 'transgender' as const },
+  { label: 'Other', value: 'other' as const },
 ];
 
 function toOptions(raw: { id?: string; name?: string }[] | undefined): Option[] {
@@ -63,7 +63,7 @@ export function RegisterScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | 'transgender' | undefined>(undefined);
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | undefined>(undefined);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [departmentId, setDepartmentId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Option[]>([]);
