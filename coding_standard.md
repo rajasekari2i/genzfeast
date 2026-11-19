@@ -1,6 +1,6 @@
 # GenzFeast Coding Standard
 
-**Stack**: Node.js 20 LTS, NestJS, TypeScript (strict), Prisma ORM, Supabase-managed PostgreSQL.
+**Stack**: Node.js 20 LTS, NestJS, TypeScript (strict), Prisma ORM, Railway-managed PostgreSQL 18.
 
 This document governs how code is written for the GenzFeast API. It exists to keep 12+ feature specs' worth of already-decided architecture (multi-tenant RLS, stateless JWT, audit triggers, soft delete, money-as-integer) enforced consistently as multiple people/agents implement them, rather than re-derived — or accidentally violated — feature by feature. Where this document is silent, defer to the relevant feature's `spec.md`/`plan.md`/`research.md` under `specs/`; where it conflicts with one, this document is wrong and should be corrected, not the other way around.
 
@@ -196,9 +196,9 @@ These restate CLAUDE.md's own rules as enforceable coding rules, since this is t
 
 ## 10. Configuration & Secrets
 
-- All secrets (JWT signing key, Supabase service-role key, Razorpay keys, FCM credentials, MSG91 auth key (`014`, mobile-number verification only), `012`'s bootstrap-admin values) come from environment variables validated at boot via a typed config schema (`@nestjs/config` + `joi`/`zod`) — a missing required var fails startup immediately, never falls back to a default (per `012`'s explicit "fail loud, no silent fallback" rule).
+- All secrets (JWT signing key, database credentials, Razorpay keys, FCM credentials, MSG91 auth key (`014`, mobile-number verification only), `012`'s bootstrap-admin values) come from environment variables validated at boot via a typed config schema (`@nestjs/config` + `joi`/`zod`) — a missing required var fails startup immediately, never falls back to a default (per `012`'s explicit "fail loud, no silent fallback" rule).
 - No secret, credential, or `.env` file is ever committed. `.env.example` documents every required key with a placeholder, never a real value.
-- Environment-specific values (which Supabase project, which Firebase project, per Architecture §9) are injected at deploy time, never hardcoded per environment in source.
+- Environment-specific values (which Railway environment/database, which Firebase project, per Architecture §9) are injected at deploy time, never hardcoded per environment in source.
 
 ---
 

@@ -22,8 +22,8 @@ module.exports = {
     {
       // Integration/contract/RLS tests — genuinely need a real (but never
       // production) Postgres database. setup-safety-guard.ts refuses to
-      // run any of these if DATABASE_URL/APP_DATABASE_URL points at a
-      // Supabase-hosted project (see its own header for why).
+      // run any of these unless DATABASE_URL/APP_DATABASE_URL point at a
+      // local/disposable database (see its own header for why).
       displayName: 'integration',
       preset: 'ts-jest',
       testEnvironment: 'node',

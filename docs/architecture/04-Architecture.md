@@ -23,9 +23,9 @@
 | Mobile API typing | `openapi-typescript` + `openapi-fetch` | Types generated per feature from each spec's `contracts/openapi.yaml` into `mobile/src/api/generated/` |
 | Backend API | **NestJS 10 + TypeScript** | **[Changed]** v2 said "Express/NestJS"; NestJS was chosen because DI + Guards + Interceptors map cleanly onto per-request tenant/role scoping |
 | ORM | **Prisma 5** | The schema is *not* the full source of truth — RLS policies, triggers, CHECK constraints and partial unique indexes are hand-written into migration SQL |
-| Database | **Supabase (managed PostgreSQL)**, RLS enabled | |
+| Database | **Railway Postgres (managed PostgreSQL 18)**, RLS enabled | **[Changed]** from Supabase, whose project has been deleted |
 | File storage | **Railway Bucket (S3-compatible)** via `@aws-sdk/client-s3` | **[Changed]** from Supabase Storage. Private bucket; served through an API proxy route |
-| Auth | **Stateless JWT (HS256)** issued/verified by this API + DB-tracked revocable refresh tokens | Not Supabase Auth, not Firebase Auth, not cookies |
+| Auth | **Stateless JWT (HS256)** issued/verified by this API + DB-tracked revocable refresh tokens | Not Firebase Auth, not cookies, not any managed auth provider |
 | Password hashing | **Argon2id** (`argon2`) | One shared `PasswordService` used by every path that ever hashes a password |
 | Push | **Firebase Cloud Messaging only** (`firebase-admin`) | No Firestore, no Firebase Auth, no Firebase Storage |
 | SMS | **MSG91** (TRAI DLT templates) | Registration verification + per-Company forgot-password |
@@ -254,7 +254,7 @@ This split is what makes §6 layer 4 real rather than decorative.
 
 ### 11.3 Environments
 
-| Environment | Supabase project | Firebase project (FCM only) | Purpose |
+| Environment | Railway Postgres database | Firebase project (FCM only) | Purpose |
 |---|---|---|---|
 | `dev` | `genzfeast-dev` | `genzfeast-dev-fcm` | Active development |
 | `staging` | `genzfeast-staging` | `genzfeast-staging-fcm` | Pre-release QA, onboarding rehearsal |
@@ -266,7 +266,7 @@ Mobile builds: one pipeline per environment × per tenant flavour, parameterized
 
 ### 11.4 Connection pooling
 
-RLS depends on `SET LOCAL`, which is transaction-scoped. Pooling must therefore be transaction-mode (Supabase's pooler / PgBouncer), and every query must stay inside the interactive transaction `TenantPrismaService` opens. This is not optional tuning — session-mode pooling with transaction-local settings would be a correctness bug.
+RLS depends on `SET LOCAL`, which is transaction-scoped. Pooling must therefore be transaction-mode (e.g. PgBouncer in transaction mode); a direct, non-pooled Railway Postgres connection is equally safe, since each connection is then its own session. Every query must stay inside the interactive transaction `TenantPrismaService` opens. This is not optional tuning — session-mode pooling with transaction-local settings would be a correctness bug.
 
 ## 12. Cross-Cutting Concerns
 
@@ -277,7 +277,7 @@ RLS depends on `SET LOCAL`, which is transaction-scoped. Pooling must therefore 
 | **Scalability** | Stateless API instances behind autoscaling; access-token verification needs no database hit; transaction-mode pooling |
 | **Observability** | Structured logs keyed by `company_id`/`order_id`. Worth alerting on: webhook signature failures, payment/status mismatches, and refresh-token reuse (a strong theft signal, detectable thanks to the `replaced_by` chain) |
 | **Resilience** | Every third-party integration is optional at boot and fails at its own request rather than at startup; push delivery is best-effort and never affects a webhook's response |
-| **Testing** | `api/test/{unit,contract,rls}`, `mobile/test`. 80% threshold in `.coverage-thresholds.json` is the blocking gate. **RLS and integration tests must never run against the real Supabase instance** — use a mocked or ephemeral database |
+| **Testing** | `api/test/{unit,contract,rls}`, `mobile/test`. 80% threshold in `.coverage-thresholds.json` is the blocking gate. **RLS and integration tests must never run against the real Railway Postgres instance** — use a mocked or ephemeral database |
 
 ## 13. What a Web Client Would Need *(nothing web exists today)*
 

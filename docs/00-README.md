@@ -2,6 +2,8 @@
 
 > **v2 change log:** Database moved from Firebase/Firestore to **Supabase (PostgreSQL)**. **Firebase is now used only for Cloud Messaging (push notifications)** — no other Firebase product is part of this architecture. Authentication is now **stateless JWT** (short-lived access token + revocable, database-tracked refresh token). A generic `audit_logs` table (populated via Postgres triggers) has been added to the Data Model and wired into every module that touches business-critical tables. See 01-BRD.md §7 for the updated assumptions list.
 
+> **v3 change log:** The database moved again, from Supabase to **Railway Postgres (managed PostgreSQL 18)** — the Supabase project has been deleted, so any `*.supabase.com` URL in these docs or in an old `.env` is dead. Product-image storage likewise moved off Supabase Storage to a private **Railway Bucket**, served through this API's own proxy route. Firebase remains Cloud-Messaging-only.
+
 Generated from the original high-level PRD. Read in this order:
 
 1. **01-BRD.md** — Business Requirements Document (why we're building this, scope, assumptions)

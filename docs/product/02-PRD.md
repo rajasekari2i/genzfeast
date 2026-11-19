@@ -7,7 +7,7 @@
 | **Version** | 2.0 — **as-built**, reconciled against `api/src` and `mobile/src` |
 | **Status** | V1 complete. Every FR below is marked **Built**, **Built (changed)**, or **Not built**. |
 | **Last reconciled** | 2026-11-06 |
-| **Stack** | React Native 0.86 (bare, Android) + NativeWind 4 · NestJS 10 + TypeScript + Prisma 5 · Supabase (PostgreSQL, RLS) · Railway Bucket (S3-compatible) · Firebase Cloud Messaging · MSG91 SMS · Razorpay (UPI) |
+| **Stack** | React Native 0.86 (bare, Android) + NativeWind 4 · NestJS 10 + TypeScript + Prisma 5 · Railway Postgres (PostgreSQL 18, RLS) · Railway Bucket (S3-compatible) · Firebase Cloud Messaging · MSG91 SMS · Razorpay (UPI) |
 
 > **How to read this version.** Earlier versions of this PRD were a forward-looking specification. This version is a reconciliation: each requirement carries a status and, where it exists, the endpoint and screen that implement it. Requirements that were specified but never built are kept — marked **Not built** — rather than deleted, so the gap stays visible. §6 records which of the original open questions the code has since answered.
 
@@ -217,7 +217,7 @@ Covered by FR-3.2–FR-3.5. A `deliveries` row records `order_id` (unique), `com
 | **Auditability** | Soft delete and `created_by`/`updated_by`/`created_at`/`updated_at` everywhere; business-critical mutations recorded automatically | **Met, with a caveat.** The `audit_logs` trigger covers `products`, `orders`, `payment_attempts`, `feedback`. `auth_audit_logs` and `order_audit_logs` capture non-row events. **No role can read any of it through the API** (BRD Gap G6). |
 | **Notifications** | OTP and order-status delivery | **Met, extended.** FCM for order-ready and for push-routed codes; MSG91 SMS where the Company opts in. |
 | **Resilience** | Third-party outages must not prevent startup | **Met.** Railway Bucket, Firebase, Razorpay and MSG91 are all optional at boot; only the database and `JWT_SECRET` are mandatory. Missing integrations fail at the specific request, not at startup. |
-| **Testing** | Unit, contract, and RLS tests | **Partial.** `api/test/{unit,contract,rls}` and `mobile/test` exist; the 80% threshold in `.coverage-thresholds.json` is the blocking gate. RLS/integration tests must never run against the real Supabase instance. |
+| **Testing** | Unit, contract, and RLS tests | **Partial.** `api/test/{unit,contract,rls}` and `mobile/test` exist; the 80% threshold in `.coverage-thresholds.json` is the blocking gate. RLS/integration tests must never run against the real Railway Postgres instance. |
 | **Browser support** | — | **Not addressed.** The API does not enable CORS. Any web client is blocked today (BRD Gap G7). |
 
 ## 5. Data & Domain Notes

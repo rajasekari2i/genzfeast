@@ -6,7 +6,8 @@
  * (Company create + role-seeding trigger, PATCH/toggle, create first
  * Company Admin) plus the 401/403/400/404/409 boundaries.
  *
- * Boots the real Nest app (AppModule) against the real Supabase database —
+ * Boots the real Nest app (AppModule) against a real Postgres database
+ * (local/disposable only — see test/setup-safety-guard.ts) —
  * same discipline as test/rls: this proves the actual wiring (guards,
  * interceptor, TenantPrismaService, RLS) works end-to-end, not a mocked
  * substitute.

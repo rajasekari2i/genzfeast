@@ -35,7 +35,7 @@ const envSchema = z.object({
   // Firebase Admin SDK service-account credentials (specs/003 FR-003,
   // specs/009 research.md §7) — for sending the forgot-password OTP as an
   // FCM data-message push. Deliberately optional, same reasoning as the
-  // Supabase vars above: the app must still boot without Firebase
+  // Railway Bucket vars above: the app must still boot without Firebase
   // configured; NotificationsModule's factory provider falls back to a
   // logging no-op adapter (see fcm-notification.adapter.ts) whenever any of
   // these three are missing, rather than failing startup.
@@ -47,7 +47,7 @@ const envSchema = z.object({
   FIREBASE_PRIVATE_KEY: z.string().optional(),
   // Razorpay (specs/006 research.md §4, Architecture §7's "critical design
   // rule": only the webhook, never a client redirect, finalizes payment).
-  // Deliberately optional, same reasoning as Supabase/Firebase above — the
+  // Deliberately optional, same reasoning as Railway Bucket/Firebase above — the
   // app boots without these; only the order-placement/retry/webhook
   // endpoints fail clearly until they're set (see razorpay.service.ts).
   RAZORPAY_KEY_ID: z.string().optional(),
@@ -57,7 +57,7 @@ const envSchema = z.object({
   // registration-time mobile-number verification, and (revised) for
   // forgot-password OTP delivery when the requesting user's own Company has
   // `is_sms=true` (order-pickup OTP always stays on FCM regardless).
-  // Deliberately optional, same reasoning as Firebase/Supabase/Razorpay: the
+  // Deliberately optional, same reasoning as Firebase/Railway Bucket/Razorpay: the
   // app boots without these; the relevant AuthService method throws/falls
   // back at request time instead (see msg91-sms.adapter.ts) — mobile
   // verification has no silent fallback (a send failure must be surfaced),

@@ -30,6 +30,6 @@
   },
   "notes": {
     "monorepo": "No root package.json — api/ (NestJS) and mobile/ (Expo/React Native) are independent sub-projects, each with their own Jest + tsconfig. Coverage enforcement is scoped to api/ only.",
-    "testing_policy": "Per explicit user direction: implement functionality first, write/run unit tests only afterward as a separate step. Tests must mock the DB/Prisma layer — never connect to the real Supabase/Postgres instance (a prior RLS test run mutated live data)."
+    "testing_policy": "Per explicit user direction: implement functionality first, write/run unit tests only afterward as a separate step. Tests must mock the DB/Prisma layer — never connect to the real Railway Postgres instance (a prior RLS test run mutated live data)."
   }
 }
