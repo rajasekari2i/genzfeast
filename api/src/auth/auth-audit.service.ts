@@ -127,4 +127,15 @@ export class AuthAuditService {
   passwordChangeFailed(userId: string, companyId: string | null, meta: AuditMeta): Promise<unknown> {
     return this.write('password_change_failed', { userId, companyId, ...meta });
   }
+
+  /**
+   * A successful POST /me/delete-account. The `users` row survives
+   * soft-deleted with every personal field overwritten, so this log line —
+   * which keeps only the id, never the scrubbed name/mobile/email — is the
+   * record that the closure was self-service and password-confirmed, as
+   * opposed to an admin deleting the account from /tenant/users.
+   */
+  accountDeleted(userId: string, companyId: string | null, meta: AuditMeta): Promise<unknown> {
+    return this.write('account_deleted', { userId, companyId, ...meta });
+  }
 }

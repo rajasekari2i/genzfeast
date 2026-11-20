@@ -90,6 +90,21 @@ export class DevicesService {
   }
 
   /**
+   * Account closure (POST /me/delete-account) — every registration for the
+   * user, including the `refresh_token_id IS NULL` rows the forgot-password
+   * path (FR-011) creates. Deliberately broader than
+   * `deleteSessionLinkedForUser` below: those rows are exempt from
+   * session-based cascades because they have no session to end, but a
+   * closed account must keep no FCM token at all, or push would still
+   * reach a device whose account no longer exists.
+   */
+  async deleteAllForUser(userId: string): Promise<void> {
+    await this.tenantPrisma.runInTenantContext(SYSTEM_ACTOR_CONTEXT, (tx) =>
+      tx.deviceRegistration.deleteMany({ where: { userId } }),
+    );
+  }
+
+  /**
    * FR-008/research.md §3 — account lock (no exception) or a password
    * change (spares the acting session, if any). Never touches a
    * `refresh_token_id IS NULL` row (the unauthenticated/FR-011 path) —

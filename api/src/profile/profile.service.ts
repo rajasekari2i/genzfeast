@@ -1,14 +1,30 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { TenantContext, TenantPrismaService } from '../common/prisma/tenant-prisma.service';
 import { PasswordService } from '../auth/password.service';
 import { TokenService } from '../auth/token.service';
 import { AuthAuditService, AuditMeta } from '../auth/auth-audit.service';
 import { AuthService } from '../auth/auth.service';
+import { DevicesService } from '../devices/devices.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { ProfileResponse, toProfileResponse } from './profile.mapper';
 
 const PROFILE_INCLUDE = { role: true, category: true, department: true, company: true } as const;
+
+/**
+ * The only order states that block account closure: paid for, food not yet
+ * handed over. Both resolve the moment Staff completes the pickup, so the
+ * block is transient and self-clearing.
+ *
+ * Deliberately NOT including `payment_pending`/`payment_failed`: nothing was
+ * charged for those, and this app has no diner-initiated cancellation (the
+ * `cancelled` status is unreachable — BRD §11), so blocking on one would
+ * leave a diner who abandoned a failed payment permanently unable to close
+ * their account. That is exactly the outcome Google Play's account-deletion
+ * requirement exists to prevent.
+ */
+const PICKUP_PENDING_STATUSES = ['order_placed', 'order_ready'];
 
 /**
  * specs/007-user-profile-management. Every method acts only on the caller's
@@ -26,6 +42,7 @@ export class ProfileService {
     private readonly tokenService: TokenService,
     private readonly authAudit: AuthAuditService,
     private readonly authService: AuthService,
+    private readonly devicesService: DevicesService,
   ) {}
 
   async getProfile(ctx: TenantContext): Promise<ProfileResponse> {
@@ -119,5 +136,113 @@ export class ProfileService {
     await this.authAudit.passwordChangeSucceeded(ctx.userId as string, ctx.companyId ?? null, meta);
 
     return { message: "Password updated. You've been logged out of other devices." };
+  }
+
+  /**
+   * POST /me/delete-account — self-service account closure, required by
+   * Google Play's User Data policy for any app that offers account
+   * creation. Distinct from UsersService.removeTenant/removeAdmin, which
+   * are an administrator acting on somebody else and explicitly refuse to
+   * touch the caller's own row.
+   *
+   * Soft delete, per this repository's never-hard-delete convention:
+   * `orders`, `payment_attempts`, `order_audit_logs` and `feedback` all
+   * reference `users` with onDelete: Restrict, and order history has to
+   * survive for financial/legal retention. What makes that retention
+   * acceptable is the scrub in the same statement — every personal field
+   * on the surviving row is overwritten, so what remains is an opaque id,
+   * not a person.
+   *
+   * The scrubbed `username` (the diner's 10-digit mobile number) frees that
+   * number for a fresh registration immediately: both
+   * `users_company_username_unique` and `users_global_username_unique` are
+   * partial indexes on `is_deleted = false`, and
+   * `check_users_cross_partition_username()` returns early for a row being
+   * written with `is_deleted` set.
+   */
+  async deleteAccount(ctx: TenantContext, dto: DeleteAccountDto, meta: AuditMeta): Promise<void> {
+    const userId = ctx.userId as string;
+
+    const result = await this.tenantPrisma.runInTenantContext(ctx, async (tx) => {
+      const user = await tx.user.findFirstOrThrow({ where: { id: userId }, include: { role: true } });
+
+      const matches = await this.passwordService.verify(user.passwordHash, dto.current_password);
+      if (!matches) {
+        return { matched: false as const };
+      }
+
+      const awaitingPickup = await tx.order.findFirst({
+        where: { userId, status: { in: PICKUP_PENDING_STATUSES } },
+        select: { id: true },
+      });
+      if (awaitingPickup) {
+        return { matched: true as const, blocked: true as const };
+      }
+
+      // One UPDATE carries both the soft delete and the scrub, so no
+      // window exists where the row is closed but still holds personal
+      // data (or the reverse). `status` goes to 'inactive' as well: a
+      // closed account should read as closed to any admin list that
+      // filters on status rather than is_deleted.
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          isDeleted: true,
+          status: 'inactive',
+          name: 'Deleted account',
+          // Namespaced by the row's own id, which keeps it unique against
+          // the partial indexes even in the unlikely case a future change
+          // starts including soft-deleted rows in them. Not a valid
+          // 10-digit mobile number, so it can never collide with a real
+          // one or be submitted at login.
+          username: `deleted-${userId}`,
+          email: `deleted-${userId}@deleted.invalid`,
+          gender: null,
+          // Argon2id verification against this throws rather than
+          // returning false, which is fine — AuthService.login rejects a
+          // soft-deleted row before it ever reaches a password check, and
+          // every forgot-password lookup filters isDeleted: false.
+          passwordHash: 'account-deleted',
+          resetPasswordOtp: null,
+          resetPasswordOtpExpiresAt: null,
+          resetPasswordOtpAttempts: 0,
+          // The affiliation and academic department are personal
+          // attributes of someone who is no longer here; the order
+          // history that survives never reads them.
+          categoryId: null,
+          departmentId: null,
+          updatedBy: userId,
+        },
+      });
+
+      await tx.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+
+      return {
+        matched: true as const,
+        blocked: false as const,
+        companyId: user.companyId,
+      };
+    });
+
+    if (!result.matched) {
+      await this.authAudit.passwordChangeFailed(userId, ctx.companyId ?? null, meta);
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    if (result.blocked) {
+      throw new ConflictException(
+        'You have an order waiting to be picked up. Collect it (or ask the canteen to complete it) before closing your account.',
+      );
+    }
+
+    // Outside the transaction, matching changePassword's own pattern of
+    // never nesting a second runInTenantContext inside another. Removes
+    // every FCM registration, including the session-less forgot-password
+    // rows that the usual logout/lock cascades deliberately spare — a
+    // closed account must keep no push reachability at all.
+    await this.devicesService.deleteAllForUser(userId);
+    await this.authAudit.accountDeleted(userId, result.companyId, meta);
   }
 }

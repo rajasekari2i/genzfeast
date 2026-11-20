@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { ChangePasswordScreen } from '../screens/shared/ChangePasswordScreen';
+import { DeleteAccountScreen } from '../screens/shared/DeleteAccountScreen';
 import { primaryHeaderOptions } from '../theme/navigationHeader';
 
 /**
@@ -14,6 +15,7 @@ export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
   ChangePassword: undefined;
+  DeleteAccount: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -46,6 +48,15 @@ export function ProfileNavigator() {
       <Stack.Screen
         name="ChangePassword"
         component={ChangePasswordScreen}
+        options={{ title: '', headerShown: false }}
+      />
+      {/* headerShown: false — same reason as the three above: the screen
+          renders its own header row. Reached only from Profile's own
+          "Delete account" row; Google Play requires this path to exist
+          in-app for any app that offers account creation. */}
+      <Stack.Screen
+        name="DeleteAccount"
+        component={DeleteAccountScreen}
         options={{ title: '', headerShown: false }}
       />
     </Stack.Navigator>
