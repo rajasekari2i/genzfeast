@@ -1,7 +1,6 @@
 import './global.css';
 import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -14,14 +13,11 @@ import {
   registerForegroundResetCodeListener,
 } from './src/notifications/passwordResetPush';
 import { registerOrderNotificationTapListener } from './src/notifications/orderReadyNotifications';
-import { requestIgnoreBatteryOptimizations } from './src/notifications/batteryOptimization';
 import { getDevicePushToken } from './src/notifications/pushToken';
 import {
   ensureMobileVerificationChannel,
   registerForegroundMobileVerificationListener,
 } from './src/notifications/mobileVerificationPush';
-
-const HAS_PROMPTED_BATTERY_OPTIMIZATION_KEY = 'genzfeast.hasPromptedBatteryOptimization';
 
 export default function App() {
   const colorScheme = useColorScheme();
@@ -59,20 +55,6 @@ export default function App() {
       unsubscribeTap();
       unsubscribeMobileVerification();
     };
-  }, []);
-
-  useEffect(() => {
-    // One-tap battery-optimization exemption prompt (see
-    // src/notifications/batteryOptimization.ts) — once per install, never
-    // re-asked regardless of the user's answer; the flag is set either way.
-    (async () => {
-      const alreadyPrompted = await AsyncStorage.getItem(HAS_PROMPTED_BATTERY_OPTIMIZATION_KEY);
-      if (alreadyPrompted) {
-        return;
-      }
-      await requestIgnoreBatteryOptimizations();
-      await AsyncStorage.setItem(HAS_PROMPTED_BATTERY_OPTIMIZATION_KEY, 'true');
-    })();
   }, []);
 
   return (

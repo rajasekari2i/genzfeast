@@ -75,8 +75,11 @@ export function ProductCreateEditScreen({ route, navigation }: Props) {
 
   async function handlePickImage() {
     setErrorMessage(null);
-    // launchImageLibrary requests the platform photo-access permission
-    // itself; a denial surfaces as result.errorCode === 'permission' below.
+    // Opens the system photo picker (AndroidX PickVisualMedia), which
+    // returns a per-URI grant and needs no storage permission — see the
+    // AndroidManifest note on why READ_MEDIA_IMAGES is deliberately absent.
+    // 'permission' is still handled below: the picker itself never raises
+    // it, but launchImageLibrary reports camera/other denials the same way.
     const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
     if (result.errorCode === 'permission') {
       setErrorMessage('Photo library access is required to pick a product image.');

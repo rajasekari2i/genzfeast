@@ -1,22 +1,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- react-native-image-picker: gallery access on older Android; on 33+ the
-         system photo picker needs no runtime permission at all. -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion" />
+    <!-- Deliberately NOT declared: READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE.
+         The only gallery access in the app is Company Admin picking a
+         product image, and react-native-image-picker's launchImageLibrary
+         goes through AndroidX `PickVisualMedia` — the system photo picker —
+         which hands back a per-URI grant and needs no storage permission on
+         any supported API level. The library declares neither permission
+         itself and checks for neither; these two were hand-added on the
+         mistaken assumption that older Android needed them.
+
+         Declaring them triggers Google Play's Photo and Video Permissions
+         policy, which requires justifying why the system picker is
+         insufficient. It isn't — it fully covers this use case — so the
+         honest answer is to not request broad access at all. -->
     <!-- @react-native-firebase/messaging: required on Android 13+ to display
          the order-ready visible notification (specs/009-order-fcm-push-notifications). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- BatteryOptimizationModule: one-tap prompt so MIUI/OEM power management
-         doesn't silently delay FCM delivery for specs/014's mobile-verification
-         push fallback (confirmed on-device via MIUI's SmartPower throttling +
-         an FcmRetry alarm in logcat). ACCEPTED RISK: Google Play restricts this
+    <!-- Deliberately NOT declared: REQUEST_IGNORE_BATTERY_OPTIMIZATIONS.
+         It was carried here for a one-tap prompt against MIUI/OEM power
+         management delaying FCM delivery, but Google Play restricts the
          permission to a narrow set of app categories (alarms, VPNs, device
-         management) that a food-ordering app does not clearly fit; using it
-         anyway risks Play Store rejection or later removal. Explicitly
-         requested and accepted by the project owner after being told this. -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+         management) that a food-ordering app does not fit, and declaring it
+         risks rejection at review. Removed before the first Play release
+         along with its native BatteryOptimizationModule, which no screen
+         ever called. If OEM throttling turns out to be a real field
+         problem, solve it with a high-priority FCM message or an in-app
+         explainer pointing at system settings — not this permission. -->
 
     <queries>
         <intent>
