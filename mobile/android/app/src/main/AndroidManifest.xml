@@ -28,6 +28,25 @@
          problem, solve it with a high-priority FCM message or an in-app
          explainer pointing at system settings — not this permission. -->
 
+    <!-- Hardware features are declared optional explicitly, because the
+         build tooling otherwise injects them as REQUIRED and Play then
+         filters the app off devices that lack them.
+
+         screen.portrait is implied by MainActivity's
+         android:screenOrientation="portrait" below. Play rejected the first
+         submission over it: it excluded Chromebook/desktop, tablet and
+         Android XR users. Marking it optional does NOT unlock the app — the
+         activity stays portrait-locked — it only stops Play treating a
+         portrait-capable display as an install requirement.
+
+         nfc is implied by the android.permission.NFC that Razorpay's
+         checkout AAR merges in. Nothing in this app uses NFC, and leaving it
+         implied-required would filter out every device without an NFC
+         radio. No dependency declares either feature itself, so both have to
+         be stated here. -->
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
