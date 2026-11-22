@@ -123,6 +123,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/delete-account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Permanently close the caller's own account. Required by Google Play's User Data policy, which obliges any app offering account creation to offer in-app account deletion.
+         * @description POST rather than DELETE so the password confirmation travels in a request body every proxy and client handles consistently, and to match /me/change-password's shape in the same controller.
+         *     The account row itself is soft-deleted (`is_deleted`), per this repository's never-hard-delete convention — orders, payment attempts and audit rows reference it with onDelete: Restrict, and order history must survive for financial/legal retention. Every personal field on the surviving row (name, username — which is the 10-digit mobile number, email, gender, password hash, outstanding reset-OTP state) is overwritten at the same time, so the retained reference carries no personal data.
+         *     Every refresh token is revoked and every device_registrations row removed, so no session continues and no further FCM push can reach the account. The mobile number is freed immediately for a fresh registration: both username unique indexes are partial on `is_deleted = false`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DeleteAccountRequest"];
+                };
+            };
+            responses: {
+                /** @description Account closed. Every session is revoked — the caller's own tokens are already invalid. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Current password did not match — nothing changed */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description An order is paid for and still awaiting pickup (order_placed/order_ready). Deliberately the only blocking state: it resolves as soon as Staff hands the order over. Unpaid payment_pending/payment_failed orders never block, since a diner cannot cancel one and would otherwise be permanently unable to close their account. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -169,6 +230,13 @@ export interface components {
         ChangePasswordAck: {
             /** @example Password updated. You've been logged out of other devices. */
             message?: string;
+        };
+        DeleteAccountRequest: {
+            /**
+             * Format: password
+             * @description Re-confirms the caller owns the account before an irreversible action, so a briefly unattended or stolen session cannot close it.
+             */
+            current_password: string;
         };
         ErrorResponse: {
             message?: string;

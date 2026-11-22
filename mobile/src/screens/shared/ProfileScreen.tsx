@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -9,6 +9,7 @@ import { radius, colors } from '../../theme/tokens';
 import { createTypedClient } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import type { ProfileStackParamList } from '../../navigation/ProfileNavigator';
+import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../../config/legal';
 import type { paths } from '../../api/generated/007-user-profile-management';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Profile'>;
@@ -170,6 +171,60 @@ export function ProfileScreen({ navigation }: Props) {
             </View>
             <Text className="flex-1 text-body-semi text-text-primary">Change password</Text>
             <Icon name="chevronRight" size={18} color={colors.espresso} />
+          </Pressable>
+          {/* Google Play's User Data policy requires an in-app account
+              deletion path for any app that offers account creation. Sits in
+              the same card as Change password rather than next to Log out:
+              both are account-settings rows, and keeping it away from the
+              Log out button makes the destructive one harder to hit by
+              accident. Tinted in the danger tone so it never reads as
+              routine. */}
+          <Pressable
+            onPress={() => navigation.navigate('DeleteAccount')}
+            accessibilityRole="button"
+            style={{ height: 60, borderTopWidth: 1, borderTopColor: colors.borderSoft }}
+            className="flex-row items-center gap-md px-md"
+          >
+            <View
+              style={{ width: 36, height: 36, borderRadius: radius.md, backgroundColor: colors.disabledFill }}
+              className="items-center justify-center"
+            >
+              <Icon name="trash" size={18} color={logoutTone} />
+            </View>
+            <Text style={{ color: logoutTone }} className="flex-1 text-body-semi">
+              Delete account
+            </Text>
+            <Icon name="chevronRight" size={18} color={logoutTone} />
+          </Pressable>
+        </InfoCard>
+
+        {/* Google Play's User Data policy requires the privacy policy to
+            be reachable from inside the app, not only from the store
+            listing — this card is that path, and Terms sits beside it
+            because the two are always read together.
+
+            No leading 36px tile here, unlike the action rows above: these
+            two leave the app for a browser rather than pushing a screen,
+            and the trailing arrow (not a chevron) is what says so. Giving
+            them tiles would have meant picking glyphs that mean nothing. */}
+        <InfoCard>
+          <Pressable
+            onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+            accessibilityRole="link"
+            style={{ height: 52 }}
+            className="flex-row items-center px-md"
+          >
+            <Text className="flex-1 text-body text-text-secondary">Privacy policy</Text>
+            <Icon name="arrowRight" size={16} color={colors.espresso} />
+          </Pressable>
+          <Pressable
+            onPress={() => void Linking.openURL(TERMS_OF_SERVICE_URL)}
+            accessibilityRole="link"
+            style={{ height: 52, borderTopWidth: 1, borderTopColor: colors.borderSoft }}
+            className="flex-row items-center px-md"
+          >
+            <Text className="flex-1 text-body text-text-secondary">Terms of service</Text>
+            <Icon name="arrowRight" size={16} color={colors.espresso} />
           </Pressable>
         </InfoCard>
 
